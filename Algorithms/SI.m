@@ -146,7 +146,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
             true_states{trial}(1, t) = 51;
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand,1);
         else
-            if factor == 1
+            if factor == 1 % TODOs: St John: why is factor 1 using B and factor 2 using bb? What is this doing?
                 Q{t,factor} = (B{1}(:,:,chosen_action(t-1))*Q{t-1,factor}')';
                 true_states{trial}(factor, t) = find(cumsum(B{1}(:,true_states{trial}(factor,t-1),chosen_action(t-1)))>= rand,1);
             else
@@ -185,6 +185,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     % sample the next observation. Same technique as sampling states
     
     for modality = 1:num_modalities     
+        % TODO Is this 'ob' variable used for anything?
         ob = A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t));
         observations(modality,t) = find(cumsum(A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t)))>=rand,1);
         %create a temporary vectore of 0s
@@ -209,14 +210,16 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     predicted_posterior = calculate_posterior(Q,y,predictive_observations_posterior,t);
     for timey = start:t
         %          if timey ~= t
-            L = spm_backwards(O,Q,A,bb,chosen_action,timey,t);
-            LL{2} = L;
-            LL{1} = Q{timey,1};
+        % TODO Why is this backward smoothing useful?
+        L = spm_backwards(O,Q,A,bb,chosen_action,timey,t);
+        LL{2} = L;
+        LL{1} = Q{timey,1};
 
         if (timey > start && ~isequal(round(L,3),round(Q{timey,2},3)')) || (timey == t) 
          for modality = 2:2
            a_learning = O(modality,timey)';
            for  factor = 1:2
+               % TODO What is the meaning of this outer product in the context of this algorithm?
                a_learning = spm_cross(a_learning, LL{factor});
            end
            a_learning = a_learning.*(a{modality} > 0);
