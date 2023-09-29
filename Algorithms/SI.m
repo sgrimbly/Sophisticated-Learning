@@ -209,7 +209,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     predictive_observations_posterior{3,t} = normalise(y{3}(:,:)*qs(:))';
     predicted_posterior = calculate_posterior(Q,y,predictive_observations_posterior,t);
     for timey = start:t
-%          if timey ~= t
+        %          if timey ~= t
             L = spm_backwards(O,Q,A,bb,chosen_action,timey,t);
             LL{2} = L;
             LL{1} = Q{timey,1};
