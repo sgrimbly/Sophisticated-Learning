@@ -76,7 +76,6 @@ D{1}(51) = 1; % starting position
 D{1} = normalise(D{1});
 T = 27;
 num_modalities = 3;
-num_states = 100;
 
 
 short_term_memory(:,:,:,:) = zeros(35,35,35,400);
