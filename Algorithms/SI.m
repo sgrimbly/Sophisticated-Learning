@@ -2,8 +2,9 @@ function [] = SI(seed)
 rng(str2double(seed))
 rng
 
-% TODO Test issue to see behaviour
+% TODO #8 Test issue to see behaviour
 
+% TODO Blah blah
 hill_1 = 55;
 true_food_source_1 = 71;
 true_food_source_2 = 43;
@@ -227,6 +228,8 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
                % TODO #5 What is the meaning of this outer product in the context of this algorithm?
                a_learning = spm_cross(a_learning, LL{factor});
            end
+           % Mask out any non-positive part of the agent likelihood for the context (a{2}). 
+           % Is this necessary? Why would the elements become negative?
            a_learning = a_learning.*(a{modality} > 0);
         %Define the proportion to subtract
           proportion = 0.3;
