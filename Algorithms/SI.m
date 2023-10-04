@@ -2,6 +2,8 @@ function [] = SI(seed)
 rng(str2double(seed))
 rng
 
+% TODO Test issue to see behaviour
+
 hill_1 = 55;
 true_food_source_1 = 71;
 true_food_source_2 = 43;
