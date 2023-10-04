@@ -74,7 +74,7 @@ D{2} = [0.25,0.25,0.25,0.25]';
 
 D{1}(51) = 1; % starting position
 D{1} = normalise(D{1});
-T = 27;
+T = 27; % TODO #7 Is this used anywhere useful? What is it meant to be?
 num_modalities = 3;
 
 
@@ -98,7 +98,7 @@ for action = 1:5
                0.25,     0.25,     0.25,    0.25;
                0.25,     0.25,       0.25     0.25]; 
 end
-b = B;
+b = B; % TODO #6 Doesn't this just erase any distinction set above? i.e. Not uniform distribution?
 for i = 1:num_states
     if i ~= [1,11,21,31,41,51,61,71,81,91]
         B{1}(:,i,2) = circshift(B{1}(:,i,2),-1); % move left
@@ -137,7 +137,7 @@ t = 1;
 for trial = 1:120
 short_term_memory(:,:,:,:) = 0;    
 while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
- 
+    % TODO #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
     bb{2} = normalise_matrix(b{2});
     for factor = 1:2
         if t == 1
@@ -146,7 +146,9 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
             true_states{trial}(1, t) = 51;
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand,1);
         else
-            if factor == 1 % TODOs: St John: why is factor 1 using B and factor 2 using bb? What is this doing?
+            if factor == 1 % TODOs: #2 St John: why is factor 1 using B and factor 2 using bb? What is this doing?
+                % Is there a reason Q and P are capitals here? Literature seems to use lowercase for agent approximations. i.e. q and p. 
+                % This Q should be the agent's posterior/model 
                 Q{t,factor} = (B{1}(:,:,chosen_action(t-1))*Q{t-1,factor}')';
                 true_states{trial}(factor, t) = find(cumsum(B{1}(:,true_states{trial}(factor,t-1),chosen_action(t-1)))>= rand,1);
             else
@@ -185,7 +187,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     % sample the next observation. Same technique as sampling states
     
     for modality = 1:num_modalities     
-        % TODO Is this 'ob' variable used for anything?
+        % TODO #3 Is this 'ob' variable used for anything?
         ob = A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t));
         observations(modality,t) = find(cumsum(A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t)))>=rand,1);
         %create a temporary vectore of 0s
@@ -196,7 +198,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     end
     true_t = t;
     if t > 1
-
+        % TODO Is 6 chosen here simply as 6 timesteps to backward smooth over? Is this a hyperparameter?
       start = t - 6;
     if start <= 0
         start = 1;
@@ -210,16 +212,17 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     predicted_posterior = calculate_posterior(Q,y,predictive_observations_posterior,t);
     for timey = start:t
         %          if timey ~= t
-        % TODO Why is this backward smoothing useful?
+        % TODO #4 Why is this backward smoothing useful?
         L = spm_backwards(O,Q,A,bb,chosen_action,timey,t);
         LL{2} = L;
         LL{1} = Q{timey,1};
 
+        % This if statement checked if the posterior (Q) has been updated in the backward smoothing
         if (timey > start && ~isequal(round(L,3),round(Q{timey,2},3)')) || (timey == t) 
          for modality = 2:2
            a_learning = O(modality,timey)';
            for  factor = 1:2
-               % TODO What is the meaning of this outer product in the context of this algorithm?
+               % TODO #5 What is the meaning of this outer product in the context of this algorithm?
                a_learning = spm_cross(a_learning, LL{factor});
            end
            a_learning = a_learning.*(a{modality} > 0);
