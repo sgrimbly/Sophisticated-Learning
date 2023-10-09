@@ -116,7 +116,7 @@ end
 
 for i = 1:num_states
     if i ~= [91,92,93,94,95,96,97,98,99,100]
-        B{1}(:,i,4) = circshift(B{1}(:,i,4),10); % move rup
+        B{1}(:,i,4) = circshift(B{1}(:,i,4),10); % move up
     end  
 end
 
