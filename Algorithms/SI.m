@@ -199,6 +199,7 @@ for trial = 1:120
             vec(1,observations(modality,t)) = 1;
             O{modality,t} = vec;
         end
+
         true_t = t;
         if t > 1
             % TODO Is 6 chosen here simply as 6 timesteps to backward smooth over? Is this a hyperparameter?
@@ -280,6 +281,7 @@ for trial = 1:120
         temp_Q{t,2} = temp_Q{t,2}';
         P = calculate_posterior(temp_Q,y,O,t);
         current_pos = find(cumsum(P{t,1})>=rand,1);
+        % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search. 
         if t > 1 && ~isequal(round(predicted_posterior{t,2},1), round(P{t,2},1))
             % if there is a relatively large state-prediction error, reset
             % memory as it's probably innacurate.
