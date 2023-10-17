@@ -26,7 +26,7 @@ if nargin < 2
 end
 
 % handle cell arrays
-
+% NOTE: For cell arrays, which Q{t,:} is. i.e. Does this recursively.
 if iscell(X), X = spm_cross(X{:}); end
 if iscell(x), x = spm_cross(x{:}); end
 

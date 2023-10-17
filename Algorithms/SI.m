@@ -193,6 +193,8 @@ for trial = 1:120
             % TODO #3 Is this 'ob' variable used for anything?
             ob = A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t));
             observations(modality,t) = find(cumsum(A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t)))>=rand,1);
+
+            % One-hot encode the observation for the current modality
             %create a temporary vectore of 0s
             vec = zeros(1,size(A{modality},1));
             % set the index of the vector matching the observation index to 1

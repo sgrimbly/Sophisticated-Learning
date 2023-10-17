@@ -1,5 +1,5 @@
-run_SL = 1;
-run_SI = 0;
+run_SL = 0;
+run_SI = 1;
 run_BA = 0;
 run_BAUCB = 0;
 
