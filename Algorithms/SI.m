@@ -135,6 +135,12 @@ file_name = strcat(seed,'.txt');
 t = 1;
 
 for trial = 1:120
+    startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    fprintf('----------------------------------------\n');
+    fprintf('TRIAL %d STARTED\n', trial);
+    fprintf('----------------------------------------\n');
+    fprintf('Start Time: %s\n', startTime);
+
     short_term_memory(:,:,:,:) = 0;
     while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
         % TODO #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
@@ -297,10 +303,30 @@ for trial = 1:120
         t = t+1;
         % end loop over time points
 
+        len_search{trial}(t) = length(best_actions);
+
     end
 
     fid = fopen(file_name, 'a+');
     fprintf(fid, '%f\n', t);
+
+    % Sample data for demonstration
+
+    endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');  % Let's assume a runtime of 1 second for this example
+    % Calculating total runtime
+    totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
+    minutes = floor(mod(totalRuntimeInSeconds, 3600)/60);
+    seconds = mod(totalRuntimeInSeconds, 60);
+
+    fprintf('At time step %d the agent is dead\n', t);
+    fprintf('The agent had %d food, %d water, and %d sleep.\n', 22-time_since_food, 20-time_since_water, 25-time_since_sleep);
+    fprintf('Sum of best_actions: %d \n', sum(len_search{trial}));
+    fprintf('TRIAL %d COMPLETE ✔\n', trial);
+    fprintf('End Time: %s\n', endTime);
+    
+    fprintf('Total Runtime in minutes/seconds: %02d:%02d\n', minutes, seconds);
+    fprintf('----------------------------------------\n');
+
 
     % reset for next iteration
     t = 1;
