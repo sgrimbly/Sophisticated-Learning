@@ -134,6 +134,8 @@ time_since_sleep = 0;
 file_name = strcat(seed,'.txt');
 t = 1;
 
+
+
 for trial = 1:120
     startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
     fprintf('----------------------------------------\n');
@@ -141,6 +143,7 @@ for trial = 1:120
     fprintf('----------------------------------------\n');
     fprintf('Start Time: %s\n', startTime);
 
+    num_memory_clears = 0;
     short_term_memory(:,:,:,:) = 0;
     while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
         % TODO #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
@@ -291,9 +294,11 @@ for trial = 1:120
             % if there is a relatively large state-prediction error, reset
             % memory as it's probably innacurate.
             short_term_memory(:,:,:,:) = 0;
+            num_memory_clears = num_memory_clears + 1;
         end
         if current_pos == 55
             short_term_memory(:,:,:,:) = 0;
+            num_memory_clears = num_memory_clears + 1;
         end
         best_actions = [];
         % Start tree search from current time point
@@ -320,6 +325,7 @@ for trial = 1:120
 
     fprintf('At time step %d the agent is dead\n', t);
     fprintf('The agent had %d food, %d water, and %d sleep.\n', 22-time_since_food, 20-time_since_water, 25-time_since_sleep);
+    fprintf('The agent cleared its memory %d times \n', num_memory_clears);
     fprintf('Sum of best_actions: %d \n', sum(len_search{trial}));
     fprintf('TRIAL %d COMPLETE ✔\n', trial);
     fprintf('End Time: %s\n', endTime);
