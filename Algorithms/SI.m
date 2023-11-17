@@ -133,6 +133,9 @@ time_since_water = 0;
 time_since_sleep = 0;
 file_name = strcat(seed,'.txt');
 t = 1;
+memory_resets = zeros(120, 1);
+pe_memory_resets = zeros(120, 1);
+hill_memory_resets = zeros(120, 1);
 
 for trial = 1:120
     startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
@@ -285,15 +288,23 @@ for trial = 1:120
         temp_Q = Q;
         temp_Q{t,2} = temp_Q{t,2}';
         P = calculate_posterior(temp_Q,y,O,t);
-        current_pos = find(cumsum(P{t,1})>=rand,1);
+        current_pos(t) = find(cumsum(P{t,1})>=rand,1);
         % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search. 
         if t > 1 && ~isequal(round(predicted_posterior{t,2},1), round(P{t,2},1))
             % if there is a relatively large state-prediction error, reset
             % memory as it's probably innacurate.
+            % t
+            % current_pos(t)
+            % predicted_posterior{t,2}
+            % P{t,2}
             short_term_memory(:,:,:,:) = 0;
+            memory_resets(trial) = memory_resets(trial) + 1;
+            pe_memory_resets(trial) = pe_memory_resets(trial) + 1;
         end
-        if current_pos == 55
+        if current_pos(t) == hill_1
             short_term_memory(:,:,:,:) = 0;
+            memory_resets(trial) = memory_resets(trial) + 1;
+            hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
         end
         best_actions = [];
         % Start tree search from current time point
@@ -320,7 +331,10 @@ for trial = 1:120
 
     fprintf('At time step %d the agent is dead\n', t);
     fprintf('The agent had %d food, %d water, and %d sleep.\n', 22-time_since_food, 20-time_since_water, 25-time_since_sleep);
-    fprintf('Sum of best_actions: %d \n', sum(len_search{trial}));
+    fprintf('The total tree search depth for this trial was %d. \n', sum(len_search{trial}));
+    fprintf('The agent cleared its short-term memory %d times. \n', memory_resets(trial));
+    fprintf('State prediction error memory resets: %d. \n', pe_memory_resets(trial));
+    fprintf('Hill memory resets: %d. \n', hill_memory_resets(trial));
     fprintf('TRIAL %d COMPLETE ✔\n', trial);
     fprintf('End Time: %s\n', endTime);
     
