@@ -133,18 +133,31 @@ time_since_water = 0;
 time_since_sleep = 0;
 file_name = strcat(seed,'.txt');
 t = 1;
-memory_resets = zeros(120, 1);
-pe_memory_resets = zeros(120, 1);
-hill_memory_resets = zeros(120, 1);
+num_trials = 15;
+memory_resets = zeros(num_trials, 1);
+pe_memory_resets = zeros(num_trials, 1);
+hill_memory_resets = zeros(num_trials, 1);
+total_search_depth = 0;
+total_memory_accessed = 0;
+total_t = 0;
 
-for trial = 1:120
+
+t_at_25 = 0;
+t_at_50 = 0;
+t_at_75 = 0;
+t_at_100 = 0;
+
+total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+for trial = 1:num_trials
     startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
-    fprintf('----------------------------------------\n');
+    fprintf('\n----------------------------------------\n');
     fprintf('TRIAL %d STARTED\n', trial);
     fprintf('----------------------------------------\n');
     fprintf('Start Time: %s\n', startTime);
 
     short_term_memory(:,:,:,:) = 0;
+    search_depth = 0;
+    memory_accessed = 0;
     while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
         % TODO #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
         bb{2} = normalise_matrix(b{2});
@@ -217,11 +230,14 @@ for trial = 1:120
             end
             bb{2} = normalise_matrix(b{2});
             y{2} = normalise_matrix(a{2});
+            x_a = round(a{2},4);
+            x_y = round(y{2},4);
 
             qs = spm_cross(Q{t,:});
             predictive_observations_posterior{2,t} = normalise(y{2}(:,:)*qs(:))';
             predictive_observations_posterior{3,t} = normalise(y{3}(:,:)*qs(:))';
             predicted_posterior = calculate_posterior(Q,y,predictive_observations_posterior,t);
+
             for timey = start:t
                 %          if timey ~= t
                 % TODO #4 Why is this backward smoothing useful?
@@ -280,7 +296,7 @@ for trial = 1:120
         y{2} = normalise_matrix(a{2});
         y{1} = A{1};
         y{3} = A{3};
-        displayGridWorld(true_states{trial}(1,t),food,water,sleep, hill_1, 1)
+        %displayGridWorld(true_states{trial}(1,t),food,water,sleep, hill_1, 1)
         horizon = min([9,min([22-time_since_food, 20-time_since_water, 25-time_since_sleep])]);
         if horizon == 0
             horizon = 1;
@@ -289,14 +305,10 @@ for trial = 1:120
         temp_Q{t,2} = temp_Q{t,2}';
         P = calculate_posterior(temp_Q,y,O,t);
         current_pos(t) = find(cumsum(P{t,1})>=rand,1);
-        % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search. 
+        % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search.
         if t > 1 && ~isequal(round(predicted_posterior{t,2},1), round(P{t,2},1))
             % if there is a relatively large state-prediction error, reset
             % memory as it's probably innacurate.
-            % t
-            % current_pos(t)
-            % predicted_posterior{t,2}
-            % P{t,2}
             short_term_memory(:,:,:,:) = 0;
             memory_resets(trial) = memory_resets(trial) + 1;
             pe_memory_resets(trial) = pe_memory_resets(trial) + 1;
@@ -308,14 +320,27 @@ for trial = 1:120
         end
         best_actions = [];
         % Start tree search from current time point
-        [G,Q, short_term_memory, best_actions] = tree_search_frwd_SI(short_term_memory, O, Q ,a, A,y, B,B, t, T, t+horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight);
-
+        [G,Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, Q ,a, A,y, B,B, t, T, t+horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
         chosen_action(t) = best_actions(1);
         t = t+1;
         % end loop over time points
 
-        len_search{trial}(t) = length(best_actions);
+        search_depth = search_depth + length(best_actions);
 
+    end
+
+    total_search_depth = total_search_depth + search_depth;
+    total_memory_accessed = total_memory_accessed + memory_accessed;
+    total_t = total_t + t-2;
+
+    if t-1 >= 25 && t-1 < 50
+        t_at_25 = t_at_25 + 1;
+    elseif t-1 >= 50 && t-1 < 75
+        t_at_50 = t_at_50 + 1;
+    elseif t-1 >= 75 && t-1 < 100
+        t_at_75 = t_at_75 + 1;
+    elseif t >= 100
+        t_at_100 = t_at_100 + 1;
     end
 
     fid = fopen(file_name, 'a+');
@@ -323,22 +348,32 @@ for trial = 1:120
 
     % Sample data for demonstration
 
-    endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');  % Let's assume a runtime of 1 second for this example
+    endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
     % Calculating total runtime
     totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
     minutes = floor(mod(totalRuntimeInSeconds, 3600)/60);
     seconds = mod(totalRuntimeInSeconds, 60);
 
-    fprintf('At time step %d the agent is dead\n', t);
+    fprintf('At time step %d the agent is dead\n', t-2);
     fprintf('The agent had %d food, %d water, and %d sleep.\n', 22-time_since_food, 20-time_since_water, 25-time_since_sleep);
-    fprintf('The total tree search depth for this trial was %d. \n', sum(len_search{trial}));
+    fprintf('The total tree search depth for this trial was %d. \n', search_depth);
+    fprintf('The agent accessed its memory %d times. \n', memory_accessed);
     fprintf('The agent cleared its short-term memory %d times. \n', memory_resets(trial));
-    fprintf('State prediction error memory resets: %d. \n', pe_memory_resets(trial));
-    fprintf('Hill memory resets: %d. \n', hill_memory_resets(trial));
+    fprintf('     State prediction error memory resets: %d. \n', pe_memory_resets(trial));
+    fprintf('     Hill memory resets: %d. \n', hill_memory_resets(trial));   
     fprintf('TRIAL %d COMPLETE ✔\n', trial);
     fprintf('End Time: %s\n', endTime);
-    
-    fprintf('Total Runtime in minutes/seconds: %02d:%02d\n', minutes, seconds);
+    fprintf('Total runtime for this trial (minutes/seconds): %02d:%02d\n', minutes, seconds);
+    fprintf('----------------------------------------\n');     
+    fprintf('Total hill visits: %d. \n', sum(hill_memory_resets(:)));
+    fprintf('Total prediction errors: %d. \n', sum(pe_memory_resets(:)));
+    fprintf('Total search depth: %d. \n', sum(total_search_depth));
+    fprintf('Total times memory accessed: %d. \n', total_memory_accessed);
+    fprintf('Total times 25 >= t <= 50: %d. \n', t_at_25);
+    fprintf('Total times 50 >= t <= 75: %d. \n', t_at_50);
+    fprintf('Total times 75 >= t <= 100: %d. \n', t_at_75);
+    fprintf('Total times t == 100: %d. \n', t_at_100);
+    fprintf('Total time steps survived: %d. \n', total_t);
     fprintf('----------------------------------------\n');
 
 
@@ -348,6 +383,21 @@ for trial = 1:120
     time_since_water = 0;
     time_since_sleep = 0;
 end
+
+total_endTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+totalRuntimeInSeconds = etime(datevec(total_endTime), datevec(total_startTime));
+hours = floor(totalRuntimeInSeconds / 3600);
+minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
+seconds = mod(totalRuntimeInSeconds, 60);
+fprintf('EXPERIMENT COMPLETE ✔.\n');
+fprintf('End Time: %s\n', total_endTime);
+fprintf('TOTAL RUNTIME (hours/minutes/seconds): %02d:%02d:%02d\n', hours, minutes, seconds);
+fprintf('AVERAGE RUNTIME PER TIME STEP: %.3f seconds\n', totalRuntimeInSeconds/total_t);
+fprintf('Average hill visits per time step: %.3f. \n', sum(hill_memory_resets(:)) / total_t);
+fprintf('Average predition errors per time step: %.3f. \n', sum(pe_memory_resets(:)) / total_t);
+fprintf('Average search depth per time step: %.0f. \n', sum(total_search_depth(:)) / total_t);
+fprintf('Average times memory accessed per time step: %.0f. \n', total_memory_accessed / total_t);    
+fprintf('----------------------------------------\n'); 
 
 end
 
