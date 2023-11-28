@@ -133,7 +133,7 @@ time_since_water = 0;
 time_since_sleep = 0;
 file_name = strcat(seed,'.txt');
 t = 1;
-num_trials = 15;
+num_trials = 100;
 memory_resets = zeros(num_trials, 1);
 pe_memory_resets = zeros(num_trials, 1);
 hill_memory_resets = zeros(num_trials, 1);
@@ -326,18 +326,19 @@ for trial = 1:num_trials
         % end loop over time points
 
         search_depth = search_depth + length(best_actions);
-
+        
     end
-
+    
     total_search_depth = total_search_depth + search_depth;
     total_memory_accessed = total_memory_accessed + memory_accessed;
-    total_t = total_t + t-2;
+    
+    total_t = total_t + t;
 
-    if t-1 >= 25 && t-1 < 50
+    if t >= 25 && t < 50
         t_at_25 = t_at_25 + 1;
-    elseif t-1 >= 50 && t-1 < 75
+    elseif t >= 50 && t < 75
         t_at_50 = t_at_50 + 1;
-    elseif t-1 >= 75 && t-1 < 100
+    elseif t >= 75 && t < 100
         t_at_75 = t_at_75 + 1;
     elseif t >= 100
         t_at_100 = t_at_100 + 1;
@@ -348,13 +349,16 @@ for trial = 1:num_trials
 
     % Sample data for demonstration
 
+    
+    % Calculating total runtime for this trial
     endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
-    % Calculating total runtime
     totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
     minutes = floor(mod(totalRuntimeInSeconds, 3600)/60);
     seconds = mod(totalRuntimeInSeconds, 60);
 
-    fprintf('At time step %d the agent is dead\n', t-2);
+    % Subtract 1 from t, because in Python trial data is presented 
+    % before t = t + 1, within the while loop
+    fprintf('At time step %d the agent is dead\n', t-1);
     fprintf('The agent had %d food, %d water, and %d sleep.\n', 22-time_since_food, 20-time_since_water, 25-time_since_sleep);
     fprintf('The total tree search depth for this trial was %d. \n', search_depth);
     fprintf('The agent accessed its memory %d times. \n', memory_accessed);
@@ -374,6 +378,11 @@ for trial = 1:num_trials
     fprintf('Total times 75 >= t <= 100: %d. \n', t_at_75);
     fprintf('Total times t == 100: %d. \n', t_at_100);
     fprintf('Total time steps survived: %d. \n', total_t);
+    totalRuntimeInSeconds = etime(datevec(endTime), datevec(total_startTime));
+    hours = floor(totalRuntimeInSeconds / 3600);
+    minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
+    seconds = mod(totalRuntimeInSeconds, 60);
+    fprintf('Total runtime so far (hours/minutes/seconds): %02d:%02d:%02d\n', hours, minutes, seconds);
     fprintf('----------------------------------------\n');
 
 
