@@ -1,4 +1,4 @@
-function [G,P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B,b, t, T, N, t_food,t_water,t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed)
+function [G,P, short_term_memory, best_actions, memory_accessed, save_epi] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B,b, t, T, N, t_food,t_water,t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed, save_epi)
 
 G = 0.02;
 P_prior = P;
@@ -8,6 +8,8 @@ t_food_approx = round(t_food+1);
 t_water_approx = round(t_water+1);
 t_sleep_approx = round(t_sleep+1);
 num_factors = 2;
+%fprintf('At time step %d, non-zero memmory length: %d\n', t, length(short_term_memory(find(short_term_memory > 0))));
+
 if t > true_t    
     novelty = 0;
 
@@ -42,6 +44,7 @@ if t > true_t
 
     % Add epistemic term (see EFE equation)
     epi = G_epistemic_value(y,P_prior(t,:)');
+    save_epi = [save_epi, [epi; t; true_t; find(P{t, 1} > 0)]];
 
     % Add novelty to term (see EFE equation)
     G = G + novelty_weight*novelty;
@@ -94,6 +97,7 @@ if t < N
             if short_term_memory(t_food_approx,t_water_approx,t_sleep_approx,state) ~= 0
                 sh = short_term_memory(t_food_approx,t_water_approx,t_sleep_approx, state);
                 K(state) = sh;
+                memory_accessed = memory_accessed + 1;
             else
                 for modal = 1:numel(A)
                     O{modal,t+1} = normalise(y{modal}(:,state)');
@@ -106,10 +110,9 @@ if t < N
 
                 % recursively move to the next node (likely state) of
                 % the tree
-                [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B,b, t+1, T, N, t_food_approx,t_water_approx,t_sleep_approx, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
+                [expected_free_energy, P, short_term_memory, best_actions, memory_accessed, save_epi] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B,b, t+1, T, N, t_food_approx,t_water_approx,t_sleep_approx, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed, save_epi);
                 S = max(expected_free_energy);
                 K(state) = S;
-                memory_accessed = memory_accessed + 1;
                 short_term_memory(t_food_approx,t_water_approx,t_sleep_approx,state) = S;
             end
 
