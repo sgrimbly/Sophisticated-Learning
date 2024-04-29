@@ -276,7 +276,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     auto_rest = 0;
     
     
-    [G,Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Tree] = tree_search_frwd(long_term_memory, short_term_memory, O, Q ,a, A,y, D, B,B, t, T, t+horizon, time_since_food, time_since_water, time_since_sleep, resource_locations, current_pos, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, history, k_factor, mct, num_mct);
+    [G,Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Tree] = tree_search_frwd_knownMCT(long_term_memory, short_term_memory, O, Q ,a, A,y, D, B,B, t, T, t+horizon, time_since_food, time_since_water, time_since_sleep, resource_locations, current_pos, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, history, k_factor, mct, num_mct);
     %TREE_SEARCH_HISTORY{trial,t} = tree_history;
     TREE_SEARCH_HISTORY{trial,t} = [nnz(short_term_memory), searches, numel(fieldnames(tree_history)), G, post_calcs];  
     short_term_memory(:,:,:,:,:) = 0; %reseting over and over
