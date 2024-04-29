@@ -296,7 +296,7 @@ for trial = 1:num_trials
         y{2} = normalise_matrix(a{2});
         y{1} = A{1};
         y{3} = A{3};
-        %displayGridWorld(true_states{trial}(1,t),food,water,sleep, hill_1, 1)
+        displayGridWorld(true_states{trial}(1,t),food,water,sleep, hill_1, 1)
         horizon = min([9,min([22-time_since_food, 20-time_since_water, 25-time_since_sleep])]);
         if horizon == 0
             horizon = 1;
