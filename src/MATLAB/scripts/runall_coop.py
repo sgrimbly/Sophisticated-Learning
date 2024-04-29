@@ -1,4 +1,8 @@
-import sys, os, re, subprocess, time
+import sys
+import os
+import re
+import subprocess
+import time
 
 results = sys.argv[1]
 seeds = sys.argv[2]
@@ -6,7 +10,6 @@ horizon = sys.argv[3]
 k_factor = sys.argv[4]
 mct = sys.argv[5]
 num_mct = sys.argv[6]
-
 
 
 if not os.path.exists(results):
@@ -30,12 +33,11 @@ for subject in range(int(seeds)):
     os.environ['mct'] = str(mct)
     os.environ['num_mct'] = str(num_mct)
 
-
-    os.system(f"sbatch -J {jobname} -o {stdout_name} -e {stderr_name} {ssub_path} {results}")
+    os.system(
+        f"sbatch -J {jobname} -o {stdout_name} -e {stderr_name} {ssub_path} {results}")
     print(f"SUBMITTED JOB [{jobname}]")
 
-
-    ###python3 runall_coop.py "/media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/results" 100 1 0.7 6 100
+    # python3 runall_coop.py "/media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/results" 100 1 0.7 6 100
     # srun -N 1 -c 4 --mem=50000 --pty --x11 --partition=c2_short /bin/bash
     # cd /media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/
     #    joblist | grep hill_ai_navid | grep -Po 131.... | xargs scancel
