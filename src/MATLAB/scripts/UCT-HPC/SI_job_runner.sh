@@ -21,5 +21,9 @@ cp SLURM_Template.sh submit_$JOB_NAME.sh
 # Use sed to replace placeholders with configured values
 sed -i "s|\$JOB_NAME|$JOB_NAME|g; s|\$TIME_LIMIT|$TIME_LIMIT|g; s|\$MEMORY_ALLOCATION|$MEMORY_ALLOCATION|g; s|\$SCRIPT_PATH|$SCRIPT_PATH|g" submit_$JOB_NAME.sh
 
+# Create experiment log directory
+output_dir=~/MATLAB-experiments/$(date +'%Y-%m-%d_%H-%M-%S')
+mkdir -p "$output_dir"
+
 # Submit the job
-sbatch submit_$JOB_NAME.sh
+sbatch --output="$output_dir/slurm-%j.out" --error="$output_dir/slurm-%j.err" submit_$JOB_NAME.sh
