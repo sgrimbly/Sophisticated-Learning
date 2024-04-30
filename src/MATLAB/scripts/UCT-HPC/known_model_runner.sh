@@ -13,7 +13,6 @@ declare -a NUM_MCTS=("100")
 declare -a ROOT_FOLDERS=("/media/labs" "/media/labs2")
 
 # Base configuration
-export JOB_NAME="main_run"
 export TIME_LIMIT="72:00:00"
 export MEMORY_ALLOCATION="12G"
 export SCRIPT_PATH="~/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
@@ -21,20 +20,28 @@ export SCRIPT_PATH="~/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
 # Loop over each combination of parameters
 for ALGORITHM in "${ALGORITHMS[@]}"
 do
+    export ALGORITHM
     for ((SEED=1; SEED<=$NUM_SEEDS; SEED++))
     do
+        export SEED
         for HORIZON in "${HORIZONS[@]}"
         do
+            export HORIZON
             for K_FACTOR in "${K_FACTORS[@]}"
             do
+                export K_FACTOR
                 for MCT in "${MCTS[@]}"
                 do
+                    export MCT
                     for NUM_MCT in "${NUM_MCTS[@]}"
                     do
+                        export NUM_MCT
                         for ROOT_FOLDER in "${ROOT_FOLDERS[@]}"
                         do
+                            export ROOT_FOLDER
                             # Configure the job name to include parameter info for easier tracking
-                            export JOB_NAME="${ALGORITHM}_Seed${SEED}_Hor${HORIZON}_KF${K_FACTOR}_MCT${MCT}_Num${NUM_MCT}"
+                            JOB_NAME="${ALGORITHM}_Seed${SEED}_Hor${HORIZON}_KF${K_FACTOR}_MCT${MCT}_Num${NUM_MCT}_$(date +'%Y-%m-%d_%H-%M-%S')"
+                            export JOB_NAME
 
                             # Prepare the SLURM script
                             SLURM_SCRIPT="submit_${JOB_NAME}.sh"
