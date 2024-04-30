@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+#SBATCH --partition=c2_cpu
+#SBATCH --ntasks=1
+#SBATCH --mem=12000
+#SBATCH --nodes=1
+#SBATCH --workdir=/media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/
+#SBATCH --begin=now
+#SBATCH --job-name=hill_ai
+#SBATCH --time=72:00:00
+#
+#################################################
+
+
+
+cd /media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/
+module load matlab/2022a
+
+run_file='/media/labs/rsmith/lab-members/nhakimi/known_model_v2_2024/main_script_simple.m'
+matlab -nodisplay -nosplash < ${run_file}

@@ -1,0 +1,267 @@
+# Importing standard library
+import numpy as np
+import random
+import copy
+import matplotlib.pyplot as plt
+
+
+# Importing local modules
+from agent_utils import (
+    initialise_distributions, 
+    update_environment, 
+    is_alive,
+    update_needs, 
+    get_observations, 
+    get_predicted_posterior,
+    get_actual_posterior, 
+    delete_short_term_memory,
+    smooth_beliefs
+)
+from forward_tree_search import forward_tree_search_SI
+from display import draw_gridworld
+
+def initialise_experiment():
+    # Initialize short_term_memory array
+    # TODO: Why 35 shape? Maybe make this a hyperparameter in the notebook
+    short_term_memory = np.zeros((35, 35, 35, 400))
+    time_since_resource = {"Food": 0, "Water": 0, "Sleep": 0}
+    # Initializing chosen_action
+    chosen_action = []
+    
+    # Data structures for storing historical/previous agent models/observations and true states of the environment
+    historical_predictive_observations_posteriors = [] # Agent belief about next state -> for state-prediction error calculation
+    historical_agent_observations = [] 
+    historical_agent_posterior_Q = [] 
+    historical_true_states = [] 
+    historical_chosen_action = []
+
+    return chosen_action, short_term_memory, historical_predictive_observations_posteriors, historical_agent_observations, historical_agent_posterior_Q, historical_true_states, historical_chosen_action, time_since_resource
+
+# Initialize the timers for each resource and the main time counter
+def agent_loop(
+    a, 
+    resource_constraints, 
+    A, 
+    B, 
+    b, 
+    D,
+    t_constraint, 
+    contextual_food_locations, 
+    contextual_sleep_locations, 
+    contextual_water_locations, 
+    num_modalities, 
+    num_states,
+    num_factors,             
+    num_contextual_states,   
+    num_resource_observations,  
+    num_context_observations,   
+    hill_1,             
+    weights,          
+    G_prior,
+    start_position,
+    visualise,
+    ax = None       
+): 
+    chosen_action, short_term_memory, historical_predictive_observations_posteriors, historical_agent_observations, historical_agent_posterior_Q, historical_true_states, historical_chosen_action, time_since_resource = initialise_experiment()
+    
+    trial_data = {
+        "historical_predictive_observations_posteriors": [],
+        "historical_agent_observations": [],
+        "historical_agent_posterior_Q": [],
+        "historical_true_states": [],
+        "historical_chosen_action": [],
+        "time_since_resource": [],
+        "hill_memory_resets": [],
+        "pe_memory_resets": [],
+        "time_steps": [],
+        "search_depth": [],
+        "memory_accessed": []
+    }
+    
+    # Main loop continues as long as time doesn't exceed constraint and agent's needs are met
+    t = 0
+    search_depth = 0
+    pe_memory_resets = 0
+    hill_memory_resets = 0
+    memory_accessed = 0
+    while t < t_constraint and is_alive(time_since_resource, resource_constraints):
+    
+        # Update the agent's model and the environment based on the last action
+        historical_agent_posterior_Q, historical_true_states = update_environment(
+            b, D, t, historical_chosen_action, historical_true_states, historical_agent_posterior_Q, start_position
+        )
+        Q = copy.deepcopy(historical_agent_posterior_Q[t])
+        current_pos = np.argmax(np.cumsum(Q[0]) >= np.random.rand())
+         
+        # Update the timers for each resource based on the agent's actions
+        time_since_resource = update_needs(
+            historical_true_states, t, 
+            contextual_food_locations, 
+            contextual_water_locations, 
+            contextual_sleep_locations, 
+            time_since_resource
+        )
+
+        # Get the current observation from the environment
+        O = get_observations(
+            A, historical_true_states, t, num_modalities, num_states, num_resource_observations, num_context_observations
+        )
+        historical_agent_observations.append(O)
+
+        # Determine predicted posterior
+        rounded_predicted_P, historical_predictive_observations_posteriors = get_predicted_posterior(a, Q, O, historical_predictive_observations_posteriors)
+
+        # Update the agent's beliefs, including backward smoothing for more accurate inferences
+        smoothing_start = 0 if t <= 6 else t - 6
+        for smoothing_t in range(smoothing_start, t+1): # In this case range() needs to be inclusive of t
+            a = smooth_beliefs(historical_agent_observations, historical_agent_posterior_Q, A, a, b, smoothing_start, smoothing_t, t)
+            
+        # Determine actual posterior
+        rounded_actual_P, P, y = get_actual_posterior(a, Q, O)
+
+        # If there is a context prediction error larger than .1, or if the agent is on the hill, reset short-term memory
+        no_state_prediction_error = np.array_equal(rounded_predicted_P, rounded_actual_P)  # This returns True if the two arrays have the same shape and elements, False otherwise
+        if not no_state_prediction_error or current_pos == hill_1:
+            short_term_memory = delete_short_term_memory()
+            if not no_state_prediction_error: pe_memory_resets +=1
+            if current_pos == hill_1: hill_memory_resets += 1
+
+        # Determine the horizon for tree search based on the agent's current needs
+        needs = {
+            "Food":resource_constraints['Food'] - time_since_resource['Food'], 
+            "Water":resource_constraints['Water'] - time_since_resource['Water'],
+            "Sleep":resource_constraints['Sleep'] - time_since_resource['Sleep']
+        }
+        horizon = max(
+            1, 
+            min(
+                9,
+                needs["Food"],
+                needs["Water"],
+                needs["Sleep"]
+            )
+        )
+        
+        # Initialize best actions and perform tree search to find the best action
+        best_actions = []
+        G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SI(
+            short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
+            time_since_resource, t, chosen_action, 
+            best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
+        )
+        
+        # Save tree search depth for analytics
+        search_depth += len(best_actions)
+        
+        # Add the latest posterior to the history
+        historical_agent_posterior_Q[t] = copy.deepcopy(P)
+
+        # Add the chosen action to the history
+        historical_chosen_action.append(best_actions[0])
+        
+        # Prepare for the next iteration
+        alive_status = is_alive(time_since_resource, resource_constraints)
+        
+        if not alive_status:
+            print(f"At time {t} the agent is dead.", flush=True)
+            print(f"The agent had: {resource_constraints['Food'] - time_since_resource['Food']} food, {resource_constraints['Water'] - time_since_resource['Water']} water, and {resource_constraints['Sleep'] - time_since_resource['Sleep']} sleep.", flush=True)
+            print(f"The total tree search depth for this trial was {search_depth}.", flush=True)
+            print(f"The agent accessed its memory {memory_accessed} times.", flush=True)
+            print(f"The agent cleared its short-term memory {pe_memory_resets + hill_memory_resets} times.", flush=True)
+            print(f"    State prediction error memory resets: {pe_memory_resets}.", flush=True)
+            print(f"    Hill memory resets: {hill_memory_resets}.", flush=True)
+            
+        if visualise:
+            # TODO: PyMDP has Gridworld environment that can be rendered.
+            # Clear the axis, redraw and pause
+            ax.clear()
+            draw_gridworld(ax, current_pos, historical_true_states[t][1], needs,contextual_food_locations, contextual_water_locations, contextual_sleep_locations, hill_1)
+            plt.pause(0.1)  # Adjust the time to be suitable for your loop speed
+        
+        t += 1
+        
+    trial_data["historical_predictive_observations_posteriors"] = historical_predictive_observations_posteriors
+    trial_data["historical_agent_observations"] = historical_agent_observations
+    trial_data["historical_agent_posterior_Q"] = historical_agent_posterior_Q
+    trial_data["historical_true_states"] = historical_true_states
+    trial_data["historical_chosen_action"] = historical_chosen_action
+    trial_data["hill_memory_resets"] = hill_memory_resets
+    trial_data["pe_memory_resets"] = pe_memory_resets
+    trial_data["time_steps"] = t
+    trial_data["search_depth"] = search_depth
+    trial_data["memory_accessed"] = memory_accessed
+    
+    
+    if visualise:
+        plt.ioff()  # Turn off interactive mode
+        plt.show()  # This will now block until the window is closed.
+
+    return a, trial_data
+
+
+if __name__ == "__main__":
+    VISUALISE = False
+    ax = None
+    if VISUALISE:
+        # Initial plot setup
+        fig, ax = plt.subplots()
+        plt.ion()  # Turn on interactive mode
+        
+    # Experimental/environmental hyperparams
+    num_trials = 5
+    num_states = 100
+    num_factors = 2
+    num_states = 100
+    num_contextual_states = 4
+    contextual_food_locations = [70,42,56,77]
+    contextual_water_locations = [72,32,47,66]
+    contextual_sleep_locations = [63,43,48,58] 
+    hill_1 = 54
+    start_position = 50
+
+    # Agentic hyperparams
+    num_modalities = 3
+    num_resource_observations = 4 # [none, food, water, sleep]
+    num_context_observations = 5 # [summer, autumn, winter, spring, none]
+    t_constraint = 100
+    resource_constraints = {"Food":21,"Water":19,"Sleep":24}
+
+    # Tree search hyperparams
+    weights = {"Novelty":10, "Learning":40, "Epistemic":1, "Preference":10}
+    G_prior = 0.02
+        
+    # Distributions
+    A, a, B, b, D = initialise_distributions(
+        num_states,
+        contextual_food_locations,
+        contextual_water_locations,
+        contextual_sleep_locations,
+        hill_1,
+        start_position)
+    
+    a, trial_data, hill_memory_resets = agent_loop(
+        a, 
+        resource_constraints, 
+        A, 
+        B, 
+        b, 
+        D,
+        t_constraint, 
+        contextual_food_locations, 
+        contextual_sleep_locations, 
+        contextual_water_locations, 
+        num_modalities, 
+        num_states,
+        num_factors,             
+        num_contextual_states,   
+        num_resource_observations,  
+        num_context_observations,   
+        hill_1,             
+        weights,          
+        G_prior,
+        start_position,
+        visualise=VISUALISE,
+        ax = ax            
+    )
+    
+    print("COMPLETE")
