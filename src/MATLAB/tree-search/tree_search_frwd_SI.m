@@ -83,8 +83,8 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
     if t < N
 
-        %actions = randperm(5);
-        actions = 1:5;
+        actions = randperm(5);
+        % actions = 1:5;
         efe = [0, 0, 0, 0, 0];
 
         for action = actions

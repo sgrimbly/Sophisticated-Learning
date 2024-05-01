@@ -140,9 +140,16 @@ function [] = SI(seed)
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
-    file_name = strcat(seed, '.txt');
+
+    % Format the current date and time
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
+
+    % Convert seed to string
+    seed_str = num2str(seed);
+    file_name = strcat(current_time, '_seed_', seed_str, '_SI_experiment.txt');
+    
     t = 1;
-    num_trials = 100;
+    num_trials = 120;
     memory_resets = zeros(num_trials, 1);
     pe_memory_resets = zeros(num_trials, 1);
     hill_memory_resets = zeros(num_trials, 1);
@@ -436,7 +443,6 @@ function [] = SI(seed)
     fprintf('Average search depth per time step: %.0f. \n', sum(total_search_depth(:)) / total_t);
     fprintf('Average times memory accessed per time step: %.0f. \n', total_memory_accessed / total_t);
     fprintf('----------------------------------------\n');
-
 end
 
 %%%%%%%%%%%% code for graphical depiction of simulations %%%%%%%%%%%%%
