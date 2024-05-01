@@ -2,7 +2,7 @@ function [] = BA_UCB(seed)
     rng(str2double(seed));
     rng
     %%% Hyper Params %%%
-    clear
+    % clear
     hill_1 = 55;
     true_food_source_1 = 71;
     true_food_source_2 = 43;
@@ -105,11 +105,12 @@ function [] = BA_UCB(seed)
     D{1} = zeros(1, num_states)'; %position in environment
     D{2} = [0.25, 0.25, 0.25, 0.25]';
     D{1}(51) = 1;
-    survival(:) = zeros(1, 70);
 
+    survival(:) = zeros(1, 70);
     D{1} = normalise(D{1});
     T = 27;
     num_modalities = 3;
+    num_states = 100;
 
     short_term_memory(:, :, :, :, :) = zeros(35, 35, 35, 400, 5);
 
@@ -173,13 +174,43 @@ function [] = BA_UCB(seed)
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
-    file_name = strcat(seed, '.txt');
+
+    % Format the current date and time
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
+
+    % Convert seed to string
+    seed_str = num2str(seed);
+    file_name = strcat(current_time, '_seed_', seed_str, '_BAUCB_experiment.txt');
+
     t = 1;
     surety = 1;
     simulated_time = 0;
 
-    for trial = 1:120
-        short_term_memory(:, :, :, :, :) = 0;
+    num_trials = 120;
+    memory_resets = zeros(num_trials, 1);
+    pe_memory_resets = zeros(num_trials, 1);
+    hill_memory_resets = zeros(num_trials, 1);
+    total_search_depth = 0;
+    total_memory_accessed = 0;
+    total_t = 0;
+
+    t_at_25 = 0;
+    t_at_50 = 0;
+    t_at_75 = 0;
+    t_at_100 = 0;
+
+    total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+
+    for trial = 1:num_trials
+        startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+        fprintf('\n----------------------------------------\n');
+        fprintf('TRIAL %d STARTED\n', trial);
+        fprintf('----------------------------------------\n');
+        fprintf('Start Time: %s\n', startTime);
+
+        short_term_memory(:, :, :, :) = 0;
+        search_depth = 0;
+        memory_accessed = 0;
 
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
 
@@ -262,6 +293,7 @@ function [] = BA_UCB(seed)
                 predicted_posterior = calculate_posterior(Q, y, predictive_observations_posterior, t);
                 %     %Backwards pass to calculate retrospective model (propagated parameter
                 %     %belief search. In this implementation, the agent does it over transition only)
+
                 for timey = t:t
                     L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
                     LL{2} = L;
@@ -344,12 +376,19 @@ function [] = BA_UCB(seed)
             long_term_memory = 0;
             trajectory = [];
             a_complexity = 0;
-            current_pos = find(cumsum(P{t, 1}) >= rand, 1);
+            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
             optimal_traj = [];
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1)) %~all(a1 == a2)
                 short_term_memory(:, :, :, :, :) = 0;
+                memory_resets(trial) = memory_resets(trial) + 1;
+                pe_memory_resets(trial) = pe_memory_resets(trial) + 1;
+            end
 
+            if current_pos(t) == hill_1
+                short_term_memory(:, :, :, :) = 0;
+                memory_resets(trial) = memory_resets(trial) + 1;
+                hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end
 
             cur_state = spm_cross(P{t});
@@ -357,31 +396,94 @@ function [] = BA_UCB(seed)
             Nt(cur_state) = Nt(cur_state) + 1;
             best_actions = [];
             % Start tree search from current time point
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, resource_locations, current_pos, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
             % end loop over time points
 
+            search_depth = search_depth + length(best_actions);
         end
 
-        survival(trial) = t;
+        total_search_depth = total_search_depth + search_depth;
+        total_memory_accessed = total_memory_accessed + memory_accessed;
 
-        if (numel(true_states{trial}) == 18)
-            alive_status = 1;
-        else
-            alive_status = 0;
+        total_t = total_t + t;
+
+        if t >= 25 && t < 50
+            t_at_25 = t_at_25 + 1;
+        elseif t >= 50 && t < 75
+            t_at_50 = t_at_50 + 1;
+        elseif t >= 75 && t < 100
+            t_at_75 = t_at_75 + 1;
+        elseif t >= 100
+            t_at_100 = t_at_100 + 1;
         end
 
         fid = fopen(file_name, 'a+');
         fprintf(fid, '%f\n', t);
+
+        % Sample data for demonstration
+
+        % Calculating total runtime for this trial
+        endTime = datestr(now +1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
+        totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
+        minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
+        seconds = mod(totalRuntimeInSeconds, 60);
+
+        % Subtract 1 from t, because in Python trial data is presented
+        % before t = t + 1, within the while loop
+        fprintf('At time step %d the agent is dead\n', t - 1);
+        fprintf('The agent had %d food, %d water, and %d sleep.\n', 22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep);
+        fprintf('The total tree search depth for this trial was %d. \n', search_depth);
+        fprintf('The agent accessed its memory %d times. \n', memory_accessed);
+        fprintf('The agent cleared its short-term memory %d times. \n', memory_resets(trial));
+        fprintf('     State prediction error memory resets: %d. \n', pe_memory_resets(trial));
+        fprintf('     Hill memory resets: %d. \n', hill_memory_resets(trial));
+        fprintf('TRIAL %d COMPLETE ✔\n', trial);
+        fprintf('End Time: %s\n', endTime);
+        fprintf('Total runtime for this trial (minutes/seconds): %02d:%02d\n', minutes, seconds);
+        fprintf('----------------------------------------\n');
+        fprintf('Total hill visits: %d. \n', sum(hill_memory_resets(:)));
+        fprintf('Total prediction errors: %d. \n', sum(pe_memory_resets(:)));
+        fprintf('Total search depth: %d. \n', sum(total_search_depth));
+        fprintf('Total times memory accessed: %d. \n', total_memory_accessed);
+        fprintf('Total times 25 >= t <= 50: %d. \n', t_at_25);
+        fprintf('Total times 50 >= t <= 75: %d. \n', t_at_50);
+        fprintf('Total times 75 >= t <= 100: %d. \n', t_at_75);
+        fprintf('Total times t == 100: %d. \n', t_at_100);
+        fprintf('Total time steps survived: %d. \n', total_t);
+        totalRuntimeInSeconds = etime(datevec(endTime), datevec(total_startTime));
+        hours = floor(totalRuntimeInSeconds / 3600);
+        minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
+        seconds = mod(totalRuntimeInSeconds, 60);
+        fprintf('Total runtime so far (hours/minutes/seconds): %02d:%02d:%02d\n', hours, minutes, seconds);
+        fprintf('----------------------------------------\n');
+
+        % reset for next iteration
         t = 1;
         time_since_food = 0;
         time_since_water = 0;
         time_since_sleep = 0;
     end
 
+    total_endTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    totalRuntimeInSeconds = etime(datevec(total_endTime), datevec(total_startTime));
+    hours = floor(totalRuntimeInSeconds / 3600);
+    minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
+    seconds = mod(totalRuntimeInSeconds, 60);
+    fprintf('EXPERIMENT COMPLETE ✔.\n');
+    fprintf('End Time: %s\n', total_endTime);
+    fprintf('TOTAL RUNTIME (hours/minutes/seconds): %02d:%02d:%02d\n', hours, minutes, seconds);
+    fprintf('AVERAGE RUNTIME PER TIME STEP: %.3f seconds\n', totalRuntimeInSeconds / total_t);
+    fprintf('Average hill visits per time step: %.3f. \n', sum(hill_memory_resets(:)) / total_t);
+    fprintf('Average predition errors per time step: %.3f. \n', sum(pe_memory_resets(:)) / total_t);
+    fprintf('Average search depth per time step: %.0f. \n', sum(total_search_depth(:)) / total_t);
+    fprintf('Average times memory accessed per time step: %.0f. \n', total_memory_accessed / total_t);
+    fprintf('----------------------------------------\n');
 end
+
+%%%%%%%%%%%% code for graphical depiction of simulations %%%%%%%%%%%%%
 
 function a = displayGridWorld(agent_position, food_position_1, water_position_1, sleep_position_1, hill_1_pos, alive_status)
 
