@@ -3,11 +3,13 @@ import numpy as np
 import random
 import copy
 import matplotlib.pyplot as plt
-
+from datetime import datetime
+import logging
+import sys
+sys.path.append('..')  # Adjust to go up two levels
 
 # Importing local modules
 from agent_utils import (
-    initialise_distributions, 
     update_environment, 
     is_alive,
     update_needs, 
@@ -17,6 +19,7 @@ from agent_utils import (
     delete_short_term_memory,
     smooth_beliefs
 )
+from agent_utils import initialise_distributions
 from forward_tree_search import forward_tree_search_SI
 from display import draw_gridworld
 
@@ -196,10 +199,12 @@ def agent_loop(
         plt.ioff()  # Turn off interactive mode
         plt.show()  # This will now block until the window is closed.
 
-    return a, trial_data
+    return a, trial_data, hill_memory_resets
 
-
-if __name__ == "__main__":
+def experiment(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    
     VISUALISE = False
     ax = None
     if VISUALISE:
@@ -208,16 +213,14 @@ if __name__ == "__main__":
         plt.ion()  # Turn on interactive mode
         
     # Experimental/environmental hyperparams
-    num_trials = 5
+    num_trials = 120
     num_states = 100
     num_factors = 2
-    num_states = 100
     num_contextual_states = 4
     contextual_food_locations = [70,42,56,77]
     contextual_water_locations = [72,32,47,66]
     contextual_sleep_locations = [63,43,48,58] 
-    hill_1 = 54
-    start_position = 50
+    hill_1 = 54 
 
     # Agentic hyperparams
     num_modalities = 3
@@ -225,6 +228,7 @@ if __name__ == "__main__":
     num_context_observations = 5 # [summer, autumn, winter, spring, none]
     t_constraint = 100
     resource_constraints = {"Food":21,"Water":19,"Sleep":24}
+    start_position = 50
 
     # Tree search hyperparams
     weights = {"Novelty":10, "Learning":40, "Epistemic":1, "Preference":10}
@@ -238,30 +242,121 @@ if __name__ == "__main__":
         contextual_sleep_locations,
         hill_1,
         start_position)
-    
-    a, trial_data, hill_memory_resets = agent_loop(
-        a, 
-        resource_constraints, 
-        A, 
-        B, 
-        b, 
-        D,
-        t_constraint, 
-        contextual_food_locations, 
-        contextual_sleep_locations, 
-        contextual_water_locations, 
-        num_modalities, 
-        num_states,
-        num_factors,             
-        num_contextual_states,   
-        num_resource_observations,  
-        num_context_observations,   
-        hill_1,             
-        weights,          
-        G_prior,
-        start_position,
-        visualise=VISUALISE,
-        ax = ax            
+
+    # Experiments
+    trials_data = []
+    total_start_time = datetime.now()
+    total_hill_resets = 0
+    total_pe_resets = 0
+    total_memory_accessed = 0
+    total_search_depth = 0
+    t_at25 = 0
+    t_at50 = 0
+    t_at75 = 0
+    t_at100 = 0
+    total_t = 0
+
+    # Generate a timestamp in the format YYYY-MM-DD_HH-MM-SS
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Configure logging to write to both the console and a log file
+    log_file_path = f"SI_Seed_{seed}_{timestamp}.txt"
+    log_format = '%(message)s'  # Only display the log message
+    logging.basicConfig(
+        level=logging.INFO,
+        format=log_format,
+        handlers=[
+            logging.FileHandler(log_file_path, encoding='utf-8'),
+            logging.StreamHandler()
+        ]
     )
+
+    for trial in range(num_trials):
+        logging.info(f"\n{'-' * 40}\nTRIAL {trial+1} STARTED\n{'-' * 40}")
+        trial_start_time = datetime.now()
+        logging.info(f"Start Time: {trial_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+        if VISUALISE and ax is not None: ax.clear()
+        a, trial_data, hill_memory_resets = agent_loop(
+            a, 
+            resource_constraints, 
+            A, 
+            B, 
+            b, 
+            D,
+            t_constraint, 
+            contextual_food_locations, 
+            contextual_sleep_locations, 
+            contextual_water_locations, 
+            num_modalities, 
+            num_states,
+            num_factors,             
+            num_contextual_states,   
+            num_resource_observations,  
+            num_context_observations,   
+            hill_1,             
+            weights,          
+            G_prior,
+            start_position,     
+            visualise = VISUALISE,     
+            ax = ax
+        )
+        trials_data.append(trial_data)
+
+        if trial_data["time_steps"] >= 24 and trial_data["time_steps"] < 49:
+            t_at25 = t_at25 + 1
+        elif trial_data["time_steps"] >= 49 and trial_data["time_steps"] < 74:
+            t_at50 = t_at50 + 1
+        elif trial_data["time_steps"] >= 74 and trial_data["time_steps"] < 99:
+            t_at75 = t_at75 + 1
+        elif trial_data["time_steps"] == 99:
+            t_at100 = t_at100 + 1
+
+        total_t += trial_data["time_steps"]-1
+        total_hill_resets += trial_data["hill_memory_resets"]
+        total_pe_resets += trial_data["pe_memory_resets"]
+        total_search_depth += trial_data["search_depth"]
+        total_memory_accessed += trial_data["memory_accessed"]
+        
+        # Calculate total runtime for the latest trial
+        trial_end_time = datetime.now()    
+        runtime = trial_end_time - trial_start_time
+        minutes, seconds = divmod(runtime.seconds, 60)
+        
+        logging.info(f"TRIAL {trial+1} COMPLETE ✔")
+        logging.info(f"End Time: {trial_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        logging.info(f"Total runtime for this trial (minutes/seconds): {minutes:02d}:{seconds:02d}")
+        logging.info(f"{'-' * 40}")
+        logging.info(f"Total hill visits: {total_hill_resets}")
+        logging.info(f"Total prediction errors: {total_pe_resets}")
+        logging.info(f"Total search depth: {total_search_depth}")
+        logging.info(f"Total times memory accessed: {total_memory_accessed}")
+        logging.info(f"Total times 24 >= t < 49: {t_at25}")
+        logging.info(f"Total times 49 >= t < 74: {t_at50}")
+        logging.info(f"Total times 74 >= t < 99: {t_at75}")
+        logging.info(f"Total times t == 99: {t_at100}")
+        logging.info(f"Total time steps survived: {total_t}")
+        # Calculate total run time so far
+        runtime = trial_end_time - total_start_time
+        hours, remainder = divmod(runtime.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        logging.info(f"Total runtime so far (hours/minutes/seconds): {hours:02d}:{minutes:02d}:{seconds:02d}")
+        logging.info(f"{'-' * 40}")
+
+    # Calculate total run time for all trials
+    total_end_time = datetime.now()
+    runtime = total_end_time - total_start_time
+    hours, remainder = divmod(runtime.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    logging.info(f"EXPERIMENT COMPLETE ✔.")
+    logging.info(f"End Time: {total_end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logging.info(f"TOTAL RUNTIME (hours/minutes/seconds): {hours:02d}:{minutes:02d}:{seconds:02d}")
+    logging.info(f"AVERAGE RUNTIME PER TIME STEP: {round_half_up((runtime.total_seconds() / total_t), 3)} seconds")
+    logging.info(f"Average hill visits per time step: {round_half_up(total_hill_resets / total_t,3)}")
+    logging.info(f"Average prediction errors per time step: {round_half_up(total_pe_resets / total_t,3)}")
+    logging.info(f"Average search depth per time step: {round_half_up(total_search_depth / total_t)}")
+    logging.info(f"Average times memory accessed per time step: {round_half_up(total_memory_accessed / total_t)}")
+    logging.info(f"{'-' * 40}")
+
+# if __name__ == "__main__":
     
-    print("COMPLETE")
