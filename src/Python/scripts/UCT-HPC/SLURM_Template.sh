@@ -17,10 +17,16 @@
 #SBATCH --mail-type=END                           # Receive emails on job end and fail
 
 # Load the Python module (ensure the correct version is loaded):
-module load software/python/3.8.5                 # Example: Load Python 3.8.5, adjust as per available modules
+module load python/miniconda3-py39
+
+# Activate the Python virtual environment
+source $ENV_PATH/bin/activate
 
 # Display the run configuration for debugging
 echo "Running Python script with ALGORITHM=${ALGORITHM} and SEED=${SEED}"
 
 # Run Python script:
-python main.py --algorithm ${ALGORITHM} --seed ${SEED}
+python "${SCRIPT_PATH}/main.py" --algorithm $ALGORITHM --seed $SEED
+
+# Deactivate the environment
+deactivate

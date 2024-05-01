@@ -1,7 +1,15 @@
 #!/bin/bash
 
-# Load the Python module:
-module load software/python/3.8.5  # Adjust as per available modules on your system
+# Load the Python module
+module load python/miniconda3-py39
+
+# Create a virtual environment (do this once, outside of your job script)
+export ENV_PATH="${HOME}/my_python_env"
+python -m venv $ENV_PATH
+
+# Activate the environment and install packages
+source $ENV_PATH/bin/activate
+pip install numpy matplotlib scipy
 
 # Define the parameter ranges
 declare -a ALGORITHMS=("SI") # "SL" later, maybe add "BA" and "BAUCB" as well
@@ -11,7 +19,7 @@ declare -i NUM_SEEDS=30  # Number of seeds to run for each algorithm
 export JOB_NAME="main_run"
 export TIME_LIMIT="72:00:00"
 export MEMORY_ALLOCATION="8G"
-export SCRIPT_PATH="~/MATLAB-experiments/Sophisticated-Learning/src/Python"
+export SCRIPT_PATH="/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/src/Python"
 
 for ALGORITHM in "${ALGORITHMS[@]}"
 do
