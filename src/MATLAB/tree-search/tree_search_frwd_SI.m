@@ -133,7 +133,6 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
             action_fe = K(likely_states) * qs(likely_states);
             efe(action) = efe(action) + 0.7 * action_fe;
-
         end
 
         [maxi, chosen_action] = max(efe);

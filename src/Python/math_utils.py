@@ -62,9 +62,9 @@ def kl_divergence(A, B):
     float: KL divergence between the normalized vectors of A and B.
     """
     # TODO (St John): Ensure that deep copying is not required if A and B are passed by reference. #testing
-    A = normalise_vector(A.ravel(order='F'))
-    B = normalise_vector(B.ravel(order='F'))
-    e = entropy(A, B)
+    A_norm = normalise_vector(A.ravel(order='F'))
+    B_norm = normalise_vector(B.ravel(order='F'))
+    e = entropy(A_norm, B_norm)
     return e
 
 def maximum_entropy(A):

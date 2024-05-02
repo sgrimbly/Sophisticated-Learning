@@ -320,7 +320,6 @@ def smooth_beliefs(O, Q, A, a, B, smoothing_start, smoothing_t, t):
     
     # 1. Smooth the posterior (from spm_backwards logic)
     # Apply backward smoothing to evaluate the posterior over initial states based on current observations
-    # TODO: Check comment in spm_backward function regarding whether or not 'A' or 'a' should be used. 
     smoothed_posterior = spm_backwards(O, Q, A, B, smoothing_t, t)
     
     # Prepare the likelihood and smoothed posterior for cross multiplication

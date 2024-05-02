@@ -1,4 +1,4 @@
-function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, P, a, A, y, D, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed)
+function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed)
 
     G = 0.02;
     P_prior = P;
@@ -17,7 +17,6 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
             start = 1;
         end
 
-        qq = P;
         novelty = 0;
 
         for timey = start:t
@@ -47,8 +46,8 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                 a_learning_weighted = a_learning;
                 a_learning_weighted(2:end, :) = learning_weight * a_learning(2:end, :);
                 a_learning_weighted(1, :) = a_learning(1, :);
-                a1 = a{2};
-                a1 = a1(:);
+                % a1 = a{2};
+                % a1 = a1(:);
                 a{modality} = a{modality} + a_learning;
                 a_temp = a_prior + a_learning_weighted;
             end
@@ -58,6 +57,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
         end
 
         % Add epistemic term (see EFE equation)
+        % TODO: Shouldn't we have to update y because a changes in backward smoothing logic above?
         epi = G_epistemic_value(y, P_prior(t, :)');
 
         % Add novelty to term (see EFE equation)
@@ -133,7 +133,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                     %state_history(end+1) = context;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, P, a, A, y, D, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
+                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
                     S = max(expected_free_energy);
                     K(state) = S;
                     short_term_memory(t_food_approx, t_water_approx, t_sleep_approx, state) = S;

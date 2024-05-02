@@ -63,9 +63,7 @@ def calculate_novelty(P, a, imagined_O, num_factors, weights):
     Returns:
     - novelty: The calculated novelty based on KL divergence.
     """
-    
-    # NOTE (St John): In sophisticated learning there is a whole step to check when to do backward smoothing in the tree search, this isn't required for sophisticated inference.
-    
+        
     # Deep copy the posteriors and resource likelihood/preference to avoid modifying the originals
     L = copy.deepcopy(P)  # Posterior 
     a_prior = copy.deepcopy(a[1])  # Resource likelihood/preference

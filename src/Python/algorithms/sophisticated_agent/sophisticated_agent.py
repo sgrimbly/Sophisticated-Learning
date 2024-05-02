@@ -2,7 +2,10 @@
 import numpy as np
 import random
 import copy
+import matplotlib
+matplotlib.use('Qt5Agg')  # Choose the appropriate backend like 'Qt5Agg', 'Qt4Agg', etc.
 import matplotlib.pyplot as plt
+
 from datetime import datetime
 import logging
 import sys
@@ -20,7 +23,7 @@ from agent_utils import (
     smooth_beliefs
 )
 from agent_utils import initialise_distributions
-from forward_tree_search import forward_tree_search_SI
+from forward_tree_search import forward_tree_search
 from display import draw_gridworld
 
 def initialise_experiment():
@@ -42,6 +45,7 @@ def initialise_experiment():
 
 # Initialize the timers for each resource and the main time counter
 def agent_loop(
+    algorithm,
     a, 
     resource_constraints, 
     A, 
@@ -146,12 +150,26 @@ def agent_loop(
         )
         
         # Initialize best actions and perform tree search to find the best action
-        best_actions = []
-        G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SI(
-            short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
+        best_actions = [] 
+        G, short_term_memory, best_actions, memory_accessed = forward_tree_search(algorithm,
+            args=(short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
             time_since_resource, t, chosen_action, 
-            best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
+            best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed)
         )
+        # G, best_actions = 0, [] 
+        # if algorithm == "SI":
+        #     G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SI(
+        #         short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
+        #         time_since_resource, t, chosen_action, 
+        #         best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
+        #     )
+        # elif algorithm == "SL":
+        #     G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SL(
+        #         short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
+        #         time_since_resource, t, chosen_action, 
+        #         best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
+        #     )
+        
         
         # Save tree search depth for analytics
         search_depth += len(best_actions)
@@ -201,11 +219,11 @@ def agent_loop(
 
     return a, trial_data, hill_memory_resets
 
-def experiment(seed):
+def experiment(algorithm, seed, visualise=False):
     random.seed(seed)
     np.random.seed(seed)
     
-    VISUALISE = False
+    VISUALISE = visualise
     ax = None
     if VISUALISE:
         # Initial plot setup
@@ -260,7 +278,8 @@ def experiment(seed):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Configure logging to write to both the console and a log file
-    log_file_path = f"SI_Seed_{seed}_{timestamp}.txt"
+    log_file_path = f"{algorithm}_Seed_{seed}_{timestamp}.txt"
+        
     log_format = '%(message)s'  # Only display the log message
     logging.basicConfig(
         level=logging.INFO,
@@ -278,6 +297,7 @@ def experiment(seed):
 
         if VISUALISE and ax is not None: ax.clear()
         a, trial_data, hill_memory_resets = agent_loop(
+            algorithm,
             a, 
             resource_constraints, 
             A, 
