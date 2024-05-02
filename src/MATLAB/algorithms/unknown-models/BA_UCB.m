@@ -153,7 +153,7 @@ function [] = BA_UCB(seed)
     for i = 1:num_states
 
         if i ~= [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
-            B{1}(:, i, 4) = circshift(B{1}(:, i, 4), 10); % move rup
+            B{1}(:, i, 4) = circshift(B{1}(:, i, 4), 10); % move up
         end
 
     end
@@ -396,7 +396,7 @@ function [] = BA_UCB(seed)
             Nt(cur_state) = Nt(cur_state) + 1;
             best_actions = [];
             % Start tree search from current time point
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
