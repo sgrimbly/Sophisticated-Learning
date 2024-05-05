@@ -12,9 +12,12 @@
 #SBATCH --mem=$MEMORY_ALLOCATION                  # Memory placeholder
 #SBATCH --output=matlab_job_%j.out                # Standard output and error log
 
+# Specific nodes request; change the nodelist depending on availability http://hpc.uct.ac.za/db/
+#SBATCH --nodelist=srvcnthpc125
+
 # Email notifications:
 #SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
-#SBATCH --mail-type=END #BEGIN,END,FAIL                # Receive emails on start, end, and fail
+#SBATCH --mail-type=END #BEGIN,END,FAIL           # Receive emails on start, end, and fail
 
 # Load the MATLAB module:
 module load software/matlab-R2022b

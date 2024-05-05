@@ -12,6 +12,9 @@
 #SBATCH --mem=$MEMORY_ALLOCATION                  # Memory placeholder
 #SBATCH --output=python_job_%j.out                # Standard output and error log
 
+# Change the nodelist dependeing on availability http://hpc.uct.ac.za/db/
+#SBATCH --nodelist=srvcnthpc105,srvcnthpc108,srvcnthpc109,srvcnthpc116,srvcnthpc120,srvcnthpc125,srvcnthpc127,srvcnthpc128  # Specific nodes request
+
 # Email notifications:
 #SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
 #SBATCH --mail-type=END                           # Receive emails on job end and fail
