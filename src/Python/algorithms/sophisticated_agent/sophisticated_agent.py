@@ -25,6 +25,7 @@ from agent_utils import (
 from agent_utils import initialise_distributions
 from forward_tree_search import forward_tree_search
 from display import draw_gridworld
+from math_utils import round_half_up
 
 def initialise_experiment():
     # Initialize short_term_memory array
@@ -150,11 +151,12 @@ def agent_loop(
         )
         
         # Initialize best actions and perform tree search to find the best action
-        best_actions = [] 
-        G, short_term_memory, best_actions, memory_accessed = forward_tree_search(algorithm,
-            args=(short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
+        best_actions = []
+        tree_search_call_count = 0
+        G, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search(algorithm,
+            args=(short_term_memory, historical_agent_observations, historical_agent_posterior_Q, a, A, y, B, b, t, t + horizon, 
             time_since_resource, t, chosen_action, 
-            best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed)
+            best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count)
         )
         # G, best_actions = 0, [] 
         # if algorithm == "SI":

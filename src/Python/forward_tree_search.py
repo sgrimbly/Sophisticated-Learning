@@ -8,12 +8,7 @@ def forward_tree_search(algorithm, args):
     if algorithm == "SI":
         return forward_tree_search_SI(*args)
     elif algorithm == "SL":
-        short_term_memory, O, P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed = args
-        
-        historical_agent_O = [O] # SL tree search expects a list of historical agent O values for backward smoothing
-        historical_agent_P = [P] # SL tree search expects a list of historical agent P values to backward smooth over
-        
-        return forward_tree_search_SL(short_term_memory, historical_agent_O, historical_agent_P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed )
+        return forward_tree_search_SL(*args)
     else:
         raise ValueError(f"Invalid algorithm type: {algorithm}")
 
@@ -116,34 +111,26 @@ def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, s
 
     return G, short_term_memory, best_actions, memory_accessed
 
-def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_agent_P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed):
-    # print(len(historical_agent_O), "imagined_time:", imagined_t, "true_t:", true_t)
-    
+def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_agent_P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count):
     imagined_historical_agent_O = copy.deepcopy(historical_agent_O)
     imagined_historical_agent_P = copy.deepcopy(historical_agent_P)
-    
-    imagined_O = copy.deepcopy(imagined_historical_agent_O[-1])
-    # print("Imagined O:", len(imagined_O))
-    
+
+    imagined_O = copy.deepcopy(imagined_historical_agent_O[-1])    
     imagined_P = copy.deepcopy(imagined_historical_agent_P[-1])
-    P_prior = copy.deepcopy(imagined_P) # Set to Q initially
+    
+    P_prior = copy.deepcopy(imagined_P)
+    P = calculate_posterior(copy.deepcopy(imagined_P),y,imagined_O)
+    imagined_historical_agent_P[-1] = P
+    
+    G = G_prior
     imagined_time_since_resource = copy.deepcopy(time_since_resource)
     imagined_chosen_action = copy.deepcopy(chosen_action)
-    
-    P = calculate_posterior(copy.deepcopy(imagined_P),y,imagined_O)
-    G = G_prior
     
     # NOTE Doesn't seem necessary, don't think b changes
     bb = copy.deepcopy(b)
     bb[1] = normalise_matrix_columns(b[1])
-    
-    if imagined_t == true_t:
-        imagined_historical_agent_P = [P]
-        imagined_historical_agent_O = [imagined_O]
-        
-    elif imagined_t > true_t:
-        imagined_historical_agent_P.append(P)
-        
+
+    if imagined_t > true_t:
         # Increment the 'imagined' time since resource. This is useful since we are recursing down a level each time and we don't want to lose track of the time since resource.
         for resource, time_since in imagined_time_since_resource.items():
             imagined_time_since_resource[resource] = round_half_up(time_since + 1)
@@ -163,9 +150,6 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
             # Apply backward smoothing to evaluate the posterior over initial states based on current observations
             if smoothing_t != imagined_t:
                 # NOTE: SPM backwards currently only returns the context posterior information
-                print("Imagined t:",imagined_t)
-                print("Length observation list:", len(imagined_historical_agent_O))
-                print("Length posterior list:", len(imagined_historical_agent_P))
                 smoothed_posterior = spm_backwards(imagined_historical_agent_O, imagined_historical_agent_P, A, bb, smoothing_t, imagined_t)
             else:
                 smoothed_posterior = P[1] # Context posterior
@@ -224,7 +208,6 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
             Q_action.append((bb[0][:,:,action] @ P[0].T).T)
             Q_action.append((bb[1][:,:,0] @ P[1].T).T)
             qs = spm_cross(Q_action).ravel(order='F')
-            imagined_historical_agent_P[-1] = Q_action
             
             # Find the indices where 'qs' is greater than 1/8
             likely_states = np.where(qs > 1/8)[0]
@@ -248,9 +231,16 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
                         imagined_O[modality] = normalise_vector(
                             y[modality].reshape(y[modality].shape[0],-1, order='F')[:,state]
                         )
-                    imagined_historical_agent_O.append(imagined_O)
+                    
+                    if len(imagined_historical_agent_O) == (imagined_t+1):
+                        imagined_historical_agent_O.append(imagined_O)
+                        imagined_historical_agent_P.append(Q_action)
+                    else:
+                        imagined_historical_agent_O[imagined_t] = imagined_O
+                        imagined_historical_agent_P[imagined_t] = Q_action
+                        
                     # Prior over next states given transition function (calculated earlier)
-                    expected_free_energy, short_term_memory, best_actions, memory_accessed = forward_tree_search_SL(short_term_memory, imagined_historical_agent_O, imagined_historical_agent_P, a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed)
+                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SL(short_term_memory, imagined_historical_agent_O, imagined_historical_agent_P, a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count+1)
                     S = np.max(expected_free_energy)
                     K[state] = S
                     memory_accessed +=1
@@ -271,4 +261,4 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
         # Update the list of best actions
         best_actions.insert(0, imagined_chosen_action)  # Assuming 'best_actions' is a list; adds 'chosen_action' to the beginning.
 
-    return G, short_term_memory, best_actions, memory_accessed
+    return G, short_term_memory, best_actions, memory_accessed, tree_search_call_count
