@@ -329,13 +329,13 @@ def smooth_beliefs(O, Q, A, a, B, smoothing_start, smoothing_t, t):
     
     # 2. Check for changes in posterior
     # Compare the rounded posterior beliefs to determine if there's a significant change in context belief
-    no_context_belief_change = np.array_equal(
+    context_belief_change = not np.array_equal(
         np.round(smoothed_posterior[1], 3), 
         np.round(Q[smoothing_t][1], 3)
     )
     
     # If there's a change in belief or it's the last time step within backward smoothing, update the beliefs about resources
-    if (not no_context_belief_change and smoothing_t > smoothing_start) or smoothing_t == t:
+    if (context_belief_change and smoothing_t > smoothing_start) or smoothing_t == t:
         a = update_agent_likelihood(a, O, smoothed_posterior, smoothing_t)
     
     return a

@@ -28,11 +28,9 @@ from display import draw_gridworld
 from math_utils import round_half_up
 
 def initialise_experiment():
-    # Initialize short_term_memory array
-    # TODO: Why 35 shape? Maybe make this a hyperparameter in the notebook
+    # Initialise variables
     short_term_memory = np.zeros((35, 35, 35, 400))
     time_since_resource = {"Food": 0, "Water": 0, "Sleep": 0}
-    # Initializing chosen_action
     chosen_action = []
     
     # Data structures for storing historical/previous agent models/observations and true states of the environment
@@ -86,12 +84,14 @@ def agent_loop(
         "memory_accessed": []
     }
     
-    # Main loop continues as long as time doesn't exceed constraint and agent's needs are met
+    # Initialise trial-specific counters
     t = 0
     search_depth = 0
     pe_memory_resets = 0
     hill_memory_resets = 0
     memory_accessed = 0
+    
+    # Main loop continues as long as time doesn't exceed constraint and agent's needs are met
     while t < t_constraint and is_alive(time_since_resource, resource_constraints):
     
         # Update the agent's model and the environment based on the last action
@@ -99,7 +99,7 @@ def agent_loop(
             b, D, t, historical_chosen_action, historical_true_states, historical_agent_posterior_Q, start_position
         )
         Q = copy.deepcopy(historical_agent_posterior_Q[t])
-        current_pos = np.argmax(np.cumsum(Q[0]) >= np.random.rand())
+        current_position = np.argmax(np.cumsum(Q[0]) >= np.random.rand())
          
         # Update the timers for each resource based on the agent's actions
         time_since_resource = update_needs(
@@ -128,11 +128,11 @@ def agent_loop(
         rounded_actual_P, P, y = get_actual_posterior(a, Q, O)
 
         # If there is a context prediction error larger than .1, or if the agent is on the hill, reset short-term memory
-        no_state_prediction_error = np.array_equal(rounded_predicted_P, rounded_actual_P)  # This returns True if the two arrays have the same shape and elements, False otherwise
-        if not no_state_prediction_error or current_pos == hill_1:
+        state_prediction_error = not np.array_equal(rounded_predicted_P, rounded_actual_P)
+        if state_prediction_error or current_position == hill_1:
             short_term_memory = delete_short_term_memory()
-            if not no_state_prediction_error: pe_memory_resets +=1
-            if current_pos == hill_1: hill_memory_resets += 1
+            if state_prediction_error: pe_memory_resets +=1
+            if current_position == hill_1: hill_memory_resets += 1
 
         # Determine the horizon for tree search based on the agent's current needs
         needs = {
@@ -158,20 +158,6 @@ def agent_loop(
             time_since_resource, t, chosen_action, 
             best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count)
         )
-        # G, best_actions = 0, [] 
-        # if algorithm == "SI":
-        #     G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SI(
-        #         short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
-        #         time_since_resource, t, chosen_action, 
-        #         best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
-        #     )
-        # elif algorithm == "SL":
-        #     G, short_term_memory, best_actions, memory_accessed = forward_tree_search_SL(
-        #         short_term_memory, O, Q, a, A, y, B, b, t, t + horizon, 
-        #         time_since_resource, t, chosen_action, 
-        #         best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed
-        #     )
-        
         
         # Save tree search depth for analytics
         search_depth += len(best_actions)
@@ -198,7 +184,7 @@ def agent_loop(
             # TODO: PyMDP has Gridworld environment that can be rendered.
             # Clear the axis, redraw and pause
             ax.clear()
-            draw_gridworld(ax, current_pos, historical_true_states[t][1], needs,contextual_food_locations, contextual_water_locations, contextual_sleep_locations, hill_1)
+            draw_gridworld(ax, current_position, historical_true_states[t][1], needs,contextual_food_locations, contextual_water_locations, contextual_sleep_locations, hill_1)
             plt.pause(0.1)  # Adjust the time to be suitable for your loop speed
         
         t += 1
@@ -217,9 +203,9 @@ def agent_loop(
     
     if visualise:
         plt.ioff()  # Turn off interactive mode
-        plt.show()  # This will now block until the window is closed.
+        plt.pause(0.5)  # This will now block until the window is closed.
 
-    return a, trial_data, hill_memory_resets
+    return a, trial_data
 
 def experiment(algorithm, seed, visualise=False):
     random.seed(seed)
@@ -298,7 +284,7 @@ def experiment(algorithm, seed, visualise=False):
         logging.info(f"Start Time: {trial_start_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
         if VISUALISE and ax is not None: ax.clear()
-        a, trial_data, hill_memory_resets = agent_loop(
+        a, trial_data = agent_loop(
             algorithm,
             a, 
             resource_constraints, 

@@ -203,6 +203,7 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
         actions = np.random.permutation(5)  
         # actions = np.arange(5)
         efe = np.array([0, 0, 0, 0, 0], dtype=float)
+        first_action_state_combination = True
         for action in actions:
             Q_action = []
             Q_action.append((bb[0][:,:,action] @ P[0].T).T)
@@ -232,9 +233,10 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
                             y[modality].reshape(y[modality].shape[0],-1, order='F')[:,state]
                         )
                     
-                    if len(imagined_historical_agent_O) == (imagined_t+1):
+                    if first_action_state_combination:
                         imagined_historical_agent_O.append(imagined_O)
                         imagined_historical_agent_P.append(Q_action)
+                        first_action_state_combination = False
                     else:
                         imagined_historical_agent_O[imagined_t] = imagined_O
                         imagined_historical_agent_P[imagined_t] = Q_action
