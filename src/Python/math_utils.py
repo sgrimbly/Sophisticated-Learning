@@ -2,10 +2,6 @@ import numpy as np
 import decimal
 from scipy.stats import entropy
 
-# TODO (St John): Test matrix normalisation functions. #testing
-
-# TODO (St John): Add documentation to all functions in this file. #documentation
-
 def normalise_matrix_columns(m):
     """
     Normalize the columns of a matrix so that each sums to 1.

@@ -15,14 +15,14 @@ def forward_tree_search(algorithm, args):
 def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed):
     imagined_O = copy.deepcopy(O)
     imagined_P = copy.deepcopy(P)
-    P_prior = copy.deepcopy(imagined_P) # Set to Q initially
+    P_prior = copy.deepcopy(imagined_P)
     imagined_time_since_resource = copy.deepcopy(time_since_resource)
     imagined_chosen_action = copy.deepcopy(chosen_action)
     
     P = calculate_posterior(copy.deepcopy(imagined_P),y,imagined_O)
     G = G_prior
     
-    # NOTE Doesn't seem necessary, don't think b changes
+    # NOTE Doesn't seem necessary, b doesn't change
     bb = copy.deepcopy(b)
     bb[1] = normalise_matrix_columns(b[1])
 
@@ -39,6 +39,7 @@ def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, s
         G += weights['Epistemic']*epi
         
         # 2. Novelty term:
+        # NOTE: In MATLAB, calculating novelty is not in a separate function
         novelty = calculate_novelty(P, a, imagined_O, num_factors, weights)
         G += weights['Novelty']*novelty
         
@@ -54,9 +55,7 @@ def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, s
         
     
     if imagined_t < search_horizon:
-        # TODO: #rowan Why does this list of actions need to be randomised?
         actions = np.random.permutation(5)  
-        # actions = np.arange(5)
         efe = np.array([0, 0, 0, 0, 0], dtype=float)
         for action in actions:
             Q_action = []
@@ -126,7 +125,7 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
     imagined_time_since_resource = copy.deepcopy(time_since_resource)
     imagined_chosen_action = copy.deepcopy(chosen_action)
     
-    # NOTE Doesn't seem necessary, don't think b changes
+    # NOTE Doesn't seem necessary, b doesn't change
     bb = copy.deepcopy(b)
     bb[1] = normalise_matrix_columns(b[1])
 
@@ -144,8 +143,8 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
         # Refer to sophisticated inference and sophisticated learning papers for this logic        
         novelty = 0
         # Set up backward smoothing start point
-        # TODO: Check that this is the same as the original code
         smoothing_start = 0 if imagined_t <= 6 else imagined_t - 6
+        # NOTE: In MATLAB, the loop "timey = start:t" is inclusive of t. We add 1 to imagined_t below to ensure the same inclusivity
         for smoothing_t in range(smoothing_start, imagined_t+1):
             # Apply backward smoothing to evaluate the posterior over initial states based on current observations
             if smoothing_t != imagined_t:
@@ -166,9 +165,6 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
             # The resulting array will be used for calculating the update in learning
             for factor in range(num_factors):
                 # Shape (4,100) after first cross then (4,100,4) after second cross
-                # print(a_learning.shape, smoothed_posterior[factor].shape)
-                # print(a_learning)
-                # print(type(a_learning), type(smoothed_posterior[factor]))
                 a_learning = spm_cross(a_learning, smoothed_posterior[factor])
 
             # Element-wise multiplication to zero-out elements where a[1] is zero
@@ -199,9 +195,7 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
         
         
     if imagined_t < search_horizon:
-        # TODO: #rowan Why does this list of actions need to be randomised?
         actions = np.random.permutation(5)  
-        # actions = np.arange(5)
         efe = np.array([0, 0, 0, 0, 0], dtype=float)
         first_action_state_combination = True
         for action in actions:

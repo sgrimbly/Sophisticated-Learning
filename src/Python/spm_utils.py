@@ -23,7 +23,6 @@ def spm_backwards(O, Q, A, B, t, T):
             
             # Temp computations using A, Q, and obs
             # TODO: Is using capital A in this spm_backward smoothing a mistake? Isn't capital A the likelihood of the agent's observations given the true state? Shouldn't this be a lower case a?
-
             temp = A[2][obs, :, :]
             temp = np.transpose(temp, (1, 0))
             temp = temp @ Q[timestep][0].T
@@ -42,45 +41,6 @@ def spm_backwards(O, Q, A, B, t, T):
         L[:] = 1 / L.shape[1]
     
     return L
-
-# def spm_cross(X, *args):
-#     """
-#     Multidimensional outer product.
-    
-#     If given one array, it returns the array.
-#     If given two arrays, it returns their outer product.
-#     If given more than two arrays, it computes their combined outer product.
-#     """
-#     # Check if X is a list and handle it recursively like a MATLAB cell array
-#     if isinstance(X, list):
-#         # If X is a list with more than one element, unpack the list and call spm_cross
-#         if len(X) > 1:
-#             return spm_cross(*X)
-#         # If X is a list with one element, just return that element
-#         elif len(X) == 1:
-#             return X[0]
-#         # If X is an empty list, return an empty numpy array
-#         else:
-#             return np.array([])
-
-#     # If X is not a list, proceed with the original function
-#     if len(args) == 0:
-#         return X
-    
-#     X = X#.ravel()
-    
-#     # Take the first additional argument
-#     x = args[0]#.ravel()
-    
-#     # Compute the outer product using broadcasting
-#     Y = np.multiply(X[..., np.newaxis], x[np.newaxis, ...])
-#     Y = np.squeeze(Y)
-    
-#     # Handle additional arguments recursively
-#     for arg in args[1:]:
-#         Y = spm_cross(Y, arg)
-        
-#     return Y
 
 # NOTE: This implementation is based on version from PyMDP
 def spm_cross(x, y=None, *args):

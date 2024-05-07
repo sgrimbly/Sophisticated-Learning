@@ -121,7 +121,8 @@ def agent_loop(
 
         # Update the agent's beliefs, including backward smoothing for more accurate inferences
         smoothing_start = 0 if t <= 6 else t - 6
-        for smoothing_t in range(smoothing_start, t+1): # In this case range() needs to be inclusive of t
+        # NOTE: In MATLAB, the loop "timey = start:t" is inclusive of t. We add 1 to t below to ensure the same inclusivity
+        for smoothing_t in range(smoothing_start, t+1):
             a = smooth_beliefs(historical_agent_observations, historical_agent_posterior_Q, A, a, b, smoothing_start, smoothing_t, t)
             
         # Determine actual posterior
@@ -181,7 +182,6 @@ def agent_loop(
             print(f"    Hill memory resets: {hill_memory_resets}.", flush=True)
             
         if visualise:
-            # TODO: PyMDP has Gridworld environment that can be rendered.
             # Clear the axis, redraw and pause
             ax.clear()
             draw_gridworld(ax, current_position, historical_true_states[t][1], needs,contextual_food_locations, contextual_water_locations, contextual_sleep_locations, hill_1)
@@ -203,11 +203,11 @@ def agent_loop(
     
     if visualise:
         plt.ioff()  # Turn off interactive mode
-        plt.pause(0.5)  # This will now block until the window is closed.
+        plt.pause(0.1)
 
     return a, trial_data
 
-def experiment(algorithm, seed, visualise=False):
+def experiment(algorithm, seed, visualise=True):
     random.seed(seed)
     np.random.seed(seed)
     
