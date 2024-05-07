@@ -315,6 +315,7 @@ def smooth_beliefs(O, Q, A, a, B, smoothing_start, smoothing_t, t):
     
     # 1. Smooth the posterior (from spm_backwards logic)
     # Apply backward smoothing to evaluate the posterior over initial states based on current observations
+    # NOTE: Both here and in MATLAB, "A" (generative process likelihood) instead of "a" (agent dirichlet counts) is passed to spm_backwards because only A[2] (context information) is used, which the agent knows. For the sake of more general code, using "a" is recommended.
     smoothed_posterior = spm_backwards(O, Q, A, B, smoothing_t, t)
     
     # Prepare the likelihood and smoothed posterior for cross multiplication

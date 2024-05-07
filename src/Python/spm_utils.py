@@ -22,7 +22,6 @@ def spm_backwards(O, Q, A, B, t, T):
             obs = min(obs, len(cumulative_sum) - 1)
             
             # Temp computations using A, Q, and obs
-            # TODO: Is using capital A in this spm_backward smoothing a mistake? Isn't capital A the likelihood of the agent's observations given the true state? Shouldn't this be a lower case a?
             temp = A[2][obs, :, :]
             temp = np.transpose(temp, (1, 0))
             temp = temp @ Q[timestep][0].T
