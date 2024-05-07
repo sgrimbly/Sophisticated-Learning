@@ -12,9 +12,9 @@ def forward_tree_search(algorithm, args):
     else:
         raise ValueError(f"Invalid algorithm type: {algorithm}")
 
-def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed):
-    imagined_O = copy.deepcopy(O)
-    imagined_P = copy.deepcopy(P)
+def forward_tree_search_SI(short_term_memory, historical_agent_O, historical_agent_P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count):
+    imagined_O = copy.deepcopy(historical_agent_O[-1])
+    imagined_P = copy.deepcopy(historical_agent_P[-1])
     P_prior = copy.deepcopy(imagined_P)
     imagined_time_since_resource = copy.deepcopy(time_since_resource)
     imagined_chosen_action = copy.deepcopy(chosen_action)
@@ -87,7 +87,8 @@ def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, s
                         )
                     
                     # Prior over next states given transition function (calculated earlier)
-                    expected_free_energy, short_term_memory, best_actions, memory_accessed = forward_tree_search_SI(short_term_memory, imagined_O, Q_action, a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed)
+                    # NOTE: We pass imagined_O and Q_action as lists to ensure that SI and SL tree search can run from a single function call in sophisticated_agent
+                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SI(short_term_memory, [imagined_O], [Q_action], a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count+1)
                     S = np.max(expected_free_energy)
                     K[state] = S
                     memory_accessed +=1
@@ -108,7 +109,7 @@ def forward_tree_search_SI(short_term_memory, O, P, a, A, y, B, b, imagined_t, s
         # Update the list of best actions
         best_actions.insert(0, imagined_chosen_action)  # Assuming 'best_actions' is a list; adds 'chosen_action' to the beginning.
 
-    return G, short_term_memory, best_actions, memory_accessed
+    return G, short_term_memory, best_actions, memory_accessed, tree_search_call_count
 
 def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_agent_P, a, A, y, B, b, imagined_t, search_horizon, time_since_resource, true_t, chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count):
     imagined_historical_agent_O = copy.deepcopy(historical_agent_O)
