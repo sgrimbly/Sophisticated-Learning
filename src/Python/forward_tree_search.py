@@ -238,8 +238,8 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
                         imagined_historical_agent_P.append(Q_action)
                         first_action_state_combination = False
                     else:
-                        imagined_historical_agent_O[imagined_t] = imagined_O
-                        imagined_historical_agent_P[imagined_t] = Q_action
+                        imagined_historical_agent_O[-1] = imagined_O
+                        imagined_historical_agent_P[-1] = Q_action
                         
                     # Prior over next states given transition function (calculated earlier)
                     expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SL(short_term_memory, imagined_historical_agent_O, imagined_historical_agent_P, a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count+1)
