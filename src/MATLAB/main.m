@@ -13,7 +13,7 @@ function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct)
         k_factor = 1.5;  % Default value for k_factor
     end
     if nargin < 5
-        root_folder = 'defaultFolder';  % Default value for root_folder
+        root_folder = '/home/grmstj001';  % Default value for root_folder
     end
     if nargin < 6
         mct = 500;  % Default value for mct

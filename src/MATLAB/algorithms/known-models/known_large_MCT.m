@@ -1,9 +1,48 @@
 function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct)
-
+%KNOWN_LARGE_MCT Runs Monte Carlo Tree Search (MCTS) experiments for a known large model.
+%
+% This function initializes the random number generator with a given seed,
+% sets up the experiment's directory structure, and simulates survival times
+% under various conditions controlled by the mct, num_mct, and auto_rest variables.
+%
+% Parameters:
+%   seed (string): Seed for the random number generator to ensure reproducibility.
+%   horizon (string): The horizon up to which sophisticated inference is performed.
+%   k_factor (string): A scaling factor influencing some aspect of the model (details should be specified).
+%   root (string): Root directory path where results are to be saved.
+%   mct (string): Specifies the length of Monte Carlo rollouts. If 'mct' is '0', standard
+%                 sophisticated inference is used up to 'horizon'. If 'mct' >= '1', the model
+%                 performs hybrid inference with both sophisticated inference and Monte Carlo rollouts.
+%   num_mct (string): The number of Monte Carlo simulations to run.
+%
+% Details:
+%   - 'auto_rest' Variable: Controls the inclusion of memory in the model. Setting it to '0'
+%     runs the model with memory, while setting it to '1' runs it without memory.
+%   - 'TREE_SEARCH_HISTORY': Included for analysis purposes, likely added for tracking or logging
+%     the history of tree search decisions during development or debugging phases.
+%
+% Usage:
+%   [] = known_large_MCT('42', '20', '1.5', '/user/path/', '10', '100')
+%
+% This sets up an experiment using seed '42', a horizon of 20, k-factor of 1.5, in the directory
+% '/user/path/', with Monte Carlo rollouts of length 10 and running 100 simulations.
+%
+% Outputs:
+%   The function does not return any values. It saves the simulation results in .mat files
+%   within the specified directory path.
+%
+% Files Created:
+%   - Survival time data file: Contains the simulated survival times under different conditions.
+%   - Agent state file: Stores the state of the agent at various points, which can be used for further analysis.
+%
+% Note:
+%   Ensure that the input parameters are in string format as the function converts them into double
+%   for computational purposes within the script.
+%
     rng(str2double(seed))
     rng
     %file_name = strcat(seed,'_hor',horizon,'.txt');
-    path = [root '/rsmith/lab-members/nhakimi/known_model_v2_2024/results/'];
+    path = [root '/MATLAB-experiments/experiments/known_model/'];
     file_name = strcat(path, horizon, 'hor_', k_factor, 'kfactor_', mct, 'MCT_', num_mct, 'num_mct_', seed, 'seed_survival_time', '.mat');
     matfilename = strcat(path, horizon, 'hor_', k_factor, 'kfactor_', mct, 'MCT_', num_mct, 'num_mct_', seed, 'seed', '.mat');
 
@@ -316,193 +355,5 @@ function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct)
         time_since_water = 0;
         time_since_sleep = 0;
     end
-
-    %fclose(fid);
-    %fprintf(fid, '%f\n', 'targetted forgetting');
-
-    %% Auxilary Functions
-
-    % function a = displayGridWorld(agent_position, food_position_1,water_position_1,sleep_position_1,hill_1_pos,alive_status, trial, t, time_since_resources, prefs, states_history)
-    % if alive_status == 1
-    %     agent_text = 'A';
-    % else
-    %     agent_text = 'Dead';
-    % end
-    %
-    % agent_dim1 = 0;
-    % if agent_position <= 10
-    %     agent_dim2 = 1;
-    %     agent_dim1 = agent_position;
-    % elseif agent_position < 21
-    %     agent_dim2 = 2;
-    %     agent_dim1 = agent_position - 10;
-    % elseif agent_position < 31
-    %     agent_dim2 = 3;
-    %     agent_dim1 = agent_position - 20;
-    % elseif agent_position < 41
-    %     agent_dim2 = 4;
-    %     agent_dim1 = agent_position - 30;
-    % elseif agent_position < 51
-    %     agent_dim2 = 5;
-    %     agent_dim1 = agent_position - 40;
-    % elseif agent_position < 61
-    %     agent_dim2 = 6;
-    %     agent_dim1 = agent_position - 50;
-    % elseif agent_position < 71
-    %     agent_dim2 = 7;
-    %     agent_dim1 = agent_position - 60;
-    % elseif agent_position < 81
-    %     agent_dim2 = 8;
-    %     agent_dim1 = agent_position - 70;
-    % elseif agent_position < 91
-    %     agent_dim2 = 9;
-    %     agent_dim1 = agent_position - 80;
-    % else
-    %     agent_dim2 = 10;
-    %     agent_dim1 = agent_position - 90;
-    % end
-    %
-    % locations_1 = [];
-    % hill_1_dim2 = idivide(int16(hill_1_pos),10,'floor')+1;
-    % hill_1_dim1 = rem(hill_1_pos,10);
-    % if hill_1_dim1 == 0
-    %     if hill_1_dim2 ~= 1
-    %         hill_1_dim2 = hill_1_dim2-1;
-    %     end
-    %     hill_1_dim1 = 10;
-    % end
-    %
-    % food_1_dim2 = idivide(int16(food_position_1),10,'floor')+1;
-    % food_1_dim1 = rem(food_position_1,10);
-    % if food_1_dim1 == 0
-    %     if food_1_dim2 ~= 1
-    %         food_1_dim2 = food_1_dim2-1;
-    %     end
-    %     food_1_dim1 = 10;
-    % end
-    % locations_1(end+1) = food_1_dim1;
-    %
-    % water_1_dim2 = idivide(int16(water_position_1), 10, 'floor')+1;
-    % water_1_dim1 = rem(water_position_1, 10);
-    % if water_1_dim1 == 0
-    %     water_1_dim1 = 10;
-    %     if water_1_dim2 ~= 1
-    %         water_1_dim2 = water_1_dim2-1;
-    %     end
-    % end
-    %
-    % sleep_1_dim2 = idivide(int16(sleep_position_1), 10, 'floor')+1;
-    % sleep_1_dim1 = rem(sleep_position_1, 10);
-    % if sleep_1_dim1 == 0
-    %     sleep_1_dim1 = 10;
-    %     if sleep_1_dim2 ~= 1
-    %         sleep_1_dim2 = sleep_1_dim2-1;
-    %     end
-    % end
-    % locations_1(end+1) = sleep_1_dim1;
-    %
-    % h1=figure(1);
-    %
-    % set(h1,'name','gridworld');
-    % h1.Position = [9.0000   64.3333  665.3333  535.3333];
-    % [X,Y]=meshgrid(1:11,1:11);
-    % plot(Y,X,'k'); hold on; axis off
-    % plot(X,Y,'k');hold off; axis off
-    % hold off;
-    % I=(1);
-    % surface(I);
-    % h=linspace(0.5,1,64);
-    % q=1;
-    % x=linspace(1.5,10.5,10);
-    % y=linspace(1.5,10.5,10);
-    %
-    % text(1, 11.5, ['trial = ' num2str(trial)], 'FontSize', 7, 'VerticalAlignment', 'bottom');
-    % text(3, 11.5, ['time step = ' num2str(t)], 'FontSize', 7, 'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right');
-    %
-    %
-    % text(7, 11.5, ['ts food = ' num2str(time_since_resources(1))], 'FontSize', 7, 'VerticalAlignment', 'bottom');
-    % text(8, 11.5, ['ts water = ' num2str(time_since_resources(2))], 'FontSize', 7, 'VerticalAlignment', 'bottom');
-    % text(9, 11.5, ['ts sleep = ' num2str(time_since_resources(3))], 'FontSize', 7, 'VerticalAlignment', 'bottom');
-    % text(8, 11.2, ['prefs = ' num2str(prefs)], 'FontSize', 7, 'VerticalAlignment', 'bottom');
-    %
-    % for n=1:10
-    %     for p=1:10
-    %         if n == agent_dim1 & p == agent_dim2
-    %             text(y(n)-.2,x(p),agent_text,'FontSize',16);
-    %             q=q+1;
-    %         end
-    %
-    %         if (n == food_1_dim1 & p == food_1_dim2)
-    %             text(y(n)-.2,x(p)+.3,'F','FontSize',16, 'FontWeight','bold');
-    %             q=q+1;
-    %         end
-    %
-    %         if (n == water_1_dim1 & p == water_1_dim2)
-    %             text(y(n)-.2,x(p)+.3,'W','FontSize',16, 'FontWeight','bold');
-    %             q=q+1;
-    %         end
-    %
-    %
-    %         if (n == hill_1_dim1 & p == hill_1_dim2)
-    %             text(y(n)-.2,x(p)+.3,'Hill','FontSize',16, 'FontWeight','bold');
-    %             q=q+1;
-    %         end
-    %
-    %
-    %         if (n == sleep_1_dim1 & p == sleep_1_dim2)
-    %             text(y(n)-.2,x(p)+.3,'S','FontSize',16, 'FontWeight','bold');
-    %             q=q+1;
-    %         end
-    %
-    %
-    %     end
-    % end
-    %
-    % % Create a new figure for the agent's trajectory
-    % % ... [rest of the function]
-    %
-    % % Create a new figure for the agent's trajectory
-    % h2 = figure(2);
-    % h2.Position = [693.6667   83.6667  510.6667  474.6667];
-    % figure(h2);  % Bring h2 to the foreground
-    % clf(h2);     % Clear the figure content
-    %
-    % title('Agent Trajectory');
-    % xlabel('Column');
-    % ylabel('Row');
-    % xlim([1, 10]);
-    % ylim([1, 10]);
-    % grid on;
-    % hold on;
-    %
-    % % Extract the agent's trajectory for the current trial
-    % current_trajectory = states_history(trial, :);
-    % current_trajectory = current_trajectory(current_trajectory ~= 0); % Removing zero values
-    %
-    % % Reverse the trajectory so we plot the oldest state first
-    % current_trajectory = fliplr(current_trajectory);
-    %
-    % if length(current_trajectory) > 10
-    %     current_trajectory = current_trajectory(1:10);
-    % end
-    %
-    % % Determine the color and size fading factors
-    % numStates = length(current_trajectory);
-    % colorFading = linspace(1, .1, numStates); % Starting from faint to solid
-    % sizeFading = linspace(20, 1, numStates);   % Starting from small to large
-    %
-    % % Convert the trajectory states to (row, column) coordinates and plot them
-    % for idx = 1:numStates
-    %     state = current_trajectory(idx);
-    %     [row, col] = stateToCoordinates(state);
-    %     plot(col, row, 'o', 'Color', [0 0 1 colorFading(idx)], 'MarkerSize', sizeFading(idx));  % Plot using fading color and size
-    % end
-    %
-    % hold off;
-    %
-    % % ... [rest of the function]
-    %
-    % % Helper function to convert a state to its corresponding (row, column) coordinates
-    % end
 
 end

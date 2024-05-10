@@ -17,7 +17,7 @@
 
 # Email notifications:
 #SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
-#SBATCH --mail-type=END #BEGIN,END,FAIL           # Receive emails on start, end, and fail
+#SBATCH --mail-type=FAIL #BEGIN,END,FAIL           # Receive emails on start, end, and fail
 
 # Load the MATLAB module:
 module load software/matlab-R2022b
