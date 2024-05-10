@@ -16,6 +16,8 @@ This code was developed by:
 ## Usage
 
 To run one simulation of 120 iterations of any algorithm, navigate to the 'matlab' directory and execute the `main.m` script. Set `run_SL`, `run_SI`, `run_BA`, or `run_BAUCB` to 1 to activate Sophisticated Learning, Sophisticated Inference, Bayes-Adaptive RL, and Bayes-Adaptive RL + UCB, respectively.
+
+To use the MATLAB's Parallel Computing Toolbox, use the `parallel_runs_PC.m` script in `src/MATLAB/Algorithms`. This script will run 30 simulations (seeds) of 120 iterations of the selected algorithm in parallel. To use the Weights & Biases feature, this requires Python integration. Check MATLAB Python requirements [here](https://www.mathworks.com/support/requirements/python-compatibility.html?s_tid=srchtitle_site_search_1_python%20compatibility).
  
 ## Description
 

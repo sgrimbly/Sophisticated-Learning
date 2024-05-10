@@ -1,4 +1,4 @@
-function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest)
+function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest)
     % Check the number of arguments and set default values if necessary
     if nargin < 1
         algorithm = 'SL';  % Default value for algorithm
@@ -32,18 +32,19 @@ function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, aut
     addpath(fullSrcPath);
 
     % Execute based on the selected algorithm
+    survived = 0;
     switch algorithm
         case 'SL'
-            SL(seed);
+            survived = SL(seed);
             disp('SL run complete');
         case 'SI'
-            SI(seed);
+            survived = SI(seed);
             disp('SI run complete');
         case 'BA'
-            BA(seed);
+            survived = BA(seed);
             disp('BA run complete');
         case 'BAUCB'
-            BA_UCB(seed);
+            survived = BA_UCB(seed);
             disp('BA_UCB run complete');
         case 'known_large_MCT'
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);

@@ -1,4 +1,4 @@
-function [] = BA_UCB(seed)
+function [survived] = BA_UCB(seed)
     rng(str2double(seed));
     rng
     %%% Hyper Params %%%
@@ -193,6 +193,7 @@ function [] = BA_UCB(seed)
     total_search_depth = 0;
     total_memory_accessed = 0;
     total_t = 0;
+    survived(1:num_trials) = 0;
 
     t_at_25 = 0;
     t_at_50 = 0;
@@ -422,6 +423,8 @@ function [] = BA_UCB(seed)
 
         fid = fopen(file_name, 'a+');
         fprintf(fid, '%f\n', t);
+
+        survived(trial) = t;
 
         % Sample data for demonstration
 
