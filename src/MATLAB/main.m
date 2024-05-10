@@ -1,4 +1,4 @@
-function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct)
+function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest)
     % Check the number of arguments and set default values if necessary
     if nargin < 1
         algorithm = 'SL';  % Default value for algorithm
@@ -20,6 +20,9 @@ function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct)
     end
     if nargin < 7
         num_mct = 10;  % Default value for num_mct
+    end
+    if nargin < 8
+        auto_rest = 0;  % Default value for auto_rest (assumed memory is usually enabled)
     end
 
     % Directory and path setup
@@ -43,7 +46,7 @@ function main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct)
             BA_UCB(seed);
             disp('BA_UCB run complete');
         case 'known_large_MCT'
-            known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct);
+            known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);
             disp('Known large MCT run complete');
         otherwise
             error('Unknown algorithm specified');

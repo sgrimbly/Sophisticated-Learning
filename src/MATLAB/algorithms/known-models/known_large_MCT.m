@@ -1,44 +1,39 @@
-function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct)
-%KNOWN_LARGE_MCT Runs Monte Carlo Tree Search (MCTS) experiments for a known large model.
-%
-% This function initializes the random number generator with a given seed,
-% sets up the experiment's directory structure, and simulates survival times
-% under various conditions controlled by the mct, num_mct, and auto_rest variables.
-%
-% Parameters:
-%   seed (string): Seed for the random number generator to ensure reproducibility.
-%   horizon (string): The horizon up to which sophisticated inference is performed.
-%   k_factor (string): A scaling factor influencing some aspect of the model (details should be specified).
-%   root (string): Root directory path where results are to be saved.
-%   mct (string): Specifies the length of Monte Carlo rollouts. If 'mct' is '0', standard
-%                 sophisticated inference is used up to 'horizon'. If 'mct' >= '1', the model
-%                 performs hybrid inference with both sophisticated inference and Monte Carlo rollouts.
-%   num_mct (string): The number of Monte Carlo simulations to run.
-%
-% Details:
-%   - 'auto_rest' Variable: Controls the inclusion of memory in the model. Setting it to '0'
-%     runs the model with memory, while setting it to '1' runs it without memory.
-%   - 'TREE_SEARCH_HISTORY': Included for analysis purposes, likely added for tracking or logging
-%     the history of tree search decisions during development or debugging phases.
-%
-% Usage:
-%   [] = known_large_MCT('42', '20', '1.5', '/user/path/', '10', '100')
-%
-% This sets up an experiment using seed '42', a horizon of 20, k-factor of 1.5, in the directory
-% '/user/path/', with Monte Carlo rollouts of length 10 and running 100 simulations.
-%
-% Outputs:
-%   The function does not return any values. It saves the simulation results in .mat files
-%   within the specified directory path.
-%
-% Files Created:
-%   - Survival time data file: Contains the simulated survival times under different conditions.
-%   - Agent state file: Stores the state of the agent at various points, which can be used for further analysis.
-%
-% Note:
-%   Ensure that the input parameters are in string format as the function converts them into double
-%   for computational purposes within the script.
-%
+function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct, auto_rest)
+    %KNOWN_LARGE_MCT Runs Monte Carlo Tree Search (MCTS) experiments for a known large model.
+    %
+    % This function initializes the random number generator with a given seed,
+    % sets up the experiment's directory structure, and simulates survival times
+    % under various conditions controlled by the mct, num_mct, and auto_rest variables.
+    %
+    % Parameters:
+    %   seed (string): Seed for the random number generator to ensure reproducibility.
+    %   horizon (string): The horizon up to which sophisticated inference is performed.
+    %   k_factor (string): A scaling factor influencing some aspect of the model (details should be specified).
+    %   root (string): Root directory path where results are to be saved.
+    %   mct (string): Specifies the length of Monte Carlo rollouts. If 'mct' is '0', standard
+    %                 sophisticated inference is used up to 'horizon'. If 'mct' >= '1', the model
+    %                 performs hybrid inference with both sophisticated inference and Monte Carlo rollouts.
+    %   num_mct (string): The number of Monte Carlo simulations to run.
+    %   auto_rest (string): Controls the inclusion of memory in the model. '0' indicates memory is included, '1' indicates no memory.
+    %
+    % Usage:
+    %   [] = known_large_MCT('42', '20', '1.5', '/user/path/', '10', '100', '0')
+    %
+    % This sets up an experiment using seed '42', a horizon of 20, k-factor of 1.5, in the directory
+    % '/user/path/', with Monte Carlo rollouts of length 10, running 100 simulations, and including memory in the model.
+    %
+    % Outputs:
+    %   The function does not return any values. It saves the simulation results in .mat files
+    %   within the specified directory path.
+    %
+    % Files Created:
+    %   - Survival time data file: Contains the simulated survival times under different conditions.
+    %   - Agent state file: Stores the state of the agent at various points, which can be used for further analysis.
+    %
+    % Note:
+    %   Ensure that the input parameters are in string format as the function converts them into double
+    %   for computational purposes within the script.
+
     rng(str2double(seed))
     rng
     %file_name = strcat(seed,'_hor',horizon,'.txt');
@@ -52,7 +47,16 @@ function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct)
     horizon = str2double(horizon);
     mct = str2double(mct);
     num_mct = str2double(num_mct);
-    %fid = fopen(file_name, 'w');
+    auto_rest = str2double(auto_rest);  % Convert auto_rest to numeric for internal logic
+
+    % Conditional logic based on auto_rest
+    if auto_rest == 1
+        disp('Running without memory...');
+        % Implement the functionality for running the experiment without memory
+    else
+        disp('Running with memory...');
+        % Implement the functionality for running the experiment with memory
+    end
 
     previous_positions = [];
 

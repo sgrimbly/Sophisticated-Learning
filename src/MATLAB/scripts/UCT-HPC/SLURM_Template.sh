@@ -12,18 +12,16 @@
 #SBATCH --mem=$MEMORY_ALLOCATION                  # Memory placeholder
 #SBATCH --output=matlab_job_%j.out                # Standard output and error log
 
-# Specific nodes request; change the nodelist depending on availability http://hpc.uct.ac.za/db/
-#SBATCH --nodelist=srvcnthpc125
-
 # Email notifications:
 #SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
-#SBATCH --mail-type=FAIL #BEGIN,END,FAIL           # Receive emails on start, end, and fail
+
+# Commented out so no emails: SBATCH --mail-type=FAIL #BEGIN,END,FAIL  
 
 # Load the MATLAB module:
-module load software/matlab-R2022b
+module load software/matlab-R2024a
 
 # Display the run configuration for debugging
-echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}"
+echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}"
 
-# Run MATLAB script:
-matlab -nodisplay -nosplash -nodesktop -r "addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;"
+# Run MATLAB script. This line will be added below here by the job runner that modifies this template. 
+# matlab -nodisplay -nosplash -nodesktop -r "addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;"
