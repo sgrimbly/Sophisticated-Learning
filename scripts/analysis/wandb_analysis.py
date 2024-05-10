@@ -18,7 +18,7 @@ from PIL import Image
 ENABLE_WANDB = False  # Set this to True to enable wandb logging
 
 # Constants
-OUTPUT_FOLDER = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning'
+OUTPUT_FOLDER = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\output_logs'
 POLLING_INTERVAL = 600  # Time in seconds between checks for new files
 FILE_PATTERN = re.compile(r"(\d{2}-\d{2}-\d{2}-\d{3})_seed_(\d+)_([A-Z]+)_experiment.txt")
 
@@ -170,64 +170,6 @@ def gather_and_analyze_data():
 
     perform_analyses(data_df)
     return data_df
-
-# def perform_analyses(data_df):
-#     """Performs statistical analyses including ANOVA, Cohen's d, and Linear Mixed Effects Model."""
-#     algorithms = data_df['Algorithm'].unique()
-#     grouped_data = [data_df[data_df['Algorithm'] == alg]['SurvivalTime'] for alg in algorithms]
-#     f_val, p_val = f_oneway(*grouped_data)
-#     logging.info(f"ANOVA results: F = {f_val}, p = {p_val}")
-
-#     max_diff = 0
-#     for i in range(len(algorithms)):
-#         for j in range(i + 1, len(algorithms)):
-#             d = cohens_d(data_df[data_df['Algorithm'] == algorithms[i]]['SurvivalTime'],
-#                          data_df[data_df['Algorithm'] == algorithms[j]]['SurvivalTime'])
-#             if abs(d) > abs(max_diff):
-#                 max_diff = d
-#                 pair = (algorithms[i], algorithms[j])
-#     logging.info(f"Max Cohen's d = {max_diff} between {pair[0]} and {pair[1]}")
-
-#     model = smf.mixedlm("SurvivalTime ~ Algorithm", data_df, groups=data_df["Algorithm"])
-#     result = model.fit()
-#     logging.info(f"Linear Mixed Effects Model results:\n{result.summary()}")
-    
-# def gather_and_analyze_data():
-#     """Gathers data, performs statistical analysis, plots results, and logs with wandb if enabled."""
-#     data_dict = {}
-#     files = get_latest_files(OUTPUT_FOLDER)
-#     for file_path in files:
-#         details = FILE_PATTERN.search(os.path.basename(file_path)).groups()
-#         _, seed, algorithm = details
-#         data = load_data(file_path)
-#         if algorithm not in data_dict:
-#             data_dict[algorithm] = {}
-#         if seed not in data_dict[algorithm]:
-#             data_dict[algorithm][seed] = []
-#         data_dict[algorithm][seed].extend(data)
-
-#     df_list = []
-#     for algorithm, seeds in data_dict.items():
-#         for seed, values in seeds.items():
-#             trials_df = pd.DataFrame({'SurvivalTime': values})
-#             trials_df['Trial'] = trials_df.index  # Create a Trial index
-#             trials_df['Algorithm'] = algorithm    # Add algorithm name for each row
-#             trials_df['Seed'] = seed              # Add seed identifier
-#             df_list.append(trials_df)
-#     data_df = pd.concat(df_list)
-
-#     perform_analyses(data_df)
-
-#     # Plotting results
-#     for algorithm in data_dict.keys():
-#         fig, ax = plt.subplots()
-#         # Only consider numeric data for mean calculation
-#         alg_data = data_df[data_df['Algorithm'] == algorithm]
-#         # Make sure to group by 'Trial' and calculate the mean of 'SurvivalTime'
-#         trial_means = alg_data.groupby('Trial')['SurvivalTime'].mean().reset_index()
-#         plot_regression(ax, trial_means['Trial'].values, trial_means['SurvivalTime'].values, algorithm)
-
-#     return data_df
 
 def plot_violin(data_df):
     fig, axs = plt.subplots(2, 1, figsize=(10, 12))  # Create two subplots vertically
