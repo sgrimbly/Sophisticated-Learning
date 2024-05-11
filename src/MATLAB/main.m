@@ -1,7 +1,7 @@
 function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest)
     % Check the number of arguments and set default values if necessary
     if nargin < 1
-        algorithm = 'SL';  % Default value for algorithm
+        algorithm = 'model_free_RL';  % Default value for algorithm
     end
     if nargin < 2
         seed = '1';  % Default seed should be an integer
@@ -49,6 +49,12 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         case 'known_large_MCT'
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);
             disp('Known large MCT run complete');
+        case 'model_free_RL'
+            survived = model_free_RL(seed);
+            disp('Model free RL run complete');
+        case 'model_mixed_RL'
+            survived = model_mixed_RL(seed);
+            disp('Model mixed RL run complete');
         otherwise
             error('Unknown algorithm specified');
     end
