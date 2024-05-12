@@ -16,11 +16,11 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     if isempty(results_file_name) 
         switch algorithm
             case 'model_free_RL'
-                results_file_name = sprintf('results_model_free_RL_Seed%d.txt', seed);
+                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_free_RL_Seed%d.txt', seed);
             case 'model_mixed_RL'
-                results_file_name = sprintf('results_model_mixed_RL_Seed%d.txt', seed);
+                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_mixed_RL_Seed%d.txt', seed);
             otherwise
-                results_file_name = sprintf('results_Seed%d.txt', seed); 
+                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_Seed%d.txt', seed); 
         end
     end
     
@@ -52,6 +52,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             survived = model_free_RL(seed, results_file_name);
             disp('Model free RL run complete');
         case 'model_mixed_RL'
+            disp('Starting model mixed.')
             survived = model_mixed_RL(seed, results_file_name);
             disp('Model mixed RL run complete');
         otherwise

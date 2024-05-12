@@ -59,7 +59,8 @@ do
         echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;\"" >> $SLURM_SCRIPT
 
         # Create experiment log directory with descriptive name
-        output_dir=~/MATLAB-experiments/experiments/$JOB_NAME
+        output_dir=~/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/job_data/$ALGORITHM/$JOB_NAME
+
         mkdir -p "$output_dir"
 
         # Submit the job

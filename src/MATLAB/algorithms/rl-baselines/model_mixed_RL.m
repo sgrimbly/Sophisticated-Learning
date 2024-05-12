@@ -168,11 +168,12 @@ function [survival] = model_mixed_RL(seed, results_file_name)
     t = 1;
     observation_count = 0;
 
-    % results_file_name = fprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_mixed_results_seed%d.txt', seed);    
+    % results_file_name = sprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_mixed_results_seed%d.txt', seed);    
     total_trials = 1000000;  % Total number of trials
     percent_interval = total_trials * 0.01;  % Calculate 1% of the total number of trials
     
     for trial = 1:total_trials
+        fprintf('Runnning trials.');
         if mod(trial, percent_interval) == 0  % Check if the current trial is at 1% interval
             percent_complete = (trial / total_trials) * 100;  % Calculate the percentage completed
             fprintf('Completed %.0f%% of the trials.\n', percent_complete);  % Print progress to the console
@@ -341,13 +342,19 @@ function [survival] = model_mixed_RL(seed, results_file_name)
             alive_status = 0;
         end
 
-        % Open or create a file to append the data
         fid = fopen(results_file_name, 'a+');
-        if fid == -1  % fopen returns -1 if it fails
+        if fid == -1
             error('Error opening file: %s', results_file_name);
         end
-        fprintf(fid, 'time_steps_survived: %g\n', t);
-        fclose(fid);
+        
+        try
+            fprintf(fid, 'time_steps_survived: %g\n', t);
+        catch ME
+            fclose(fid);
+            rethrow(ME); % Re-throw the error after closing the file
+        end
+        
+        fclose(fid); % Close the file in the normal case
 
         % t_pref_mv_av = movmean(pref_match, 9);
         % t_food_mv_av = movmean(t_food_plot,9);

@@ -4,13 +4,13 @@
 module load software/matlab-R2024a
 
 # Parameters
-declare -a ALGORITHMS=("model_mixed_RL") # "model_free_RL" 
+declare -a ALGORITHMS=("model_free_RL") # "model_mixed_RL" 
 declare -a SEEDS=(1) # ({1..100})  # Seeds 1 to 100
 
 # SLURM Configuration
 export TIME_LIMIT="72:00:00"  # Adjust time limit based on expected runtime
 export MEMORY_ALLOCATION="4G"  # Increase if needed
-declare SCRIPT_PATH="${HOME}/MATLAB-experiments/Sophisticated-Learning/src/MATLAB/scripts/UCT-HPC"
+declare SCRIPT_PATH="${HOME}/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB"
 declare MAIN_PATH="${HOME}/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
 
 for ALGORITHM in "${ALGORITHMS[@]}"
@@ -37,7 +37,7 @@ do
         echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${MAIN_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;\"" >> $SLURM_SCRIPT
 
         # Create an output directory for experiment logs
-        output_dir=~/MATLAB-experiments/experiments/RL-runs/$JOB_NAME
+        output_dir=~/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/job_data/$ALGORITHM/$JOB_NAME
         mkdir -p "$output_dir"
 
         # Submit the job
