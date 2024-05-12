@@ -1,0 +1,3270 @@
+Running main with ALGORITHM=SL, SEED=43, HORIZON=2, K_FACTOR=0.7, ROOT_FOLDER=/media/labs, MCT=3, NUM_MCT=100, AUTO_REST=
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2024 The MathWorks, Inc.
+                  R2024a (24.1.0.2537033) 64-bit (glnxa64)
+                             February 21, 2024
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+
+ans = 
+
+  struct with fields:
+
+     Type: 'twister'
+     Seed: 43
+    State: [625x1 uint32]
+
+
+----------------------------------------
+TRIAL 1 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:47:01
+At time step 26 the agent is dead
+The agent had 5 food, 5 water, and 0 sleep.
+The total tree search depth for this trial was 21480. 
+The agent accessed its memory 163582 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 3. 
+TRIAL 1 COMPLETE ✔
+End Time: 2024-05-10 15:47:57
+Total runtime for this trial (minutes/seconds): 00:56
+----------------------------------------
+Total hill visits: 3. 
+Total prediction errors: 10. 
+Total search depth: 21480. 
+Total times memory accessed: 163582. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 27. 
+Total runtime so far (hours/minutes/seconds): 00:00:56
+----------------------------------------
+
+----------------------------------------
+TRIAL 2 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:47:56
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 3079. 
+The agent accessed its memory 24929 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 1. 
+TRIAL 2 COMPLETE ✔
+End Time: 2024-05-10 15:48:06
+Total runtime for this trial (minutes/seconds): 00:10
+----------------------------------------
+Total hill visits: 4. 
+Total prediction errors: 22. 
+Total search depth: 24559. 
+Total times memory accessed: 188511. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 49. 
+Total runtime so far (hours/minutes/seconds): 00:01:05
+----------------------------------------
+
+----------------------------------------
+TRIAL 3 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:48:05
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 2381. 
+The agent accessed its memory 18262 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 3. 
+TRIAL 3 COMPLETE ✔
+End Time: 2024-05-10 15:48:13
+Total runtime for this trial (minutes/seconds): 00:08
+----------------------------------------
+Total hill visits: 7. 
+Total prediction errors: 32. 
+Total search depth: 26940. 
+Total times memory accessed: 206773. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 71. 
+Total runtime so far (hours/minutes/seconds): 00:01:12
+----------------------------------------
+
+----------------------------------------
+TRIAL 4 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:48:12
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 1681. 
+The agent accessed its memory 13209 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 4 COMPLETE ✔
+End Time: 2024-05-10 15:48:20
+Total runtime for this trial (minutes/seconds): 00:08
+----------------------------------------
+Total hill visits: 8. 
+Total prediction errors: 43. 
+Total search depth: 28621. 
+Total times memory accessed: 219982. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 93. 
+Total runtime so far (hours/minutes/seconds): 00:01:19
+----------------------------------------
+
+----------------------------------------
+TRIAL 5 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:48:19
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 1124. 
+The agent accessed its memory 8550 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 5 COMPLETE ✔
+End Time: 2024-05-10 15:48:24
+Total runtime for this trial (minutes/seconds): 00:05
+----------------------------------------
+Total hill visits: 10. 
+Total prediction errors: 48. 
+Total search depth: 29745. 
+Total times memory accessed: 228532. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 115. 
+Total runtime so far (hours/minutes/seconds): 00:01:23
+----------------------------------------
+
+----------------------------------------
+TRIAL 6 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:48:23
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 2518. 
+The agent accessed its memory 18769 times. 
+The agent cleared its short-term memory 15 times. 
+     State prediction error memory resets: 13. 
+     Hill memory resets: 2. 
+TRIAL 6 COMPLETE ✔
+End Time: 2024-05-10 15:48:34
+Total runtime for this trial (minutes/seconds): 00:11
+----------------------------------------
+Total hill visits: 12. 
+Total prediction errors: 61. 
+Total search depth: 32263. 
+Total times memory accessed: 247301. 
+Total times 25 >= t <= 50: 1. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 137. 
+Total runtime so far (hours/minutes/seconds): 00:01:33
+----------------------------------------
+
+----------------------------------------
+TRIAL 7 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:48:33
+At time step 26 the agent is dead
+The agent had 14 food, 5 water, and 0 sleep.
+The total tree search depth for this trial was 27325. 
+The agent accessed its memory 228076 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 3. 
+     Hill memory resets: 3. 
+TRIAL 7 COMPLETE ✔
+End Time: 2024-05-10 15:49:41
+Total runtime for this trial (minutes/seconds): 01:08
+----------------------------------------
+Total hill visits: 15. 
+Total prediction errors: 64. 
+Total search depth: 59588. 
+Total times memory accessed: 475377. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 164. 
+Total runtime so far (hours/minutes/seconds): 00:02:40
+----------------------------------------
+
+----------------------------------------
+TRIAL 8 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:49:40
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 16 sleep.
+The total tree search depth for this trial was 4920. 
+The agent accessed its memory 36298 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 3. 
+TRIAL 8 COMPLETE ✔
+End Time: 2024-05-10 15:49:57
+Total runtime for this trial (minutes/seconds): 00:17
+----------------------------------------
+Total hill visits: 18. 
+Total prediction errors: 70. 
+Total search depth: 64508. 
+Total times memory accessed: 511675. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 186. 
+Total runtime so far (hours/minutes/seconds): 00:02:56
+----------------------------------------
+
+----------------------------------------
+TRIAL 9 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:49:56
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 5064. 
+The agent accessed its memory 33129 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 9 COMPLETE ✔
+End Time: 2024-05-10 15:50:18
+Total runtime for this trial (minutes/seconds): 00:22
+----------------------------------------
+Total hill visits: 19. 
+Total prediction errors: 76. 
+Total search depth: 69572. 
+Total times memory accessed: 544804. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 208. 
+Total runtime so far (hours/minutes/seconds): 00:03:17
+----------------------------------------
+
+----------------------------------------
+TRIAL 10 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:50:17
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 9978. 
+The agent accessed its memory 70157 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 10 COMPLETE ✔
+End Time: 2024-05-10 15:50:56
+Total runtime for this trial (minutes/seconds): 00:39
+----------------------------------------
+Total hill visits: 20. 
+Total prediction errors: 87. 
+Total search depth: 79550. 
+Total times memory accessed: 614961. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 230. 
+Total runtime so far (hours/minutes/seconds): 00:03:55
+----------------------------------------
+
+----------------------------------------
+TRIAL 11 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:50:55
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 2236. 
+The agent accessed its memory 14402 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 11 COMPLETE ✔
+End Time: 2024-05-10 15:51:06
+Total runtime for this trial (minutes/seconds): 00:11
+----------------------------------------
+Total hill visits: 21. 
+Total prediction errors: 93. 
+Total search depth: 81786. 
+Total times memory accessed: 629363. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 252. 
+Total runtime so far (hours/minutes/seconds): 00:04:05
+----------------------------------------
+
+----------------------------------------
+TRIAL 12 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:51:05
+At time step 21 the agent is dead
+The agent had 16 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 3311. 
+The agent accessed its memory 22887 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 3. 
+     Hill memory resets: 3. 
+TRIAL 12 COMPLETE ✔
+End Time: 2024-05-10 15:51:20
+Total runtime for this trial (minutes/seconds): 00:15
+----------------------------------------
+Total hill visits: 24. 
+Total prediction errors: 96. 
+Total search depth: 85097. 
+Total times memory accessed: 652250. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 274. 
+Total runtime so far (hours/minutes/seconds): 00:04:19
+----------------------------------------
+
+----------------------------------------
+TRIAL 13 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:51:19
+At time step 21 the agent is dead
+The agent had 21 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 3548. 
+The agent accessed its memory 38080 times. 
+The agent cleared its short-term memory 17 times. 
+     State prediction error memory resets: 17. 
+     Hill memory resets: 0. 
+TRIAL 13 COMPLETE ✔
+End Time: 2024-05-10 15:51:36
+Total runtime for this trial (minutes/seconds): 00:17
+----------------------------------------
+Total hill visits: 24. 
+Total prediction errors: 113. 
+Total search depth: 88645. 
+Total times memory accessed: 690330. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 296. 
+Total runtime so far (hours/minutes/seconds): 00:04:35
+----------------------------------------
+
+----------------------------------------
+TRIAL 14 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:51:35
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 3116. 
+The agent accessed its memory 33576 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 0. 
+TRIAL 14 COMPLETE ✔
+End Time: 2024-05-10 15:51:50
+Total runtime for this trial (minutes/seconds): 00:15
+----------------------------------------
+Total hill visits: 24. 
+Total prediction errors: 124. 
+Total search depth: 91761. 
+Total times memory accessed: 723906. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 318. 
+Total runtime so far (hours/minutes/seconds): 00:04:49
+----------------------------------------
+
+----------------------------------------
+TRIAL 15 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:51:49
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 6024. 
+The agent accessed its memory 45678 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 15 COMPLETE ✔
+End Time: 2024-05-10 15:52:16
+Total runtime for this trial (minutes/seconds): 00:27
+----------------------------------------
+Total hill visits: 25. 
+Total prediction errors: 135. 
+Total search depth: 97785. 
+Total times memory accessed: 769584. 
+Total times 25 >= t <= 50: 2. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 340. 
+Total runtime so far (hours/minutes/seconds): 00:05:15
+----------------------------------------
+
+----------------------------------------
+TRIAL 16 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:52:15
+At time step 26 the agent is dead
+The agent had 13 food, 8 water, and 0 sleep.
+The total tree search depth for this trial was 23392. 
+The agent accessed its memory 161485 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 4. 
+TRIAL 16 COMPLETE ✔
+End Time: 2024-05-10 15:53:35
+Total runtime for this trial (minutes/seconds): 01:20
+----------------------------------------
+Total hill visits: 29. 
+Total prediction errors: 145. 
+Total search depth: 121177. 
+Total times memory accessed: 931069. 
+Total times 25 >= t <= 50: 3. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 367. 
+Total runtime so far (hours/minutes/seconds): 00:06:34
+----------------------------------------
+
+----------------------------------------
+TRIAL 17 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:53:34
+At time step 21 the agent is dead
+The agent had 21 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 4300. 
+The agent accessed its memory 43108 times. 
+The agent cleared its short-term memory 4 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 0. 
+TRIAL 17 COMPLETE ✔
+End Time: 2024-05-10 15:53:50
+Total runtime for this trial (minutes/seconds): 00:16
+----------------------------------------
+Total hill visits: 29. 
+Total prediction errors: 149. 
+Total search depth: 125477. 
+Total times memory accessed: 974177. 
+Total times 25 >= t <= 50: 3. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 389. 
+Total runtime so far (hours/minutes/seconds): 00:06:49
+----------------------------------------
+
+----------------------------------------
+TRIAL 18 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:53:49
+At time step 42 the agent is dead
+The agent had 0 food, 0 water, and 24 sleep.
+The total tree search depth for this trial was 88158. 
+The agent accessed its memory 613099 times. 
+The agent cleared its short-term memory 33 times. 
+     State prediction error memory resets: 31. 
+     Hill memory resets: 2. 
+TRIAL 18 COMPLETE ✔
+End Time: 2024-05-10 15:59:36
+Total runtime for this trial (minutes/seconds): 05:47
+----------------------------------------
+Total hill visits: 31. 
+Total prediction errors: 180. 
+Total search depth: 213635. 
+Total times memory accessed: 1587276. 
+Total times 25 >= t <= 50: 4. 
+Total times 50 >= t <= 75: 0. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 432. 
+Total runtime so far (hours/minutes/seconds): 00:12:35
+----------------------------------------
+
+----------------------------------------
+TRIAL 19 STARTED
+----------------------------------------
+Start Time: 2024-05-10 15:59:35
+At time step 69 the agent is dead
+The agent had 4 food, 4 water, and 0 sleep.
+The total tree search depth for this trial was 79678. 
+The agent accessed its memory 528077 times. 
+The agent cleared its short-term memory 21 times. 
+     State prediction error memory resets: 20. 
+     Hill memory resets: 1. 
+TRIAL 19 COMPLETE ✔
+End Time: 2024-05-10 16:04:48
+Total runtime for this trial (minutes/seconds): 05:13
+----------------------------------------
+Total hill visits: 32. 
+Total prediction errors: 200. 
+Total search depth: 293313. 
+Total times memory accessed: 2115353. 
+Total times 25 >= t <= 50: 4. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 502. 
+Total runtime so far (hours/minutes/seconds): 00:17:47
+----------------------------------------
+
+----------------------------------------
+TRIAL 20 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:04:47
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 31866. 
+The agent accessed its memory 242665 times. 
+The agent cleared its short-term memory 16 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 1. 
+TRIAL 20 COMPLETE ✔
+End Time: 2024-05-10 16:07:12
+Total runtime for this trial (minutes/seconds): 02:25
+----------------------------------------
+Total hill visits: 33. 
+Total prediction errors: 215. 
+Total search depth: 325179. 
+Total times memory accessed: 2358018. 
+Total times 25 >= t <= 50: 4. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 524. 
+Total runtime so far (hours/minutes/seconds): 00:20:11
+----------------------------------------
+
+----------------------------------------
+TRIAL 21 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:07:11
+At time step 21 the agent is dead
+The agent had 12 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 57996. 
+The agent accessed its memory 434966 times. 
+The agent cleared its short-term memory 15 times. 
+     State prediction error memory resets: 14. 
+     Hill memory resets: 1. 
+TRIAL 21 COMPLETE ✔
+End Time: 2024-05-10 16:11:10
+Total runtime for this trial (minutes/seconds): 03:59
+----------------------------------------
+Total hill visits: 34. 
+Total prediction errors: 229. 
+Total search depth: 383175. 
+Total times memory accessed: 2792984. 
+Total times 25 >= t <= 50: 4. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 546. 
+Total runtime so far (hours/minutes/seconds): 00:24:09
+----------------------------------------
+
+----------------------------------------
+TRIAL 22 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:11:09
+At time step 33 the agent is dead
+The agent had 18 food, 0 water, and 8 sleep.
+The total tree search depth for this trial was 46631. 
+The agent accessed its memory 303523 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 3. 
+TRIAL 22 COMPLETE ✔
+End Time: 2024-05-10 16:13:54
+Total runtime for this trial (minutes/seconds): 02:45
+----------------------------------------
+Total hill visits: 37. 
+Total prediction errors: 233. 
+Total search depth: 429806. 
+Total times memory accessed: 3096507. 
+Total times 25 >= t <= 50: 5. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 0. 
+Total time steps survived: 580. 
+Total runtime so far (hours/minutes/seconds): 00:26:53
+----------------------------------------
+
+----------------------------------------
+TRIAL 23 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:13:53
+At time step 99 the agent is dead
+The agent had 19 food, 7 water, and 25 sleep.
+The total tree search depth for this trial was 131749. 
+The agent accessed its memory 801828 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 23 COMPLETE ✔
+End Time: 2024-05-10 16:21:39
+Total runtime for this trial (minutes/seconds): 07:46
+----------------------------------------
+Total hill visits: 39. 
+Total prediction errors: 244. 
+Total search depth: 561555. 
+Total times memory accessed: 3898335. 
+Total times 25 >= t <= 50: 5. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 680. 
+Total runtime so far (hours/minutes/seconds): 00:34:38
+----------------------------------------
+
+----------------------------------------
+TRIAL 24 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:21:38
+At time step 29 the agent is dead
+The agent had 1 food, 0 water, and 3 sleep.
+The total tree search depth for this trial was 29695. 
+The agent accessed its memory 202700 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 24 COMPLETE ✔
+End Time: 2024-05-10 16:23:24
+Total runtime for this trial (minutes/seconds): 01:46
+----------------------------------------
+Total hill visits: 40. 
+Total prediction errors: 250. 
+Total search depth: 591250. 
+Total times memory accessed: 4101035. 
+Total times 25 >= t <= 50: 6. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 710. 
+Total runtime so far (hours/minutes/seconds): 00:36:23
+----------------------------------------
+
+----------------------------------------
+TRIAL 25 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:23:23
+At time step 26 the agent is dead
+The agent had 19 food, 19 water, and 0 sleep.
+The total tree search depth for this trial was 42624. 
+The agent accessed its memory 297215 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 4. 
+TRIAL 25 COMPLETE ✔
+End Time: 2024-05-10 16:26:04
+Total runtime for this trial (minutes/seconds): 02:41
+----------------------------------------
+Total hill visits: 44. 
+Total prediction errors: 255. 
+Total search depth: 633874. 
+Total times memory accessed: 4398250. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 737. 
+Total runtime so far (hours/minutes/seconds): 00:39:03
+----------------------------------------
+
+----------------------------------------
+TRIAL 26 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:26:03
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 15 sleep.
+The total tree search depth for this trial was 38986. 
+The agent accessed its memory 292676 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 26 COMPLETE ✔
+End Time: 2024-05-10 16:28:35
+Total runtime for this trial (minutes/seconds): 02:32
+----------------------------------------
+Total hill visits: 45. 
+Total prediction errors: 266. 
+Total search depth: 672860. 
+Total times memory accessed: 4690926. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 759. 
+Total runtime so far (hours/minutes/seconds): 00:41:34
+----------------------------------------
+
+----------------------------------------
+TRIAL 27 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:28:34
+At time step 21 the agent is dead
+The agent had 11 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 46117. 
+The agent accessed its memory 371325 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 1. 
+TRIAL 27 COMPLETE ✔
+End Time: 2024-05-10 16:31:24
+Total runtime for this trial (minutes/seconds): 02:50
+----------------------------------------
+Total hill visits: 46. 
+Total prediction errors: 274. 
+Total search depth: 718977. 
+Total times memory accessed: 5062251. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 781. 
+Total runtime so far (hours/minutes/seconds): 00:44:23
+----------------------------------------
+
+----------------------------------------
+TRIAL 28 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:31:23
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 15 sleep.
+The total tree search depth for this trial was 24705. 
+The agent accessed its memory 160100 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 2. 
+TRIAL 28 COMPLETE ✔
+End Time: 2024-05-10 16:33:02
+Total runtime for this trial (minutes/seconds): 01:39
+----------------------------------------
+Total hill visits: 48. 
+Total prediction errors: 282. 
+Total search depth: 743682. 
+Total times memory accessed: 5222351. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 803. 
+Total runtime so far (hours/minutes/seconds): 00:46:01
+----------------------------------------
+
+----------------------------------------
+TRIAL 29 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:33:01
+At time step 21 the agent is dead
+The agent had 19 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 58923. 
+The agent accessed its memory 408994 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 2. 
+TRIAL 29 COMPLETE ✔
+End Time: 2024-05-10 16:36:30
+Total runtime for this trial (minutes/seconds): 03:29
+----------------------------------------
+Total hill visits: 50. 
+Total prediction errors: 288. 
+Total search depth: 802605. 
+Total times memory accessed: 5631345. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 825. 
+Total runtime so far (hours/minutes/seconds): 00:49:29
+----------------------------------------
+
+----------------------------------------
+TRIAL 30 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:36:29
+At time step 23 the agent is dead
+The agent had 0 food, 8 water, and 3 sleep.
+The total tree search depth for this trial was 51191. 
+The agent accessed its memory 315352 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 4. 
+TRIAL 30 COMPLETE ✔
+End Time: 2024-05-10 16:39:49
+Total runtime for this trial (minutes/seconds): 03:20
+----------------------------------------
+Total hill visits: 54. 
+Total prediction errors: 298. 
+Total search depth: 853796. 
+Total times memory accessed: 5946697. 
+Total times 25 >= t <= 50: 7. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 849. 
+Total runtime so far (hours/minutes/seconds): 00:52:48
+----------------------------------------
+
+----------------------------------------
+TRIAL 31 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:39:48
+At time step 26 the agent is dead
+The agent had 18 food, 11 water, and 0 sleep.
+The total tree search depth for this trial was 43013. 
+The agent accessed its memory 288430 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 31 COMPLETE ✔
+End Time: 2024-05-10 16:42:34
+Total runtime for this trial (minutes/seconds): 02:46
+----------------------------------------
+Total hill visits: 55. 
+Total prediction errors: 304. 
+Total search depth: 896809. 
+Total times memory accessed: 6235127. 
+Total times 25 >= t <= 50: 8. 
+Total times 50 >= t <= 75: 1. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 876. 
+Total runtime so far (hours/minutes/seconds): 00:55:33
+----------------------------------------
+
+----------------------------------------
+TRIAL 32 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:42:33
+At time step 67 the agent is dead
+The agent had 0 food, 15 water, and 4 sleep.
+The total tree search depth for this trial was 51049. 
+The agent accessed its memory 333257 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 2. 
+TRIAL 32 COMPLETE ✔
+End Time: 2024-05-10 16:45:36
+Total runtime for this trial (minutes/seconds): 03:03
+----------------------------------------
+Total hill visits: 57. 
+Total prediction errors: 311. 
+Total search depth: 947858. 
+Total times memory accessed: 6568384. 
+Total times 25 >= t <= 50: 8. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 944. 
+Total runtime so far (hours/minutes/seconds): 00:58:35
+----------------------------------------
+
+----------------------------------------
+TRIAL 33 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:45:35
+At time step 31 the agent is dead
+The agent had 0 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 45968. 
+The agent accessed its memory 290301 times. 
+The agent cleared its short-term memory 17 times. 
+     State prediction error memory resets: 16. 
+     Hill memory resets: 1. 
+TRIAL 33 COMPLETE ✔
+End Time: 2024-05-10 16:48:35
+Total runtime for this trial (minutes/seconds): 03:00
+----------------------------------------
+Total hill visits: 58. 
+Total prediction errors: 327. 
+Total search depth: 993826. 
+Total times memory accessed: 6858685. 
+Total times 25 >= t <= 50: 9. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 976. 
+Total runtime so far (hours/minutes/seconds): 01:01:34
+----------------------------------------
+
+----------------------------------------
+TRIAL 34 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:48:34
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 19 sleep.
+The total tree search depth for this trial was 9733. 
+The agent accessed its memory 66231 times. 
+The agent cleared its short-term memory 4 times. 
+     State prediction error memory resets: 3. 
+     Hill memory resets: 1. 
+TRIAL 34 COMPLETE ✔
+End Time: 2024-05-10 16:49:12
+Total runtime for this trial (minutes/seconds): 00:38
+----------------------------------------
+Total hill visits: 59. 
+Total prediction errors: 330. 
+Total search depth: 1003559. 
+Total times memory accessed: 6924916. 
+Total times 25 >= t <= 50: 9. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 998. 
+Total runtime so far (hours/minutes/seconds): 01:02:11
+----------------------------------------
+
+----------------------------------------
+TRIAL 35 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:49:11
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 12 sleep.
+The total tree search depth for this trial was 28410. 
+The agent accessed its memory 172428 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 3. 
+TRIAL 35 COMPLETE ✔
+End Time: 2024-05-10 16:51:05
+Total runtime for this trial (minutes/seconds): 01:54
+----------------------------------------
+Total hill visits: 62. 
+Total prediction errors: 336. 
+Total search depth: 1031969. 
+Total times memory accessed: 7097344. 
+Total times 25 >= t <= 50: 9. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1020. 
+Total runtime so far (hours/minutes/seconds): 01:04:04
+----------------------------------------
+
+----------------------------------------
+TRIAL 36 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:51:04
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 17 sleep.
+The total tree search depth for this trial was 56001. 
+The agent accessed its memory 436759 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 1. 
+TRIAL 36 COMPLETE ✔
+End Time: 2024-05-10 16:54:17
+Total runtime for this trial (minutes/seconds): 03:13
+----------------------------------------
+Total hill visits: 63. 
+Total prediction errors: 344. 
+Total search depth: 1087970. 
+Total times memory accessed: 7534103. 
+Total times 25 >= t <= 50: 9. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1042. 
+Total runtime so far (hours/minutes/seconds): 01:07:16
+----------------------------------------
+
+----------------------------------------
+TRIAL 37 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:54:16
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 13013. 
+The agent accessed its memory 94403 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 9. 
+     Hill memory resets: 1. 
+TRIAL 37 COMPLETE ✔
+End Time: 2024-05-10 16:55:07
+Total runtime for this trial (minutes/seconds): 00:51
+----------------------------------------
+Total hill visits: 64. 
+Total prediction errors: 353. 
+Total search depth: 1100983. 
+Total times memory accessed: 7628506. 
+Total times 25 >= t <= 50: 9. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1064. 
+Total runtime so far (hours/minutes/seconds): 01:08:06
+----------------------------------------
+
+----------------------------------------
+TRIAL 38 STARTED
+----------------------------------------
+Start Time: 2024-05-10 16:55:06
+At time step 35 the agent is dead
+The agent had 8 food, 4 water, and 0 sleep.
+The total tree search depth for this trial was 135843. 
+The agent accessed its memory 943157 times. 
+The agent cleared its short-term memory 18 times. 
+     State prediction error memory resets: 17. 
+     Hill memory resets: 1. 
+TRIAL 38 COMPLETE ✔
+End Time: 2024-05-10 17:03:16
+Total runtime for this trial (minutes/seconds): 08:10
+----------------------------------------
+Total hill visits: 65. 
+Total prediction errors: 370. 
+Total search depth: 1236826. 
+Total times memory accessed: 8571663. 
+Total times 25 >= t <= 50: 10. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1100. 
+Total runtime so far (hours/minutes/seconds): 01:16:15
+----------------------------------------
+
+----------------------------------------
+TRIAL 39 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:03:15
+At time step 30 the agent is dead
+The agent had 5 food, 0 water, and 15 sleep.
+The total tree search depth for this trial was 76028. 
+The agent accessed its memory 520129 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 1. 
+TRIAL 39 COMPLETE ✔
+End Time: 2024-05-10 17:07:46
+Total runtime for this trial (minutes/seconds): 04:31
+----------------------------------------
+Total hill visits: 66. 
+Total prediction errors: 378. 
+Total search depth: 1312854. 
+Total times memory accessed: 9091792. 
+Total times 25 >= t <= 50: 11. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1131. 
+Total runtime so far (hours/minutes/seconds): 01:20:45
+----------------------------------------
+
+----------------------------------------
+TRIAL 40 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:07:45
+At time step 30 the agent is dead
+The agent had 3 food, 0 water, and 7 sleep.
+The total tree search depth for this trial was 43702. 
+The agent accessed its memory 302829 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 2. 
+TRIAL 40 COMPLETE ✔
+End Time: 2024-05-10 17:10:16
+Total runtime for this trial (minutes/seconds): 02:31
+----------------------------------------
+Total hill visits: 68. 
+Total prediction errors: 386. 
+Total search depth: 1356556. 
+Total times memory accessed: 9394621. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 2. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1162. 
+Total runtime so far (hours/minutes/seconds): 01:23:15
+----------------------------------------
+
+----------------------------------------
+TRIAL 41 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:10:15
+At time step 63 the agent is dead
+The agent had 0 food, 0 water, and 12 sleep.
+The total tree search depth for this trial was 168660. 
+The agent accessed its memory 1143974 times. 
+The agent cleared its short-term memory 15 times. 
+     State prediction error memory resets: 14. 
+     Hill memory resets: 1. 
+TRIAL 41 COMPLETE ✔
+End Time: 2024-05-10 17:19:59
+Total runtime for this trial (minutes/seconds): 09:44
+----------------------------------------
+Total hill visits: 69. 
+Total prediction errors: 400. 
+Total search depth: 1525216. 
+Total times memory accessed: 10538595. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 3. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1226. 
+Total runtime so far (hours/minutes/seconds): 01:32:58
+----------------------------------------
+
+----------------------------------------
+TRIAL 42 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:19:58
+At time step 21 the agent is dead
+The agent had 9 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 52947. 
+The agent accessed its memory 333512 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 3. 
+TRIAL 42 COMPLETE ✔
+End Time: 2024-05-10 17:23:10
+Total runtime for this trial (minutes/seconds): 03:12
+----------------------------------------
+Total hill visits: 72. 
+Total prediction errors: 405. 
+Total search depth: 1578163. 
+Total times memory accessed: 10872107. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 3. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1248. 
+Total runtime so far (hours/minutes/seconds): 01:36:09
+----------------------------------------
+
+----------------------------------------
+TRIAL 43 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:23:09
+At time step 66 the agent is dead
+The agent had 0 food, 3 water, and 0 sleep.
+The total tree search depth for this trial was 133668. 
+The agent accessed its memory 920507 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 2. 
+TRIAL 43 COMPLETE ✔
+End Time: 2024-05-10 17:31:16
+Total runtime for this trial (minutes/seconds): 08:07
+----------------------------------------
+Total hill visits: 74. 
+Total prediction errors: 415. 
+Total search depth: 1711831. 
+Total times memory accessed: 11792614. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 4. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1315. 
+Total runtime so far (hours/minutes/seconds): 01:44:15
+----------------------------------------
+
+----------------------------------------
+TRIAL 44 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:31:15
+At time step 21 the agent is dead
+The agent had 19 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 37357. 
+The agent accessed its memory 246474 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 44 COMPLETE ✔
+End Time: 2024-05-10 17:33:28
+Total runtime for this trial (minutes/seconds): 02:13
+----------------------------------------
+Total hill visits: 76. 
+Total prediction errors: 420. 
+Total search depth: 1749188. 
+Total times memory accessed: 12039088. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 4. 
+Total times 75 >= t <= 100: 0. 
+Total times t == 100: 1. 
+Total time steps survived: 1337. 
+Total runtime so far (hours/minutes/seconds): 01:46:27
+----------------------------------------
+
+----------------------------------------
+TRIAL 45 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:33:27
+At time step 98 the agent is dead
+The agent had 7 food, 8 water, and 0 sleep.
+The total tree search depth for this trial was 168044. 
+The agent accessed its memory 1187479 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 45 COMPLETE ✔
+End Time: 2024-05-10 17:42:51
+Total runtime for this trial (minutes/seconds): 09:24
+----------------------------------------
+Total hill visits: 78. 
+Total prediction errors: 431. 
+Total search depth: 1917232. 
+Total times memory accessed: 13226567. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 4. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 1. 
+Total time steps survived: 1436. 
+Total runtime so far (hours/minutes/seconds): 01:55:50
+----------------------------------------
+
+----------------------------------------
+TRIAL 46 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:42:50
+At time step 67 the agent is dead
+The agent had 4 food, 5 water, and 0 sleep.
+The total tree search depth for this trial was 176024. 
+The agent accessed its memory 1258230 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 46 COMPLETE ✔
+End Time: 2024-05-10 17:52:54
+Total runtime for this trial (minutes/seconds): 10:04
+----------------------------------------
+Total hill visits: 80. 
+Total prediction errors: 442. 
+Total search depth: 2093256. 
+Total times memory accessed: 14484797. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 1. 
+Total time steps survived: 1504. 
+Total runtime so far (hours/minutes/seconds): 02:05:53
+----------------------------------------
+
+----------------------------------------
+TRIAL 47 STARTED
+----------------------------------------
+Start Time: 2024-05-10 17:52:53
+At time step 99 the agent is dead
+The agent had 21 food, 17 water, and 10 sleep.
+The total tree search depth for this trial was 421154. 
+The agent accessed its memory 2957467 times. 
+The agent cleared its short-term memory 23 times. 
+     State prediction error memory resets: 20. 
+     Hill memory resets: 3. 
+TRIAL 47 COMPLETE ✔
+End Time: 2024-05-10 18:16:46
+Total runtime for this trial (minutes/seconds): 23:53
+----------------------------------------
+Total hill visits: 83. 
+Total prediction errors: 462. 
+Total search depth: 2514410. 
+Total times memory accessed: 17442264. 
+Total times 25 >= t <= 50: 12. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 2. 
+Total time steps survived: 1604. 
+Total runtime so far (hours/minutes/seconds): 02:29:45
+----------------------------------------
+
+----------------------------------------
+TRIAL 48 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:16:45
+At time step 29 the agent is dead
+The agent had 0 food, 2 water, and 6 sleep.
+The total tree search depth for this trial was 148735. 
+The agent accessed its memory 1105955 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 1. 
+TRIAL 48 COMPLETE ✔
+End Time: 2024-05-10 18:26:02
+Total runtime for this trial (minutes/seconds): 09:17
+----------------------------------------
+Total hill visits: 84. 
+Total prediction errors: 472. 
+Total search depth: 2663145. 
+Total times memory accessed: 18548219. 
+Total times 25 >= t <= 50: 13. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 2. 
+Total time steps survived: 1634. 
+Total runtime so far (hours/minutes/seconds): 02:39:01
+----------------------------------------
+
+----------------------------------------
+TRIAL 49 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:26:01
+At time step 31 the agent is dead
+The agent had 0 food, 7 water, and 8 sleep.
+The total tree search depth for this trial was 182472. 
+The agent accessed its memory 1308446 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 49 COMPLETE ✔
+End Time: 2024-05-10 18:37:06
+Total runtime for this trial (minutes/seconds): 11:05
+----------------------------------------
+Total hill visits: 85. 
+Total prediction errors: 483. 
+Total search depth: 2845617. 
+Total times memory accessed: 19856665. 
+Total times 25 >= t <= 50: 14. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 2. 
+Total time steps survived: 1666. 
+Total runtime so far (hours/minutes/seconds): 02:50:05
+----------------------------------------
+
+----------------------------------------
+TRIAL 50 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:37:05
+At time step 32 the agent is dead
+The agent had 5 food, 0 water, and 7 sleep.
+The total tree search depth for this trial was 42898. 
+The agent accessed its memory 303995 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 9. 
+     Hill memory resets: 1. 
+TRIAL 50 COMPLETE ✔
+End Time: 2024-05-10 18:39:32
+Total runtime for this trial (minutes/seconds): 02:27
+----------------------------------------
+Total hill visits: 86. 
+Total prediction errors: 492. 
+Total search depth: 2888515. 
+Total times memory accessed: 20160660. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 1. 
+Total times t == 100: 2. 
+Total time steps survived: 1699. 
+Total runtime so far (hours/minutes/seconds): 02:52:31
+----------------------------------------
+
+----------------------------------------
+TRIAL 51 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:39:31
+At time step 85 the agent is dead
+The agent had 0 food, 2 water, and 8 sleep.
+The total tree search depth for this trial was 191108. 
+The agent accessed its memory 1267830 times. 
+The agent cleared its short-term memory 19 times. 
+     State prediction error memory resets: 17. 
+     Hill memory resets: 2. 
+TRIAL 51 COMPLETE ✔
+End Time: 2024-05-10 18:50:34
+Total runtime for this trial (minutes/seconds): 11:03
+----------------------------------------
+Total hill visits: 88. 
+Total prediction errors: 509. 
+Total search depth: 3079623. 
+Total times memory accessed: 21428490. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1785. 
+Total runtime so far (hours/minutes/seconds): 03:03:33
+----------------------------------------
+
+----------------------------------------
+TRIAL 52 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:50:33
+At time step 21 the agent is dead
+The agent had 9 food, 0 water, and 17 sleep.
+The total tree search depth for this trial was 127795. 
+The agent accessed its memory 858865 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 1. 
+TRIAL 52 COMPLETE ✔
+End Time: 2024-05-10 18:58:14
+Total runtime for this trial (minutes/seconds): 07:41
+----------------------------------------
+Total hill visits: 89. 
+Total prediction errors: 521. 
+Total search depth: 3207418. 
+Total times memory accessed: 22287355. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 5. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1807. 
+Total runtime so far (hours/minutes/seconds): 03:11:13
+----------------------------------------
+
+----------------------------------------
+TRIAL 53 STARTED
+----------------------------------------
+Start Time: 2024-05-10 18:58:13
+At time step 55 the agent is dead
+The agent had 0 food, 0 water, and 12 sleep.
+The total tree search depth for this trial was 184149. 
+The agent accessed its memory 1285719 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 2. 
+TRIAL 53 COMPLETE ✔
+End Time: 2024-05-10 19:08:31
+Total runtime for this trial (minutes/seconds): 10:18
+----------------------------------------
+Total hill visits: 91. 
+Total prediction errors: 528. 
+Total search depth: 3391567. 
+Total times memory accessed: 23573074. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 6. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1863. 
+Total runtime so far (hours/minutes/seconds): 03:21:30
+----------------------------------------
+
+----------------------------------------
+TRIAL 54 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:08:31
+At time step 21 the agent is dead
+The agent had 13 food, 0 water, and 14 sleep.
+The total tree search depth for this trial was 42663. 
+The agent accessed its memory 290892 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 54 COMPLETE ✔
+End Time: 2024-05-10 19:10:51
+Total runtime for this trial (minutes/seconds): 02:20
+----------------------------------------
+Total hill visits: 92. 
+Total prediction errors: 534. 
+Total search depth: 3434230. 
+Total times memory accessed: 23863966. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 6. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1885. 
+Total runtime so far (hours/minutes/seconds): 03:23:50
+----------------------------------------
+
+----------------------------------------
+TRIAL 55 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:10:50
+At time step 57 the agent is dead
+The agent had 19 food, 15 water, and 0 sleep.
+The total tree search depth for this trial was 133318. 
+The agent accessed its memory 886111 times. 
+The agent cleared its short-term memory 5 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 1. 
+TRIAL 55 COMPLETE ✔
+End Time: 2024-05-10 19:18:12
+Total runtime for this trial (minutes/seconds): 07:22
+----------------------------------------
+Total hill visits: 93. 
+Total prediction errors: 538. 
+Total search depth: 3567548. 
+Total times memory accessed: 24750077. 
+Total times 25 >= t <= 50: 15. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1943. 
+Total runtime so far (hours/minutes/seconds): 03:31:11
+----------------------------------------
+
+----------------------------------------
+TRIAL 56 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:18:11
+At time step 37 the agent is dead
+The agent had 11 food, 0 water, and 10 sleep.
+The total tree search depth for this trial was 126564. 
+The agent accessed its memory 879927 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 1. 
+TRIAL 56 COMPLETE ✔
+End Time: 2024-05-10 19:25:00
+Total runtime for this trial (minutes/seconds): 06:49
+----------------------------------------
+Total hill visits: 94. 
+Total prediction errors: 546. 
+Total search depth: 3694112. 
+Total times memory accessed: 25630004. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 2. 
+Total time steps survived: 1981. 
+Total runtime so far (hours/minutes/seconds): 03:37:59
+----------------------------------------
+
+----------------------------------------
+TRIAL 57 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:24:59
+At time step 99 the agent is dead
+The agent had 7 food, 3 water, and 5 sleep.
+The total tree search depth for this trial was 289788. 
+The agent accessed its memory 2077342 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 2. 
+TRIAL 57 COMPLETE ✔
+End Time: 2024-05-10 19:40:52
+Total runtime for this trial (minutes/seconds): 15:53
+----------------------------------------
+Total hill visits: 96. 
+Total prediction errors: 556. 
+Total search depth: 3983900. 
+Total times memory accessed: 27707346. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 3. 
+Total time steps survived: 2081. 
+Total runtime so far (hours/minutes/seconds): 03:53:51
+----------------------------------------
+
+----------------------------------------
+TRIAL 58 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:40:51
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 17 sleep.
+The total tree search depth for this trial was 43985. 
+The agent accessed its memory 289821 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 58 COMPLETE ✔
+End Time: 2024-05-10 19:43:27
+Total runtime for this trial (minutes/seconds): 02:36
+----------------------------------------
+Total hill visits: 98. 
+Total prediction errors: 561. 
+Total search depth: 4027885. 
+Total times memory accessed: 27997167. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 3. 
+Total time steps survived: 2103. 
+Total runtime so far (hours/minutes/seconds): 03:56:26
+----------------------------------------
+
+----------------------------------------
+TRIAL 59 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:43:26
+At time step 99 the agent is dead
+The agent had 21 food, 1 water, and 10 sleep.
+The total tree search depth for this trial was 269925. 
+The agent accessed its memory 1862579 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 59 COMPLETE ✔
+End Time: 2024-05-10 19:57:59
+Total runtime for this trial (minutes/seconds): 14:33
+----------------------------------------
+Total hill visits: 100. 
+Total prediction errors: 572. 
+Total search depth: 4297810. 
+Total times memory accessed: 29859746. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 2. 
+Total times t == 100: 4. 
+Total time steps survived: 2203. 
+Total runtime so far (hours/minutes/seconds): 04:10:58
+----------------------------------------
+
+----------------------------------------
+TRIAL 60 STARTED
+----------------------------------------
+Start Time: 2024-05-10 19:57:58
+At time step 79 the agent is dead
+The agent had 0 food, 0 water, and 18 sleep.
+The total tree search depth for this trial was 179139. 
+The agent accessed its memory 1198602 times. 
+The agent cleared its short-term memory 19 times. 
+     State prediction error memory resets: 16. 
+     Hill memory resets: 3. 
+TRIAL 60 COMPLETE ✔
+End Time: 2024-05-10 20:07:08
+Total runtime for this trial (minutes/seconds): 09:10
+----------------------------------------
+Total hill visits: 103. 
+Total prediction errors: 588. 
+Total search depth: 4476949. 
+Total times memory accessed: 31058348. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 3. 
+Total times t == 100: 4. 
+Total time steps survived: 2283. 
+Total runtime so far (hours/minutes/seconds): 04:20:07
+----------------------------------------
+
+----------------------------------------
+TRIAL 61 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:07:07
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 18 sleep.
+The total tree search depth for this trial was 15713. 
+The agent accessed its memory 117816 times. 
+The agent cleared its short-term memory 2 times. 
+     State prediction error memory resets: 1. 
+     Hill memory resets: 1. 
+TRIAL 61 COMPLETE ✔
+End Time: 2024-05-10 20:07:59
+Total runtime for this trial (minutes/seconds): 00:52
+----------------------------------------
+Total hill visits: 104. 
+Total prediction errors: 589. 
+Total search depth: 4492662. 
+Total times memory accessed: 31176164. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 3. 
+Total times t == 100: 4. 
+Total time steps survived: 2305. 
+Total runtime so far (hours/minutes/seconds): 04:20:58
+----------------------------------------
+
+----------------------------------------
+TRIAL 62 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:07:58
+At time step 99 the agent is dead
+The agent had 15 food, 19 water, and 25 sleep.
+The total tree search depth for this trial was 155615. 
+The agent accessed its memory 970377 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 2. 
+TRIAL 62 COMPLETE ✔
+End Time: 2024-05-10 20:16:02
+Total runtime for this trial (minutes/seconds): 08:04
+----------------------------------------
+Total hill visits: 106. 
+Total prediction errors: 601. 
+Total search depth: 4648277. 
+Total times memory accessed: 32146541. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 3. 
+Total times t == 100: 5. 
+Total time steps survived: 2405. 
+Total runtime so far (hours/minutes/seconds): 04:29:01
+----------------------------------------
+
+----------------------------------------
+TRIAL 63 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:16:01
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 19 sleep.
+The total tree search depth for this trial was 16614. 
+The agent accessed its memory 118154 times. 
+The agent cleared its short-term memory 3 times. 
+     State prediction error memory resets: 2. 
+     Hill memory resets: 1. 
+TRIAL 63 COMPLETE ✔
+End Time: 2024-05-10 20:16:57
+Total runtime for this trial (minutes/seconds): 00:56
+----------------------------------------
+Total hill visits: 107. 
+Total prediction errors: 603. 
+Total search depth: 4664891. 
+Total times memory accessed: 32264695. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 3. 
+Total times t == 100: 5. 
+Total time steps survived: 2427. 
+Total runtime so far (hours/minutes/seconds): 04:29:56
+----------------------------------------
+
+----------------------------------------
+TRIAL 64 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:16:56
+At time step 99 the agent is dead
+The agent had 22 food, 15 water, and 19 sleep.
+The total tree search depth for this trial was 295345. 
+The agent accessed its memory 1919307 times. 
+The agent cleared its short-term memory 26 times. 
+     State prediction error memory resets: 21. 
+     Hill memory resets: 5. 
+TRIAL 64 COMPLETE ✔
+End Time: 2024-05-10 20:32:30
+Total runtime for this trial (minutes/seconds): 15:34
+----------------------------------------
+Total hill visits: 112. 
+Total prediction errors: 624. 
+Total search depth: 4960236. 
+Total times memory accessed: 34184002. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 3. 
+Total times t == 100: 6. 
+Total time steps survived: 2527. 
+Total runtime so far (hours/minutes/seconds): 04:45:29
+----------------------------------------
+
+----------------------------------------
+TRIAL 65 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:32:29
+At time step 92 the agent is dead
+The agent had 5 food, 0 water, and 2 sleep.
+The total tree search depth for this trial was 301272. 
+The agent accessed its memory 2044270 times. 
+The agent cleared its short-term memory 22 times. 
+     State prediction error memory resets: 17. 
+     Hill memory resets: 5. 
+TRIAL 65 COMPLETE ✔
+End Time: 2024-05-10 20:48:45
+Total runtime for this trial (minutes/seconds): 16:16
+----------------------------------------
+Total hill visits: 117. 
+Total prediction errors: 641. 
+Total search depth: 5261508. 
+Total times memory accessed: 36228272. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 6. 
+Total time steps survived: 2620. 
+Total runtime so far (hours/minutes/seconds): 05:01:44
+----------------------------------------
+
+----------------------------------------
+TRIAL 66 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:48:44
+At time step 99 the agent is dead
+The agent had 22 food, 17 water, and 19 sleep.
+The total tree search depth for this trial was 139086. 
+The agent accessed its memory 914192 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 4. 
+TRIAL 66 COMPLETE ✔
+End Time: 2024-05-10 20:55:37
+Total runtime for this trial (minutes/seconds): 06:53
+----------------------------------------
+Total hill visits: 121. 
+Total prediction errors: 646. 
+Total search depth: 5400594. 
+Total times memory accessed: 37142464. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 7. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 7. 
+Total time steps survived: 2720. 
+Total runtime so far (hours/minutes/seconds): 05:08:36
+----------------------------------------
+
+----------------------------------------
+TRIAL 67 STARTED
+----------------------------------------
+Start Time: 2024-05-10 20:55:36
+At time step 62 the agent is dead
+The agent had 0 food, 0 water, and 23 sleep.
+The total tree search depth for this trial was 189590. 
+The agent accessed its memory 1289073 times. 
+The agent cleared its short-term memory 18 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 3. 
+TRIAL 67 COMPLETE ✔
+End Time: 2024-05-10 21:05:12
+Total runtime for this trial (minutes/seconds): 09:36
+----------------------------------------
+Total hill visits: 124. 
+Total prediction errors: 661. 
+Total search depth: 5590184. 
+Total times memory accessed: 38431537. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 8. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 7. 
+Total time steps survived: 2783. 
+Total runtime so far (hours/minutes/seconds): 05:18:11
+----------------------------------------
+
+----------------------------------------
+TRIAL 68 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:05:11
+At time step 99 the agent is dead
+The agent had 13 food, 9 water, and 23 sleep.
+The total tree search depth for this trial was 322215. 
+The agent accessed its memory 2185619 times. 
+The agent cleared its short-term memory 17 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 2. 
+TRIAL 68 COMPLETE ✔
+End Time: 2024-05-10 21:20:28
+Total runtime for this trial (minutes/seconds): 15:17
+----------------------------------------
+Total hill visits: 126. 
+Total prediction errors: 676. 
+Total search depth: 5912399. 
+Total times memory accessed: 40617156. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 8. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 8. 
+Total time steps survived: 2883. 
+Total runtime so far (hours/minutes/seconds): 05:33:27
+----------------------------------------
+
+----------------------------------------
+TRIAL 69 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:20:27
+At time step 99 the agent is dead
+The agent had 18 food, 14 water, and 25 sleep.
+The total tree search depth for this trial was 124351. 
+The agent accessed its memory 816460 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 69 COMPLETE ✔
+End Time: 2024-05-10 21:26:08
+Total runtime for this trial (minutes/seconds): 05:41
+----------------------------------------
+Total hill visits: 127. 
+Total prediction errors: 682. 
+Total search depth: 6036750. 
+Total times memory accessed: 41433616. 
+Total times 25 >= t <= 50: 16. 
+Total times 50 >= t <= 75: 8. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 2983. 
+Total runtime so far (hours/minutes/seconds): 05:39:07
+----------------------------------------
+
+----------------------------------------
+TRIAL 70 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:26:07
+At time step 38 the agent is dead
+The agent had 0 food, 7 water, and 10 sleep.
+The total tree search depth for this trial was 73964. 
+The agent accessed its memory 504351 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 1. 
+TRIAL 70 COMPLETE ✔
+End Time: 2024-05-10 21:29:41
+Total runtime for this trial (minutes/seconds): 03:34
+----------------------------------------
+Total hill visits: 128. 
+Total prediction errors: 689. 
+Total search depth: 6110714. 
+Total times memory accessed: 41937967. 
+Total times 25 >= t <= 50: 17. 
+Total times 50 >= t <= 75: 8. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3022. 
+Total runtime so far (hours/minutes/seconds): 05:42:40
+----------------------------------------
+
+----------------------------------------
+TRIAL 71 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:29:40
+At time step 55 the agent is dead
+The agent had 11 food, 6 water, and 0 sleep.
+The total tree search depth for this trial was 195100. 
+The agent accessed its memory 1432984 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 1. 
+TRIAL 71 COMPLETE ✔
+End Time: 2024-05-10 21:38:35
+Total runtime for this trial (minutes/seconds): 08:55
+----------------------------------------
+Total hill visits: 129. 
+Total prediction errors: 699. 
+Total search depth: 6305814. 
+Total times memory accessed: 43370951. 
+Total times 25 >= t <= 50: 17. 
+Total times 50 >= t <= 75: 9. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3078. 
+Total runtime so far (hours/minutes/seconds): 05:51:34
+----------------------------------------
+
+----------------------------------------
+TRIAL 72 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:38:34
+At time step 29 the agent is dead
+The agent had 4 food, 0 water, and 13 sleep.
+The total tree search depth for this trial was 85245. 
+The agent accessed its memory 600103 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 2. 
+TRIAL 72 COMPLETE ✔
+End Time: 2024-05-10 21:42:42
+Total runtime for this trial (minutes/seconds): 04:08
+----------------------------------------
+Total hill visits: 131. 
+Total prediction errors: 703. 
+Total search depth: 6391059. 
+Total times memory accessed: 43971054. 
+Total times 25 >= t <= 50: 18. 
+Total times 50 >= t <= 75: 9. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3108. 
+Total runtime so far (hours/minutes/seconds): 05:55:41
+----------------------------------------
+
+----------------------------------------
+TRIAL 73 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:42:41
+At time step 54 the agent is dead
+The agent had 10 food, 0 water, and 18 sleep.
+The total tree search depth for this trial was 144737. 
+The agent accessed its memory 974873 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 1. 
+TRIAL 73 COMPLETE ✔
+End Time: 2024-05-10 21:49:21
+Total runtime for this trial (minutes/seconds): 06:40
+----------------------------------------
+Total hill visits: 132. 
+Total prediction errors: 710. 
+Total search depth: 6535796. 
+Total times memory accessed: 44945927. 
+Total times 25 >= t <= 50: 18. 
+Total times 50 >= t <= 75: 10. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3163. 
+Total runtime so far (hours/minutes/seconds): 06:02:20
+----------------------------------------
+
+----------------------------------------
+TRIAL 74 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:49:20
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 12 sleep.
+The total tree search depth for this trial was 58573. 
+The agent accessed its memory 425842 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 1. 
+TRIAL 74 COMPLETE ✔
+End Time: 2024-05-10 21:52:22
+Total runtime for this trial (minutes/seconds): 03:02
+----------------------------------------
+Total hill visits: 133. 
+Total prediction errors: 717. 
+Total search depth: 6594369. 
+Total times memory accessed: 45371769. 
+Total times 25 >= t <= 50: 18. 
+Total times 50 >= t <= 75: 10. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3185. 
+Total runtime so far (hours/minutes/seconds): 06:05:21
+----------------------------------------
+
+----------------------------------------
+TRIAL 75 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:52:21
+At time step 26 the agent is dead
+The agent had 10 food, 6 water, and 0 sleep.
+The total tree search depth for this trial was 131464. 
+The agent accessed its memory 879159 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 5. 
+TRIAL 75 COMPLETE ✔
+End Time: 2024-05-10 21:59:00
+Total runtime for this trial (minutes/seconds): 06:39
+----------------------------------------
+Total hill visits: 138. 
+Total prediction errors: 722. 
+Total search depth: 6725833. 
+Total times memory accessed: 46250928. 
+Total times 25 >= t <= 50: 19. 
+Total times 50 >= t <= 75: 10. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3212. 
+Total runtime so far (hours/minutes/seconds): 06:11:59
+----------------------------------------
+
+----------------------------------------
+TRIAL 76 STARTED
+----------------------------------------
+Start Time: 2024-05-10 21:58:59
+At time step 63 the agent is dead
+The agent had 0 food, 8 water, and 10 sleep.
+The total tree search depth for this trial was 172420. 
+The agent accessed its memory 1154719 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 76 COMPLETE ✔
+End Time: 2024-05-10 22:07:25
+Total runtime for this trial (minutes/seconds): 08:26
+----------------------------------------
+Total hill visits: 140. 
+Total prediction errors: 733. 
+Total search depth: 6898253. 
+Total times memory accessed: 47405647. 
+Total times 25 >= t <= 50: 19. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3276. 
+Total runtime so far (hours/minutes/seconds): 06:20:24
+----------------------------------------
+
+----------------------------------------
+TRIAL 77 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:07:24
+At time step 23 the agent is dead
+The agent had 0 food, 6 water, and 3 sleep.
+The total tree search depth for this trial was 144205. 
+The agent accessed its memory 1035416 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 1. 
+TRIAL 77 COMPLETE ✔
+End Time: 2024-05-10 22:14:37
+Total runtime for this trial (minutes/seconds): 07:13
+----------------------------------------
+Total hill visits: 141. 
+Total prediction errors: 744. 
+Total search depth: 7042458. 
+Total times memory accessed: 48441063. 
+Total times 25 >= t <= 50: 19. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 4. 
+Total times t == 100: 9. 
+Total time steps survived: 3300. 
+Total runtime so far (hours/minutes/seconds): 06:27:36
+----------------------------------------
+
+----------------------------------------
+TRIAL 78 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:14:36
+At time step 90 the agent is dead
+The agent had 10 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 168646. 
+The agent accessed its memory 1144954 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 2. 
+TRIAL 78 COMPLETE ✔
+End Time: 2024-05-10 22:22:38
+Total runtime for this trial (minutes/seconds): 08:02
+----------------------------------------
+Total hill visits: 143. 
+Total prediction errors: 756. 
+Total search depth: 7211104. 
+Total times memory accessed: 49586017. 
+Total times 25 >= t <= 50: 19. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 9. 
+Total time steps survived: 3391. 
+Total runtime so far (hours/minutes/seconds): 06:35:37
+----------------------------------------
+
+----------------------------------------
+TRIAL 79 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:22:37
+At time step 28 the agent is dead
+The agent had 4 food, 0 water, and 10 sleep.
+The total tree search depth for this trial was 46348. 
+The agent accessed its memory 351223 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 1. 
+TRIAL 79 COMPLETE ✔
+End Time: 2024-05-10 22:24:47
+Total runtime for this trial (minutes/seconds): 02:10
+----------------------------------------
+Total hill visits: 144. 
+Total prediction errors: 761. 
+Total search depth: 7257452. 
+Total times memory accessed: 49937240. 
+Total times 25 >= t <= 50: 20. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 9. 
+Total time steps survived: 3420. 
+Total runtime so far (hours/minutes/seconds): 06:37:46
+----------------------------------------
+
+----------------------------------------
+TRIAL 80 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:24:46
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 16 sleep.
+The total tree search depth for this trial was 69888. 
+The agent accessed its memory 465320 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 3. 
+TRIAL 80 COMPLETE ✔
+End Time: 2024-05-10 22:28:11
+Total runtime for this trial (minutes/seconds): 03:25
+----------------------------------------
+Total hill visits: 147. 
+Total prediction errors: 768. 
+Total search depth: 7327340. 
+Total times memory accessed: 50402560. 
+Total times 25 >= t <= 50: 20. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 9. 
+Total time steps survived: 3442. 
+Total runtime so far (hours/minutes/seconds): 06:41:10
+----------------------------------------
+
+----------------------------------------
+TRIAL 81 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:28:10
+At time step 30 the agent is dead
+The agent had 0 food, 18 water, and 21 sleep.
+The total tree search depth for this trial was 143709. 
+The agent accessed its memory 1001355 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 2. 
+TRIAL 81 COMPLETE ✔
+End Time: 2024-05-10 22:34:47
+Total runtime for this trial (minutes/seconds): 06:37
+----------------------------------------
+Total hill visits: 149. 
+Total prediction errors: 774. 
+Total search depth: 7471049. 
+Total times memory accessed: 51403915. 
+Total times 25 >= t <= 50: 21. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 9. 
+Total time steps survived: 3473. 
+Total runtime so far (hours/minutes/seconds): 06:47:46
+----------------------------------------
+
+----------------------------------------
+TRIAL 82 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:34:46
+At time step 34 the agent is dead
+The agent had 0 food, 18 water, and 14 sleep.
+The total tree search depth for this trial was 35734. 
+The agent accessed its memory 251825 times. 
+The agent cleared its short-term memory 4 times. 
+     State prediction error memory resets: 3. 
+     Hill memory resets: 1. 
+TRIAL 82 COMPLETE ✔
+End Time: 2024-05-10 22:36:27
+Total runtime for this trial (minutes/seconds): 01:41
+----------------------------------------
+Total hill visits: 150. 
+Total prediction errors: 777. 
+Total search depth: 7506783. 
+Total times memory accessed: 51655740. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 9. 
+Total time steps survived: 3508. 
+Total runtime so far (hours/minutes/seconds): 06:49:26
+----------------------------------------
+
+----------------------------------------
+TRIAL 83 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:36:26
+At time step 99 the agent is dead
+The agent had 22 food, 13 water, and 17 sleep.
+The total tree search depth for this trial was 121581. 
+The agent accessed its memory 807494 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 83 COMPLETE ✔
+End Time: 2024-05-10 22:42:15
+Total runtime for this trial (minutes/seconds): 05:49
+----------------------------------------
+Total hill visits: 152. 
+Total prediction errors: 782. 
+Total search depth: 7628364. 
+Total times memory accessed: 52463234. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 11. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 10. 
+Total time steps survived: 3608. 
+Total runtime so far (hours/minutes/seconds): 06:55:14
+----------------------------------------
+
+----------------------------------------
+TRIAL 84 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:42:14
+At time step 73 the agent is dead
+The agent had 4 food, 0 water, and 18 sleep.
+The total tree search depth for this trial was 220133. 
+The agent accessed its memory 1568391 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 3. 
+TRIAL 84 COMPLETE ✔
+End Time: 2024-05-10 22:52:23
+Total runtime for this trial (minutes/seconds): 10:09
+----------------------------------------
+Total hill visits: 155. 
+Total prediction errors: 790. 
+Total search depth: 7848497. 
+Total times memory accessed: 54031625. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 12. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 10. 
+Total time steps survived: 3682. 
+Total runtime so far (hours/minutes/seconds): 07:05:22
+----------------------------------------
+
+----------------------------------------
+TRIAL 85 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:52:22
+At time step 51 the agent is dead
+The agent had 0 food, 1 water, and 4 sleep.
+The total tree search depth for this trial was 145358. 
+The agent accessed its memory 952088 times. 
+The agent cleared its short-term memory 15 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 3. 
+TRIAL 85 COMPLETE ✔
+End Time: 2024-05-10 22:59:21
+Total runtime for this trial (minutes/seconds): 06:59
+----------------------------------------
+Total hill visits: 158. 
+Total prediction errors: 802. 
+Total search depth: 7993855. 
+Total times memory accessed: 54983713. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 13. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 10. 
+Total time steps survived: 3734. 
+Total runtime so far (hours/minutes/seconds): 07:12:20
+----------------------------------------
+
+----------------------------------------
+TRIAL 86 STARTED
+----------------------------------------
+Start Time: 2024-05-10 22:59:20
+At time step 99 the agent is dead
+The agent had 13 food, 13 water, and 21 sleep.
+The total tree search depth for this trial was 248052. 
+The agent accessed its memory 1683446 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 1. 
+TRIAL 86 COMPLETE ✔
+End Time: 2024-05-10 23:10:28
+Total runtime for this trial (minutes/seconds): 11:08
+----------------------------------------
+Total hill visits: 159. 
+Total prediction errors: 810. 
+Total search depth: 8241907. 
+Total times memory accessed: 56667159. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 13. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 11. 
+Total time steps survived: 3834. 
+Total runtime so far (hours/minutes/seconds): 07:23:27
+----------------------------------------
+
+----------------------------------------
+TRIAL 87 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:10:27
+At time step 99 the agent is dead
+The agent had 18 food, 18 water, and 12 sleep.
+The total tree search depth for this trial was 214256. 
+The agent accessed its memory 1421886 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 9. 
+     Hill memory resets: 4. 
+TRIAL 87 COMPLETE ✔
+End Time: 2024-05-10 23:20:44
+Total runtime for this trial (minutes/seconds): 10:17
+----------------------------------------
+Total hill visits: 163. 
+Total prediction errors: 819. 
+Total search depth: 8456163. 
+Total times memory accessed: 58089045. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 13. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 12. 
+Total time steps survived: 3934. 
+Total runtime so far (hours/minutes/seconds): 07:33:43
+----------------------------------------
+
+----------------------------------------
+TRIAL 88 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:20:43
+At time step 56 the agent is dead
+The agent had 0 food, 0 water, and 13 sleep.
+The total tree search depth for this trial was 126761. 
+The agent accessed its memory 858253 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 13. 
+     Hill memory resets: 1. 
+TRIAL 88 COMPLETE ✔
+End Time: 2024-05-10 23:26:45
+Total runtime for this trial (minutes/seconds): 06:02
+----------------------------------------
+Total hill visits: 164. 
+Total prediction errors: 832. 
+Total search depth: 8582924. 
+Total times memory accessed: 58947298. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 14. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 12. 
+Total time steps survived: 3991. 
+Total runtime so far (hours/minutes/seconds): 07:39:44
+----------------------------------------
+
+----------------------------------------
+TRIAL 89 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:26:44
+At time step 58 the agent is dead
+The agent had 0 food, 7 water, and 18 sleep.
+The total tree search depth for this trial was 123537. 
+The agent accessed its memory 789586 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 4. 
+TRIAL 89 COMPLETE ✔
+End Time: 2024-05-10 23:32:19
+Total runtime for this trial (minutes/seconds): 05:35
+----------------------------------------
+Total hill visits: 168. 
+Total prediction errors: 839. 
+Total search depth: 8706461. 
+Total times memory accessed: 59736884. 
+Total times 25 >= t <= 50: 22. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 12. 
+Total time steps survived: 4050. 
+Total runtime so far (hours/minutes/seconds): 07:45:18
+----------------------------------------
+
+----------------------------------------
+TRIAL 90 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:32:18
+At time step 40 the agent is dead
+The agent had 4 food, 0 water, and 10 sleep.
+The total tree search depth for this trial was 147417. 
+The agent accessed its memory 1039814 times. 
+The agent cleared its short-term memory 13 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 2. 
+TRIAL 90 COMPLETE ✔
+End Time: 2024-05-10 23:39:17
+Total runtime for this trial (minutes/seconds): 06:59
+----------------------------------------
+Total hill visits: 170. 
+Total prediction errors: 850. 
+Total search depth: 8853878. 
+Total times memory accessed: 60776698. 
+Total times 25 >= t <= 50: 23. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 12. 
+Total time steps survived: 4091. 
+Total runtime so far (hours/minutes/seconds): 07:52:16
+----------------------------------------
+
+----------------------------------------
+TRIAL 91 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:39:16
+At time step 37 the agent is dead
+The agent had 0 food, 6 water, and 7 sleep.
+The total tree search depth for this trial was 56455. 
+The agent accessed its memory 407804 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 1. 
+TRIAL 91 COMPLETE ✔
+End Time: 2024-05-10 23:42:05
+Total runtime for this trial (minutes/seconds): 02:49
+----------------------------------------
+Total hill visits: 171. 
+Total prediction errors: 855. 
+Total search depth: 8910333. 
+Total times memory accessed: 61184502. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 12. 
+Total time steps survived: 4129. 
+Total runtime so far (hours/minutes/seconds): 07:55:04
+----------------------------------------
+
+----------------------------------------
+TRIAL 92 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:42:04
+At time step 99 the agent is dead
+The agent had 18 food, 20 water, and 24 sleep.
+The total tree search depth for this trial was 98546. 
+The agent accessed its memory 641303 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 92 COMPLETE ✔
+End Time: 2024-05-10 23:46:29
+Total runtime for this trial (minutes/seconds): 04:25
+----------------------------------------
+Total hill visits: 173. 
+Total prediction errors: 860. 
+Total search depth: 9008879. 
+Total times memory accessed: 61825805. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 13. 
+Total time steps survived: 4229. 
+Total runtime so far (hours/minutes/seconds): 07:59:28
+----------------------------------------
+
+----------------------------------------
+TRIAL 93 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:46:28
+At time step 99 the agent is dead
+The agent had 17 food, 14 water, and 17 sleep.
+The total tree search depth for this trial was 134740. 
+The agent accessed its memory 910542 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 9. 
+     Hill memory resets: 2. 
+TRIAL 93 COMPLETE ✔
+End Time: 2024-05-10 23:52:30
+Total runtime for this trial (minutes/seconds): 06:02
+----------------------------------------
+Total hill visits: 175. 
+Total prediction errors: 869. 
+Total search depth: 9143619. 
+Total times memory accessed: 62736347. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 14. 
+Total time steps survived: 4329. 
+Total runtime so far (hours/minutes/seconds): 08:05:29
+----------------------------------------
+
+----------------------------------------
+TRIAL 94 STARTED
+----------------------------------------
+Start Time: 2024-05-10 23:52:29
+At time step 99 the agent is dead
+The agent had 18 food, 18 water, and 24 sleep.
+The total tree search depth for this trial was 286468. 
+The agent accessed its memory 2003415 times. 
+The agent cleared its short-term memory 18 times. 
+     State prediction error memory resets: 17. 
+     Hill memory resets: 1. 
+TRIAL 94 COMPLETE ✔
+End Time: 2024-05-11 00:05:45
+Total runtime for this trial (minutes/seconds): 13:16
+----------------------------------------
+Total hill visits: 176. 
+Total prediction errors: 886. 
+Total search depth: 9430087. 
+Total times memory accessed: 64739762. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 15. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 15. 
+Total time steps survived: 4429. 
+Total runtime so far (hours/minutes/seconds): 08:18:44
+----------------------------------------
+
+----------------------------------------
+TRIAL 95 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:05:44
+At time step 60 the agent is dead
+The agent had 5 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 155091. 
+The agent accessed its memory 1111378 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 1. 
+TRIAL 95 COMPLETE ✔
+End Time: 2024-05-11 00:12:33
+Total runtime for this trial (minutes/seconds): 06:49
+----------------------------------------
+Total hill visits: 177. 
+Total prediction errors: 893. 
+Total search depth: 9585178. 
+Total times memory accessed: 65851140. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 16. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 15. 
+Total time steps survived: 4490. 
+Total runtime so far (hours/minutes/seconds): 08:25:32
+----------------------------------------
+
+----------------------------------------
+TRIAL 96 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:12:32
+At time step 99 the agent is dead
+The agent had 7 food, 3 water, and 15 sleep.
+The total tree search depth for this trial was 344286. 
+The agent accessed its memory 2397131 times. 
+The agent cleared its short-term memory 17 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 2. 
+TRIAL 96 COMPLETE ✔
+End Time: 2024-05-11 00:27:54
+Total runtime for this trial (minutes/seconds): 15:22
+----------------------------------------
+Total hill visits: 179. 
+Total prediction errors: 908. 
+Total search depth: 9929464. 
+Total times memory accessed: 68248271. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 16. 
+Total times 75 >= t <= 100: 5. 
+Total times t == 100: 16. 
+Total time steps survived: 4590. 
+Total runtime so far (hours/minutes/seconds): 08:40:53
+----------------------------------------
+
+----------------------------------------
+TRIAL 97 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:27:53
+At time step 89 the agent is dead
+The agent had 6 food, 0 water, and 13 sleep.
+The total tree search depth for this trial was 246161. 
+The agent accessed its memory 1719360 times. 
+The agent cleared its short-term memory 16 times. 
+     State prediction error memory resets: 14. 
+     Hill memory resets: 2. 
+TRIAL 97 COMPLETE ✔
+End Time: 2024-05-11 00:39:15
+Total runtime for this trial (minutes/seconds): 11:22
+----------------------------------------
+Total hill visits: 181. 
+Total prediction errors: 922. 
+Total search depth: 10175625. 
+Total times memory accessed: 69967631. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 16. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 16. 
+Total time steps survived: 4680. 
+Total runtime so far (hours/minutes/seconds): 08:52:14
+----------------------------------------
+
+----------------------------------------
+TRIAL 98 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:39:14
+At time step 99 the agent is dead
+The agent had 12 food, 16 water, and 25 sleep.
+The total tree search depth for this trial was 316081. 
+The agent accessed its memory 2151194 times. 
+The agent cleared its short-term memory 16 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 1. 
+TRIAL 98 COMPLETE ✔
+End Time: 2024-05-11 00:53:42
+Total runtime for this trial (minutes/seconds): 14:28
+----------------------------------------
+Total hill visits: 182. 
+Total prediction errors: 937. 
+Total search depth: 10491706. 
+Total times memory accessed: 72118825. 
+Total times 25 >= t <= 50: 24. 
+Total times 50 >= t <= 75: 16. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 4780. 
+Total runtime so far (hours/minutes/seconds): 09:06:41
+----------------------------------------
+
+----------------------------------------
+TRIAL 99 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:53:41
+At time step 30 the agent is dead
+The agent had 0 food, 4 water, and 22 sleep.
+The total tree search depth for this trial was 116622. 
+The agent accessed its memory 840824 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 2. 
+TRIAL 99 COMPLETE ✔
+End Time: 2024-05-11 00:58:59
+Total runtime for this trial (minutes/seconds): 05:18
+----------------------------------------
+Total hill visits: 184. 
+Total prediction errors: 943. 
+Total search depth: 10608328. 
+Total times memory accessed: 72959649. 
+Total times 25 >= t <= 50: 25. 
+Total times 50 >= t <= 75: 16. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 4811. 
+Total runtime so far (hours/minutes/seconds): 09:11:58
+----------------------------------------
+
+----------------------------------------
+TRIAL 100 STARTED
+----------------------------------------
+Start Time: 2024-05-11 00:58:58
+At time step 72 the agent is dead
+The agent had 0 food, 18 water, and 21 sleep.
+The total tree search depth for this trial was 229697. 
+The agent accessed its memory 1574796 times. 
+The agent cleared its short-term memory 16 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 4. 
+TRIAL 100 COMPLETE ✔
+End Time: 2024-05-11 01:09:21
+Total runtime for this trial (minutes/seconds): 10:23
+----------------------------------------
+Total hill visits: 188. 
+Total prediction errors: 955. 
+Total search depth: 10838025. 
+Total times memory accessed: 74534445. 
+Total times 25 >= t <= 50: 25. 
+Total times 50 >= t <= 75: 17. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 4884. 
+Total runtime so far (hours/minutes/seconds): 09:22:20
+----------------------------------------
+
+----------------------------------------
+TRIAL 101 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:09:20
+At time step 21 the agent is dead
+The agent had 21 food, 0 water, and 23 sleep.
+The total tree search depth for this trial was 60232. 
+The agent accessed its memory 449823 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 2. 
+TRIAL 101 COMPLETE ✔
+End Time: 2024-05-11 01:12:19
+Total runtime for this trial (minutes/seconds): 02:59
+----------------------------------------
+Total hill visits: 190. 
+Total prediction errors: 960. 
+Total search depth: 10898257. 
+Total times memory accessed: 74984268. 
+Total times 25 >= t <= 50: 25. 
+Total times 50 >= t <= 75: 17. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 4906. 
+Total runtime so far (hours/minutes/seconds): 09:25:18
+----------------------------------------
+
+----------------------------------------
+TRIAL 102 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:12:18
+At time step 60 the agent is dead
+The agent had 6 food, 0 water, and 1 sleep.
+The total tree search depth for this trial was 143447. 
+The agent accessed its memory 988558 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 3. 
+TRIAL 102 COMPLETE ✔
+End Time: 2024-05-11 01:19:17
+Total runtime for this trial (minutes/seconds): 06:59
+----------------------------------------
+Total hill visits: 193. 
+Total prediction errors: 966. 
+Total search depth: 11041704. 
+Total times memory accessed: 75972826. 
+Total times 25 >= t <= 50: 25. 
+Total times 50 >= t <= 75: 18. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 4967. 
+Total runtime so far (hours/minutes/seconds): 09:32:16
+----------------------------------------
+
+----------------------------------------
+TRIAL 103 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:19:16
+At time step 47 the agent is dead
+The agent had 0 food, 0 water, and 11 sleep.
+The total tree search depth for this trial was 121688. 
+The agent accessed its memory 848515 times. 
+The agent cleared its short-term memory 11 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 1. 
+TRIAL 103 COMPLETE ✔
+End Time: 2024-05-11 01:24:45
+Total runtime for this trial (minutes/seconds): 05:29
+----------------------------------------
+Total hill visits: 194. 
+Total prediction errors: 976. 
+Total search depth: 11163392. 
+Total times memory accessed: 76821341. 
+Total times 25 >= t <= 50: 26. 
+Total times 50 >= t <= 75: 18. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5015. 
+Total runtime so far (hours/minutes/seconds): 09:37:44
+----------------------------------------
+
+----------------------------------------
+TRIAL 104 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:24:44
+At time step 48 the agent is dead
+The agent had 0 food, 2 water, and 11 sleep.
+The total tree search depth for this trial was 152709. 
+The agent accessed its memory 1025452 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 4. 
+TRIAL 104 COMPLETE ✔
+End Time: 2024-05-11 01:31:47
+Total runtime for this trial (minutes/seconds): 07:03
+----------------------------------------
+Total hill visits: 198. 
+Total prediction errors: 980. 
+Total search depth: 11316101. 
+Total times memory accessed: 77846793. 
+Total times 25 >= t <= 50: 27. 
+Total times 50 >= t <= 75: 18. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5064. 
+Total runtime so far (hours/minutes/seconds): 09:44:46
+----------------------------------------
+
+----------------------------------------
+TRIAL 105 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:31:46
+At time step 29 the agent is dead
+The agent had 3 food, 0 water, and 3 sleep.
+The total tree search depth for this trial was 82410. 
+The agent accessed its memory 556090 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 3. 
+TRIAL 105 COMPLETE ✔
+End Time: 2024-05-11 01:35:44
+Total runtime for this trial (minutes/seconds): 03:58
+----------------------------------------
+Total hill visits: 201. 
+Total prediction errors: 985. 
+Total search depth: 11398511. 
+Total times memory accessed: 78402883. 
+Total times 25 >= t <= 50: 28. 
+Total times 50 >= t <= 75: 18. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5094. 
+Total runtime so far (hours/minutes/seconds): 09:48:43
+----------------------------------------
+
+----------------------------------------
+TRIAL 106 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:35:43
+At time step 21 the agent is dead
+The agent had 2 food, 0 water, and 5 sleep.
+The total tree search depth for this trial was 117147. 
+The agent accessed its memory 787389 times. 
+The agent cleared its short-term memory 9 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 3. 
+TRIAL 106 COMPLETE ✔
+End Time: 2024-05-11 01:41:30
+Total runtime for this trial (minutes/seconds): 05:47
+----------------------------------------
+Total hill visits: 204. 
+Total prediction errors: 991. 
+Total search depth: 11515658. 
+Total times memory accessed: 79190272. 
+Total times 25 >= t <= 50: 28. 
+Total times 50 >= t <= 75: 18. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5116. 
+Total runtime so far (hours/minutes/seconds): 09:54:29
+----------------------------------------
+
+----------------------------------------
+TRIAL 107 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:41:29
+At time step 63 the agent is dead
+The agent had 6 food, 0 water, and 13 sleep.
+The total tree search depth for this trial was 162137. 
+The agent accessed its memory 1147392 times. 
+The agent cleared its short-term memory 10 times. 
+     State prediction error memory resets: 8. 
+     Hill memory resets: 2. 
+TRIAL 107 COMPLETE ✔
+End Time: 2024-05-11 01:48:45
+Total runtime for this trial (minutes/seconds): 07:16
+----------------------------------------
+Total hill visits: 206. 
+Total prediction errors: 999. 
+Total search depth: 11677795. 
+Total times memory accessed: 80337664. 
+Total times 25 >= t <= 50: 28. 
+Total times 50 >= t <= 75: 19. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5180. 
+Total runtime so far (hours/minutes/seconds): 10:01:44
+----------------------------------------
+
+----------------------------------------
+TRIAL 108 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:48:44
+At time step 65 the agent is dead
+The agent had 0 food, 0 water, and 18 sleep.
+The total tree search depth for this trial was 209150. 
+The agent accessed its memory 1438977 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 2. 
+TRIAL 108 COMPLETE ✔
+End Time: 2024-05-11 01:57:56
+Total runtime for this trial (minutes/seconds): 09:12
+----------------------------------------
+Total hill visits: 208. 
+Total prediction errors: 1011. 
+Total search depth: 11886945. 
+Total times memory accessed: 81776641. 
+Total times 25 >= t <= 50: 28. 
+Total times 50 >= t <= 75: 20. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5246. 
+Total runtime so far (hours/minutes/seconds): 10:10:55
+----------------------------------------
+
+----------------------------------------
+TRIAL 109 STARTED
+----------------------------------------
+Start Time: 2024-05-11 01:57:55
+At time step 45 the agent is dead
+The agent had 0 food, 4 water, and 13 sleep.
+The total tree search depth for this trial was 81597. 
+The agent accessed its memory 590290 times. 
+The agent cleared its short-term memory 6 times. 
+     State prediction error memory resets: 5. 
+     Hill memory resets: 1. 
+TRIAL 109 COMPLETE ✔
+End Time: 2024-05-11 02:01:27
+Total runtime for this trial (minutes/seconds): 03:32
+----------------------------------------
+Total hill visits: 209. 
+Total prediction errors: 1016. 
+Total search depth: 11968542. 
+Total times memory accessed: 82366931. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 20. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 17. 
+Total time steps survived: 5292. 
+Total runtime so far (hours/minutes/seconds): 10:14:26
+----------------------------------------
+
+----------------------------------------
+TRIAL 110 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:01:26
+At time step 99 the agent is dead
+The agent had 9 food, 12 water, and 24 sleep.
+The total tree search depth for this trial was 311932. 
+The agent accessed its memory 2139469 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 11. 
+     Hill memory resets: 3. 
+TRIAL 110 COMPLETE ✔
+End Time: 2024-05-11 02:15:00
+Total runtime for this trial (minutes/seconds): 13:34
+----------------------------------------
+Total hill visits: 212. 
+Total prediction errors: 1027. 
+Total search depth: 12280474. 
+Total times memory accessed: 84506400. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 20. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 18. 
+Total time steps survived: 5392. 
+Total runtime so far (hours/minutes/seconds): 10:27:59
+----------------------------------------
+
+----------------------------------------
+TRIAL 111 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:14:59
+At time step 23 the agent is dead
+The agent had 0 food, 7 water, and 9 sleep.
+The total tree search depth for this trial was 65853. 
+The agent accessed its memory 500064 times. 
+The agent cleared its short-term memory 5 times. 
+     State prediction error memory resets: 4. 
+     Hill memory resets: 1. 
+TRIAL 111 COMPLETE ✔
+End Time: 2024-05-11 02:18:02
+Total runtime for this trial (minutes/seconds): 03:03
+----------------------------------------
+Total hill visits: 213. 
+Total prediction errors: 1031. 
+Total search depth: 12346327. 
+Total times memory accessed: 85006464. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 20. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 18. 
+Total time steps survived: 5416. 
+Total runtime so far (hours/minutes/seconds): 10:31:01
+----------------------------------------
+
+----------------------------------------
+TRIAL 112 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:18:01
+At time step 52 the agent is dead
+The agent had 0 food, 1 water, and 9 sleep.
+The total tree search depth for this trial was 180111. 
+The agent accessed its memory 1273220 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 112 COMPLETE ✔
+End Time: 2024-05-11 02:25:50
+Total runtime for this trial (minutes/seconds): 07:49
+----------------------------------------
+Total hill visits: 214. 
+Total prediction errors: 1037. 
+Total search depth: 12526438. 
+Total times memory accessed: 86279684. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 21. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 18. 
+Total time steps survived: 5469. 
+Total runtime so far (hours/minutes/seconds): 10:38:49
+----------------------------------------
+
+----------------------------------------
+TRIAL 113 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:25:49
+At time step 23 the agent is dead
+The agent had 0 food, 6 water, and 3 sleep.
+The total tree search depth for this trial was 116366. 
+The agent accessed its memory 850746 times. 
+The agent cleared its short-term memory 8 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 2. 
+TRIAL 113 COMPLETE ✔
+End Time: 2024-05-11 02:31:13
+Total runtime for this trial (minutes/seconds): 05:24
+----------------------------------------
+Total hill visits: 216. 
+Total prediction errors: 1043. 
+Total search depth: 12642804. 
+Total times memory accessed: 87130430. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 21. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 18. 
+Total time steps survived: 5493. 
+Total runtime so far (hours/minutes/seconds): 10:44:12
+----------------------------------------
+
+----------------------------------------
+TRIAL 114 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:31:12
+At time step 60 the agent is dead
+The agent had 5 food, 0 water, and 7 sleep.
+The total tree search depth for this trial was 238909. 
+The agent accessed its memory 1650988 times. 
+The agent cleared its short-term memory 18 times. 
+     State prediction error memory resets: 15. 
+     Hill memory resets: 3. 
+TRIAL 114 COMPLETE ✔
+End Time: 2024-05-11 02:41:48
+Total runtime for this trial (minutes/seconds): 10:36
+----------------------------------------
+Total hill visits: 219. 
+Total prediction errors: 1058. 
+Total search depth: 12881713. 
+Total times memory accessed: 88781418. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 18. 
+Total time steps survived: 5554. 
+Total runtime so far (hours/minutes/seconds): 10:54:47
+----------------------------------------
+
+----------------------------------------
+TRIAL 115 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:41:47
+At time step 99 the agent is dead
+The agent had 18 food, 9 water, and 20 sleep.
+The total tree search depth for this trial was 293333. 
+The agent accessed its memory 1966123 times. 
+The agent cleared its short-term memory 16 times. 
+     State prediction error memory resets: 13. 
+     Hill memory resets: 3. 
+TRIAL 115 COMPLETE ✔
+End Time: 2024-05-11 02:53:55
+Total runtime for this trial (minutes/seconds): 12:08
+----------------------------------------
+Total hill visits: 222. 
+Total prediction errors: 1071. 
+Total search depth: 13175046. 
+Total times memory accessed: 90747541. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 19. 
+Total time steps survived: 5654. 
+Total runtime so far (hours/minutes/seconds): 11:06:54
+----------------------------------------
+
+----------------------------------------
+TRIAL 116 STARTED
+----------------------------------------
+Start Time: 2024-05-11 02:53:54
+At time step 99 the agent is dead
+The agent had 17 food, 10 water, and 25 sleep.
+The total tree search depth for this trial was 288833. 
+The agent accessed its memory 1903735 times. 
+The agent cleared its short-term memory 17 times. 
+     State prediction error memory resets: 13. 
+     Hill memory resets: 4. 
+TRIAL 116 COMPLETE ✔
+End Time: 2024-05-11 03:06:01
+Total runtime for this trial (minutes/seconds): 12:07
+----------------------------------------
+Total hill visits: 226. 
+Total prediction errors: 1084. 
+Total search depth: 13463879. 
+Total times memory accessed: 92651276. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 20. 
+Total time steps survived: 5754. 
+Total runtime so far (hours/minutes/seconds): 11:19:00
+----------------------------------------
+
+----------------------------------------
+TRIAL 117 STARTED
+----------------------------------------
+Start Time: 2024-05-11 03:06:00
+At time step 99 the agent is dead
+The agent had 15 food, 15 water, and 25 sleep.
+The total tree search depth for this trial was 323124. 
+The agent accessed its memory 2211631 times. 
+The agent cleared its short-term memory 12 times. 
+     State prediction error memory resets: 10. 
+     Hill memory resets: 2. 
+TRIAL 117 COMPLETE ✔
+End Time: 2024-05-11 03:19:11
+Total runtime for this trial (minutes/seconds): 13:11
+----------------------------------------
+Total hill visits: 228. 
+Total prediction errors: 1094. 
+Total search depth: 13787003. 
+Total times memory accessed: 94862907. 
+Total times 25 >= t <= 50: 29. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 21. 
+Total time steps survived: 5854. 
+Total runtime so far (hours/minutes/seconds): 11:32:10
+----------------------------------------
+
+----------------------------------------
+TRIAL 118 STARTED
+----------------------------------------
+Start Time: 2024-05-11 03:19:10
+At time step 45 the agent is dead
+The agent had 0 food, 3 water, and 15 sleep.
+The total tree search depth for this trial was 159725. 
+The agent accessed its memory 1110388 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 6. 
+     Hill memory resets: 1. 
+TRIAL 118 COMPLETE ✔
+End Time: 2024-05-11 03:25:46
+Total runtime for this trial (minutes/seconds): 06:36
+----------------------------------------
+Total hill visits: 229. 
+Total prediction errors: 1100. 
+Total search depth: 13946728. 
+Total times memory accessed: 95973295. 
+Total times 25 >= t <= 50: 30. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 21. 
+Total time steps survived: 5900. 
+Total runtime so far (hours/minutes/seconds): 11:38:45
+----------------------------------------
+
+----------------------------------------
+TRIAL 119 STARTED
+----------------------------------------
+Start Time: 2024-05-11 03:25:45
+At time step 99 the agent is dead
+The agent had 22 food, 13 water, and 7 sleep.
+The total tree search depth for this trial was 231397. 
+The agent accessed its memory 1534304 times. 
+The agent cleared its short-term memory 14 times. 
+     State prediction error memory resets: 12. 
+     Hill memory resets: 2. 
+TRIAL 119 COMPLETE ✔
+End Time: 2024-05-11 03:34:59
+Total runtime for this trial (minutes/seconds): 09:14
+----------------------------------------
+Total hill visits: 231. 
+Total prediction errors: 1112. 
+Total search depth: 14178125. 
+Total times memory accessed: 97507599. 
+Total times 25 >= t <= 50: 30. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 22. 
+Total time steps survived: 6000. 
+Total runtime so far (hours/minutes/seconds): 11:47:58
+----------------------------------------
+
+----------------------------------------
+TRIAL 120 STARTED
+----------------------------------------
+Start Time: 2024-05-11 03:34:58
+At time step 26 the agent is dead
+The agent had 13 food, 13 water, and 0 sleep.
+The total tree search depth for this trial was 30025. 
+The agent accessed its memory 259008 times. 
+The agent cleared its short-term memory 7 times. 
+     State prediction error memory resets: 7. 
+     Hill memory resets: 0. 
+TRIAL 120 COMPLETE ✔
+End Time: 2024-05-11 03:36:15
+Total runtime for this trial (minutes/seconds): 01:17
+----------------------------------------
+Total hill visits: 231. 
+Total prediction errors: 1119. 
+Total search depth: 14208150. 
+Total times memory accessed: 97766607. 
+Total times 25 >= t <= 50: 31. 
+Total times 50 >= t <= 75: 22. 
+Total times 75 >= t <= 100: 6. 
+Total times t == 100: 22. 
+Total time steps survived: 6027. 
+Total runtime so far (hours/minutes/seconds): 11:49:14
+----------------------------------------
+EXPERIMENT COMPLETE ✔.
+End Time: 2024-05-11 03:36:14
+TOTAL RUNTIME (hours/minutes/seconds): 11:49:13
+AVERAGE RUNTIME PER TIME STEP: 7.060 seconds
+Average hill visits per time step: 0.038. 
+Average predition errors per time step: 0.186. 
+Average search depth per time step: 2357. 
+Average times memory accessed per time step: 16221. 
+----------------------------------------
+SL run complete

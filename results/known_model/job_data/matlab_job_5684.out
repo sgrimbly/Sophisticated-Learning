@@ -1,0 +1,133 @@
+Running main with ALGORITHM=known_large_MCT, SEED=58, HORIZON=0, K_FACTOR=0.7, ROOT_FOLDER=/home/grmstj001, MCT=4, NUM_MCT=100, AUTO_REST=0
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2024 The MathWorks, Inc.
+                  R2024a (24.1.0.2537033) 64-bit (glnxa64)
+                             February 21, 2024
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+
+ans = 
+
+  struct with fields:
+
+     Type: 'twister'
+     Seed: 58
+    State: [625x1 uint32]
+
+Running with memory...
+     1
+
+[Warning: The value of local variables may have been changed to match the
+globals.  Future versions of MATLAB will require that you declare a variable to
+be global before you use that variable.] 
+[> In known_large_MCT (line 337)
+In main (line 50)] 
+     2
+
+     3
+
+     4
+
+     5
+
+     6
+
+     7
+
+     8
+
+     9
+
+    10
+
+    11
+
+    12
+
+    13
+
+    14
+
+    15
+
+    16
+
+    17
+
+    18
+
+    19
+
+    20
+
+    21
+
+Known large MCT run complete
+
+--------------------------------------------------------------------------------
+          Segmentation violation detected at 2024-05-12 12:25:05 +0200
+--------------------------------------------------------------------------------
+
+Configuration:
+  Crash Decoding           : Disabled - No sandbox or build area path
+  Crash Mode               : continue (default)
+  Default Encoding         : UTF-8
+  Deployed                 : false
+  GNU C Library            : 2.34 stable
+  Graphics Driver          : Uninitialized software 
+  Graphics card 1          : 0x102b ( 0x102b ) 0x536 Version 0.0.0.0 (0-0-0)
+  Java Version             : Java 1.8.0_202-b08 with Oracle Corporation Java HotSpot(TM) 64-Bit Server VM mixed mode
+  MATLAB Architecture      : glnxa64
+  MATLAB Entitlement ID    : 7116308
+  MATLAB Root              : /opt/exp_soft/MATLAB/R2024a
+  MATLAB Version           : 24.1.0.2537033 (R2024a)
+  OpenGL                   : software
+  Operating System         : "Rocky Linux release 9.3 (Blue Onyx)"
+  Process ID               : 1319346
+  Processor ID             : x86 Family 6 Model 143 Stepping 8, GenuineIntel
+  Session Key              : abb2cd7f-2a83-4bf5-a53d-018636e1fce6
+  Window System            : No active display
+
+Fault Count: 1
+
+
+Abnormal termination:
+Segmentation violation
+
+Current Thread: 'GTP_4' id 139724244334144
+
+Register State (from fault):
+  RAX = 0000000000000020  RBX = 00007f1415f32960
+  RCX = 0000000000000000  RDX = 0000000000000001
+  RSP = 00007f1415f328b0  RBP = 00007f1415f329b0
+  RSI = 00007f13a4249f10  RDI = 00007f1415f32950
+
+   R8 = 00007f140c0e9600   R9 = 0000000000000000
+  R10 = 00007ffdb5bec080  R11 = 75782c4ec4734a27
+  R12 = 00007f1415f32950  R13 = 00007f140c1368c0
+  R14 = 00000000ffffffeb  R15 = 00007f1415f32900
+
+  RIP = 00007f132dcaa494  EFL = 0000000000010202
+
+   CS = 0033   FS = 0000   GS = 0000
+
+Stack Trace (from fault):
+[  0] 0x00007f132dcaa494 /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/ddux/ddux_matlab/ddux_matlab/mwddux_matlab.so+00586900
+[  1] 0x00007f143e47be0f /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/cppmicroservices_compendium/ddux_fctrl_impl/../../../../bin/glnxa64/libmwddux.so+00126479
+[  2] 0x00007f1446e9dd14 /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/libmwfoundation_threadpool.so+00163092
+[  3] 0x00007f1446ea1f10 /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/libmwfoundation_threadpool.so+00179984
+[  4] 0x00007f1446ea26a9 /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/libmwfoundation_threadpool.so+00181929
+[  5] 0x00007f1446facd10 /opt/exp_soft/MATLAB/R2024a/bin/glnxa64/../../sys/os/glnxa64/libstdc++.so.6+00879888
+[  6] 0x00007f1446c9f802                                   /lib64/libc.so.6+00653314
+[  7] 0x00007f1446c3f450                                   /lib64/libc.so.6+00259152
+
+** This crash report has been saved to disk as /home/grmstj001/matlab_crash_dump.1319346-1 **
+
+
+
+MATLAB is exiting because of fatal error
+/var/spool/slurmd.spool/job05684/slurm_script: line 31: 1319346 Killed                  matlab -nodisplay -nosplash -nodesktop -r "addpath(genpath('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/src/MATLAB')); main('known_large_MCT', '58', '0', '0.7', '/home/grmstj001', '4', '100', '0'); exit;"
