@@ -1,5 +1,5 @@
 function [survived] = BA_UCB(seed)
-    rng(str2double(seed));
+    rng(seed);
     rng
     %%% Hyper Params %%%
     % clear

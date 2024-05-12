@@ -1,40 +1,30 @@
 function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest, results_file_name)
     % Check the number of arguments and set default values if necessary
-    if nargin < 1
-        algorithm = 'model_free_RL';  % Default value for algorithm
-    end
-    if nargin < 2
-        seed = '1';  % Default seed should be an integer
-    end
-    if nargin < 3
-        horizon = 1000;  % Default value for horizon
-    end
-    if nargin < 4
-        k_factor = 1.5;  % Default value for k_factor
-    end
-    if nargin < 5
-        root_folder = '/home/grmstj001';  % Default value for root_folder
-    end
-    if nargin < 6
-        mct = 500;  % Default value for mct
-    end
-    if nargin < 7
-        num_mct = 10;  % Default value for num_mct
-    end
-    if nargin < 8
-        auto_rest = 0;  % Default value for auto_rest (assumed memory is usually enabled)
-    end
-    if nargin < 9
-        if algorithm == 'model_free_RL' 
-            results_file_name = 'results_model_free_RL.txt';
-        elseif algorithm == 'model_mixed_RL'
-            results_file_name = 'results_model_mixed_RL.txt';
-        else
-            results_file_name = 'results.txt';
-        end
+    arguments
+        algorithm char {mustBeMember(algorithm,{'model_mixed_RL','model_free_RL','SL','SI','BA','BAUCB','known_large_MCT'})} = 'model_mixed_RL';
+        seed (1,1) double {mustBeInteger} = 1;  % Seed MUST be an integer
+        horizon (1,1) double {mustBeInteger, mustBePositive} = 1000;
+        k_factor (1,1) double = 1.5;
+        root_folder char = '/home/grmstj001';
+        mct (1,1) double {mustBeInteger, mustBePositive} = 500;
+        num_mct (1,1) double {mustBeInteger, mustBePositive} = 10;
+        auto_rest (1,1) logical = false; % Default is false, meaning memory is usually enabled
+        results_file_name char = ''; % Will be set later if empty
     end
 
-    % Directory and path setup
+    % Set results_file_name if it was not provided, now incorporating the seed
+    if isempty(results_file_name) 
+        switch algorithm
+            case 'model_free_RL'
+                results_file_name = sprintf('results_model_free_RL_Seed%d.txt', seed);
+            case 'model_mixed_RL'
+                results_file_name = sprintf('results_model_mixed_RL_Seed%d.txt', seed);
+            otherwise
+                results_file_name = sprintf('results_Seed%d.txt', seed); 
+        end
+    end
+    
+    % Directory and path setup (unchanged)
     currentDir = fileparts(mfilename('fullpath'));
     srcPath = fullfile(currentDir, '../MATLAB');
     fullSrcPath = genpath(srcPath);

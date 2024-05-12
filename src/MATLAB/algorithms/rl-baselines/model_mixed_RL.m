@@ -1,7 +1,7 @@
 function [survival] = model_mixed_RL(seed, results_file_name)
     %clear
     %class(seed)
-    rng(str2double(seed));
+    rng(seed);
     % rng(seed)
     %file_name = strcat(num2str(seed),'.txt');
     file_name = '07k_mixed.txt';
@@ -169,7 +169,7 @@ function [survival] = model_mixed_RL(seed, results_file_name)
     observation_count = 0;
 
     % results_file_name = fprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_mixed_results_seed%d.txt', seed);    
-    total_trials = 300000;  % Total number of trials
+    total_trials = 1000000;  % Total number of trials
     percent_interval = total_trials * 0.01;  % Calculate 1% of the total number of trials
     
     for trial = 1:total_trials
@@ -342,7 +342,10 @@ function [survival] = model_mixed_RL(seed, results_file_name)
         end
 
         % Open or create a file to append the data
-        fid = fopen(results_file_name, 'a+');       
+        fid = fopen(results_file_name, 'a+');
+        if fid == -1  % fopen returns -1 if it fails
+            error('Error opening file: %s', results_file_name);
+        end
         fprintf(fid, 'time_steps_survived: %g\n', t);
         fclose(fid);
 
@@ -371,8 +374,6 @@ function [survival] = model_mixed_RL(seed, results_file_name)
         % fwrite(fid, 'overall_mov_av: ');
         % fprintf(fid, '%g,', t_pref_mv_av);
         % fprintf(fid, '%g\n','');
-
-        fclose(fid);
         t = 1;
         time_since_food = 0;
         time_since_water = 0;

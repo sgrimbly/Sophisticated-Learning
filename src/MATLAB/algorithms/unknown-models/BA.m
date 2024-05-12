@@ -1,6 +1,6 @@
 function [survived] = BA(seed)
 
-    rng(str2double(seed));
+    rng(seed);
     rng
 
     hill_1 = 55;

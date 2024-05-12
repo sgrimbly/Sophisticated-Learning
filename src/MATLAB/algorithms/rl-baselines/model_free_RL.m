@@ -1,7 +1,7 @@
 function [survival] = model_free_RL(seed, results_file_name)
     % clear
     %class(seed)
-    rng(str2double(seed));
+    rng(seed);
     % rng(seed)
     %file_name = strcat(num2str(seed),'.txt');
     file_name = '07k.txt';
@@ -163,7 +163,6 @@ function [survival] = model_free_RL(seed, results_file_name)
     observation_count = 0;
 
     fprintf('Seed value: %d\n', seed);  % This will print "Seed value: 1" to the console
-    results_file_name = fprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_free_results_seed%d.txt', seed);    
     total_trials = 1000000;  % Total number of trials
     percent_interval = total_trials * 0.01;  % Calculate 1% of the total number of trials
     

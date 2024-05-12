@@ -34,7 +34,7 @@ function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct, auto_
     %   Ensure that the input parameters are in string format as the function converts them into double
     %   for computational purposes within the script.
 
-    rng(str2double(seed))
+    rng(seed)
     rng
     %file_name = strcat(seed,'_hor',horizon,'.txt');
     path = [root '/MATLAB-experiments/experiments/known_model/'];

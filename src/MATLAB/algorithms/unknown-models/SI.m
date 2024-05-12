@@ -1,5 +1,5 @@
 function [survived] = SI(seed)
-    rng(str2double(seed))
+    rng(seed)
     rng
 
     hill_1 = 55;
