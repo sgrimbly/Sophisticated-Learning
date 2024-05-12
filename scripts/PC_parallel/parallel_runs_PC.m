@@ -3,33 +3,27 @@ USE_WEIGHTS_AND_BIASES = false;
 
 % Ensure a parallel pool is open with a specified number of workers
 if isempty(gcp('nocreate'))
-    parpool(24); 
+    parpool(16); 
 end
 
 % Directory and path setup
 currentDir = fileparts(mfilename('fullpath'));
-srcPath = fullfile(currentDir, '../../../MATLAB');
+srcPath = fullfile(currentDir, '../..');
 fullSrcPath = genpath(srcPath);
 addpath(fullSrcPath);
 
-% Define the algorithms and their currently running or completed seeds
-algorithms = {'SL', 'SI', 'BA', 'BAUCB'};
-completedOrRunningSeeds = struct(...
-    'SL', [1:16 18:30], ...       % SL from 1 to 16 and 18 to 30, except seed 17
-    'SI', [1:30], ...             % SI from 1 to 30 (no issues reported for SI)
-    'BA', [1:10 13:18 21 22 29 30], ...   % BA from 1 to 10, 13 to 18, 21, 22, 29, 30
-    'BAUCB', [1:5 8] ...          % BAUCB from 1 to 5, 8
-);
+% Define the new algorithms
+algorithms = {'model_free_RL'}; % other algorithms are commented out for clarity
 
-% Parameters
-horizon = 1000;  % Example parameter
-k_factor = 1.5;  % Example parameter
-root_folder = 'defaultFolder';  % Example parameter
-mct = 500;  % Example parameter
-num_mct = 10;  % Example parameter
+% Set experiment parameters
+horizon = 1000;
+k_factor = 1.5;
+root_folder = 'defaultFolder';
+mct = 500;
+num_mct = 10;
 
+% Initialize Weights & Biases if required
 if USE_WEIGHTS_AND_BIASES
-    % Initialize Weights & Biases using Python
     try
         py.importlib.import_module('wandb');
         wb = py.wandb.init(pyargs('project','active_inference_agent', 'entity', 'sgrimbly', 'resume', 'allow'));
@@ -39,17 +33,16 @@ if USE_WEIGHTS_AND_BIASES
     end
 end
 
-% Make sure the directory for output logs exists
-outputLogDir = fullfile(currentDir, '../output_logs');
+% Ensure output log directory exists
+outputLogDir = 'C:\Users\stjoh\Documents\ActiveInference\Sophisticated-Learning\results\output_logs';
 if ~exist(outputLogDir, 'dir')
     mkdir(outputLogDir);
 end
 
-% Construct list of experiments to run based on remaining seeds
+% Construct list of experiments
 experimentsToRun = {};
 for i = 1:length(algorithms)
-    remainingSeeds = setdiff(1:30, completedOrRunningSeeds.(algorithms{i}));
-    for s = remainingSeeds
+    for s = 1:30
         experimentsToRun{end+1} = struct('algorithm', algorithms{i}, 'seed', s);
     end
 end
@@ -63,6 +56,14 @@ end
 % Total number of experiments
 totalExperiments = numel(experimentsToRun);
 
+% Function to check memory usage
+function check_memory()
+    [usermem, sysmem] = memory;
+    fprintf('Memory used by MATLAB: %g GB\n', usermem.MemUsedMATLAB / 1e9);
+    fprintf('Total system memory available: %g GB\n', sysmem.PhysicalMemory.Total / 1e9);
+    fprintf('Memory available for data: %g GB\n', sysmem.PhysicalMemory.Available / 1e9);
+end
+
 % Use parfor for parallel execution over all experiments
 parfor idx = 1:totalExperiments
     expData = experimentsToRun{idx};
@@ -71,7 +72,7 @@ parfor idx = 1:totalExperiments
     seedStr = num2str(seed);  % Convert seed to string if necessary
 
     % Construct output file name
-    outputFileName = fullfile(outputLogDir, sprintf('output_%s_seed%d.txt', algorithm, seed));
+    outputFileName = fullfile(outputLogDir, fprintf('output_%s_seed%d.txt', algorithm, seed));
 
     % Start capturing output to file
     diary(outputFileName);
@@ -79,26 +80,33 @@ parfor idx = 1:totalExperiments
 
     fprintf('Running %s with seed %d...\n', algorithm, seed);
     try
+        % Periodic memory check before execution
+        check_memory();
+
+        % Call the main function or specific model function here
         survived = main(algorithm, seedStr, horizon, k_factor, root_folder, mct, num_mct);
-        
+
+        % Log survived data to W&B if needed
         if USE_WEIGHTS_AND_BIASES
-            % Log survived data to W&B
             for j = 1:length(survived)
-                step_data = py.dict(pyargs('algorithm', algorithm, 'seed', seed, ...
-                                           'trial', j, 'survived', double(survived(j))));
+                step_data = py.dict(pyargs('algorithm', algorithm, 'seed', seed, 'trial', j, 'survived', double(survived(j))));
                 py.wandb.log(step_data);
             end
         end
+
+        % Periodic memory check after execution
+        check_memory();
     catch e
         fprintf('Error occurred in %s with seed %d: %s\n', algorithm, seed, e.message);
+        check_memory();  % Check memory also in case of an error
+    finally
+        % Stop capturing output to file
+        diary off;
     end
-
-    % Stop capturing output to file
-    diary off;
 end
 
+% Close the W&B session if initialized
 if USE_WEIGHTS_AND_BIASES
-    % Close the W&B session
     wb.finish();
 end
 

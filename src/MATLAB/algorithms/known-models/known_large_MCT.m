@@ -136,8 +136,6 @@ function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct, auto_
 
     survival(:) = zeros(1, 70);
 
-    %why these? wtf is happening?
-
     D{1} = normalise(D{1});
     num_factors = 1;
     T = 27; % what is this
@@ -172,7 +170,7 @@ function [] = known_large_MCT(seed, horizon, k_factor, root, mct, num_mct, auto_
 
     for i = 1:num_states
 
-        if i ~= [10, 20, 30, 40, 50, 60, 70, 80, 90]
+        if i ~= [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
             B{1}(:, i, 3) = circshift(B{1}(:, i, 3), 1); % move right
         end
 

@@ -1,4 +1,4 @@
-function [survival] = model_free_RL(seed)
+function [survival] = model_free_RL(seed, results_file_name)
     % clear
     %class(seed)
     rng(str2double(seed));
@@ -112,12 +112,6 @@ function [survival] = model_free_RL(seed)
                               0, 0.05, 0.95, 0;
                               0, 0, 0.05 0.95];
 
-        % Uniform prior over season transitions. This is what the agent must
-        % learn
-        b{2}(:, :, action) = [0.25, 0.25, 0.25 0.25;
-                              0.25, 0.25, 0.25, 0.25;
-                              0.25, 0.25, 0.25, 0.25;
-                              0.25, 0.25, 0.25 0.25];
     end
 
     b = B;
@@ -141,7 +135,7 @@ function [survival] = model_free_RL(seed)
     for i = 1:num_states
 
         if i ~= [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
-            B{1}(:, i, 4) = circshift(B{1}(:, i, 4), 10); % move rup
+            B{1}(:, i, 4) = circshift(B{1}(:, i, 4), 10); % move up
         end
 
     end
@@ -168,8 +162,16 @@ function [survival] = model_free_RL(seed)
     t = 1;
     observation_count = 0;
 
-    for trial = 1:1000000
-
+    fprintf('Seed value: %d\n', seed);  % This will print "Seed value: 1" to the console
+    results_file_name = fprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_free_results_seed%d.txt', seed);    
+    total_trials = 1000000;  % Total number of trials
+    percent_interval = total_trials * 0.01;  % Calculate 1% of the total number of trials
+    
+    for trial = 1:total_trials
+        if mod(trial, percent_interval) == 0  % Check if the current trial is at 1% interval
+            percent_complete = (trial / total_trials) * 100;  % Calculate the percentage completed
+            fprintf('Completed %.0f%% of the trials.\n', percent_complete);  % Print progress to the console
+        end
         if trial > 250000
             ep = 40;
         elseif trial > 500000
@@ -304,6 +306,11 @@ function [survival] = model_free_RL(seed)
             alive_status = 0;
         end
 
+        % Open or create a file to append the data
+        fid = fopen(results_file_name, 'a+');       
+        fprintf(fid, 'time_steps_survived: %g\n', t);
+        fclose(fid);
+
         % t_pref_mv_av = movmean(pref_match, 9);
         % t_food_mv_av = movmean(t_food_plot,9);
         % t_water_mv_av = movmean(t_water_plot,9);
@@ -311,8 +318,8 @@ function [survival] = model_free_RL(seed)
         % fid =fopen('results.txt', 'w' );
         %file_name = strcat(seed,'.txt');
         %file_name = 'model_free_results.txt';
-        fid = fopen(file_name, 'a+');
-        fprintf(fid, '%f\n', t);
+        % fid = fopen(file_name, 'a+');
+        % fprintf(fid, '%f\n', t);
         %fwrite(fid, 'time_steps_survived: ');
         %fprintf(fid, '%g,', t);
         %printf(fid, '%g\n','');
@@ -330,7 +337,7 @@ function [survival] = model_free_RL(seed)
         % fprintf(fid, '%g,', t_pref_mv_av);
         % fprintf(fid, '%g\n','');
 
-        fclose(fid);
+        % fclose(fid);
         t = 1;
         time_since_food = 0;
         time_since_water = 0;

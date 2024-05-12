@@ -1,4 +1,4 @@
-function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest)
+function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest, results_file_name)
     % Check the number of arguments and set default values if necessary
     if nargin < 1
         algorithm = 'model_free_RL';  % Default value for algorithm
@@ -23,6 +23,15 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     end
     if nargin < 8
         auto_rest = 0;  % Default value for auto_rest (assumed memory is usually enabled)
+    end
+    if nargin < 9
+        if algorithm == 'model_free_RL' 
+            results_file_name = 'results_model_free_RL.txt';
+        elseif algorithm == 'model_mixed_RL'
+            results_file_name = 'results_model_mixed_RL.txt';
+        else
+            results_file_name = 'results.txt';
+        end
     end
 
     % Directory and path setup
@@ -50,10 +59,10 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);
             disp('Known large MCT run complete');
         case 'model_free_RL'
-            survived = model_free_RL(seed);
+            survived = model_free_RL(seed, results_file_name);
             disp('Model free RL run complete');
         case 'model_mixed_RL'
-            survived = model_mixed_RL(seed);
+            survived = model_mixed_RL(seed, results_file_name);
             disp('Model mixed RL run complete');
         otherwise
             error('Unknown algorithm specified');
