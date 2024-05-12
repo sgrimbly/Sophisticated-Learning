@@ -12,6 +12,9 @@
 #SBATCH --mem=$MEMORY_ALLOCATION                  # Memory placeholder
 #SBATCH --output=matlab_job_%j.out                # Standard output and error log
 
+# Currently excluding these nodes on HEX because there were issues with jobs not starting/ending correctly. MATLAB related?
+#SBATCH --exclude=srvrochpc103,srvrochpc107       # Exclude these nodes
+
 # Email notifications:
 #SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
 

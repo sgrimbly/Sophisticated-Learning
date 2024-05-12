@@ -5,24 +5,41 @@ module load software/matlab-R2024a
 
 # Define the parameter ranges
 declare -a ALGORITHMS=("SI" "SL" "BA" "BAUCB")
-declare -i START_SEED=31  # Start seed number
-declare -i END_SEED=50    # End seed number
+declare -a MISSING_SI_SEEDS=() # All necessary SI seeds from 1 to 130 are accounted for
+declare -a MISSING_SL_SEEDS=() # All necessary SL seeds from 1 to 130 are accounted for
+declare -a MISSING_BA_SEEDS=() # Adjusted to include only remaining BA seeds
+declare -a MISSING_BAUCB_SEEDS=(111 128 129) # Remaining seeds for BAUCB to run
 
 # These params are not used (yet) for unknown model algos as of 30/4/2024
 export HORIZON="2"
 export K_FACTOR="0.7"
 export MCT="3"
 export NUM_MCT="100"
-export ROOT_FOLDER="/media/labs"  # Adjust as necessary
+export ROOT_FOLDER="/home/grmstj001"  # Adjust as necessary
 
 # Base configuration
 export TIME_LIMIT="72:00:00"
-export MEMORY_ALLOCATION="2G"
+export MEMORY_ALLOCATION="4G"
 export SCRIPT_PATH="~/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
 
 for ALGORITHM in "${ALGORITHMS[@]}"
 do
-    for ((SEED=START_SEED; SEED<=END_SEED; SEED++))
+    case "$ALGORITHM" in
+        "SI")
+            SEEDS_TO_RUN="${MISSING_SI_SEEDS[@]}"
+            ;;
+        "SL")
+            SEEDS_TO_RUN="${MISSING_SL_SEEDS[@]}"
+            ;;
+        "BA")
+            SEEDS_TO_RUN="${MISSING_BA_SEEDS[@]}"
+            ;;
+        "BAUCB")
+            SEEDS_TO_RUN="${MISSING_BAUCB_SEEDS[@]}"
+            ;;
+    esac
+
+    for SEED in $SEEDS_TO_RUN
     do
         # Configure the job name to include parameter info for easier tracking
         export ALGORITHM  # Export the ALGORITHM for each job
