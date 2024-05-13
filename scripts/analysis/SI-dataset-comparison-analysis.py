@@ -10,11 +10,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 
+BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
+
 # Constants
-EXCEL_FILE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\SI_final_results.xlsx'
-SURVIVAL_FOLDER = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\survival'
-PYTHON_SURVIVAL_FOLDER = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\python-SI'
-FILE_PATTERN = re.compile(r"\d{2}-\d{2}-\d{2}-\d{3}_seed_(\d+)_SI_experiment\.txt")
+EXCEL_FILE_PATH = BASE_PATH + 'results\\unknown_model\\SI_final_results_RowanOriginal.xlsx'
+SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\survival'
+PYTHON_SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\python-SI'
+
+FILE_PATTERN = re.compile(r"SI_Seed(\d+)_\d{2}-\d{2}-\d{2}-\d{3}\.txt")
 PYTHON_FILE_PATTERN = re.compile(r"slurm-\d+\.out") 
 
 # Setup logging

@@ -1,60 +1,167 @@
-# TODO: Update logic of script to match the Python version
-
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import make_interp_spline
 import os
 import re
 from datetime import datetime
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from scipy.stats import ttest_ind, t, sem
+import logging
 
-# Specify the output folder here
-OUTPUT_FOLDER = 'path_to_data_folder'
+# Setup basic configuration for logging
+logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', filemode='w',
+                    format='%(levelname)s:%(message)s')
 
-# Function to load data from a given file path
+# Specify the output folder and regex pattern
+BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
+SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\survival'
+file_pattern = re.compile(r"([A-Z]+)_Seed(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
+
+# Load data from file paths
 def load_data(file_path):
     with open(file_path, 'r') as file:
-        data = [float(line.strip()) for line in file.readlines()]
+        data = np.array([float(line.strip()) for line in file.readlines()])
     return data
 
-# Function to get all files in the specified directory that match the pattern
 def get_files(directory):
-    file_pattern = re.compile(r"(.+)_Seed(\d+)_Hor(\d+)_KF(\d+)_MCT(\d+)_Num(\d+)_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})")
     for file_name in os.listdir(directory):
-        if file_pattern.match(file_name):
-            yield os.path.join(directory, file_name), file_pattern.match(file_name).groups()
+        match = file_pattern.match(file_name)
+        if match:
+            yield os.path.join(directory, file_name), match.groups()
+        else:
+            print("Did not match:", file_name)
 
-# Load data from files and sort them by algorithm and seed
+def perform_statistical_comparison(results):
+    algorithms = list(results.keys())
+    for i in range(len(algorithms)):
+        for j in range(i + 1, len(algorithms)):
+            algo1, algo2 = algorithms[i], algorithms[j]
+            data1, data2 = results[algo1], results[algo2]
+
+            # Perform t-test
+            t_stat, p_value = ttest_ind(data1, data2)
+            ci1 = t.interval(0.95, len(data1)-1, loc=np.mean(data1), scale=sem(data1))
+            ci2 = t.interval(0.95, len(data2)-1, loc=np.mean(data2), scale=sem(data2))
+
+            # Log the results
+            logging.info(f"\n{algo1} vs. {algo2}:")
+            logging.info(f"T-test result: T-statistic = {t_stat}, P-value = {p_value}")
+            logging.info(f"{algo1} Data 95% CI: {ci1}")
+            logging.info(f"{algo2} Data 95% CI: {ci2}")
+            
+def perform_statistical_comparison_polynomial(results, x_values):
+    # Generate polynomial fits and predictions for comparison
+    algorithms = list(results.keys())
+    predictions = {}
+    for algorithm in algorithms:
+        model = make_pipeline(PolynomialFeatures(2), LinearRegression())
+        model.fit(x_values[:, np.newaxis], results[algorithm])
+        predictions[algorithm] = model.predict(x_values[:, np.newaxis])
+    
+    for i in range(len(algorithms)):
+        for j in range(i + 1, len(algorithms)):
+            algo1, algo2 = algorithms[i], algorithms[j]
+            pred1, pred2 = predictions[algo1], predictions[algo2]
+
+            # Perform t-test on the predictions
+            t_stat, p_value = ttest_ind(pred1, pred2)
+            ci1 = t.interval(0.95, len(pred1)-1, loc=np.mean(pred1), scale=sem(pred1))
+            ci2 = t.interval(0.95, len(pred2)-1, loc=np.mean(pred2), scale=sem(pred2))
+
+            # Log the results
+            logging.info(f"\n{algo1} vs. {algo2}:")
+            logging.info(f"T-test result: T-statistic = {t_stat}, P-value = {p_value}")
+            logging.info(f"{algo1} Predictions 95% CI: {ci1}")
+            logging.info(f"{algo2} Predictions 95% CI: {ci2}")
+
+def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
+    """Plots regression models with confidence intervals."""
+    x_data = np.array(x_data)
+    y_data = np.array(y_data)
+    n = len(y_data)
+    
+    # Linear Regression
+    lin_model = LinearRegression()
+    lin_model.fit(x_data[:, np.newaxis], y_data)
+    y_lin_pred = lin_model.predict(x_data[:, np.newaxis])
+    residuals = y_data - y_lin_pred
+    std_residuals = np.std(residuals)
+    
+    # Confidence intervals for linear regression
+    t_value_lin = t.ppf(0.975, df=n-2)
+    ci_lin = t_value_lin * std_residuals * np.sqrt(1/n + (x_data - np.mean(x_data))**2 / np.sum((x_data - np.mean(x_data))**2))
+    ax.fill_between(x_data, y_lin_pred - ci_lin, y_lin_pred + ci_lin, color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
+    ax.plot(x_data, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
+    
+    # Polynomial Regression
+    degree = 2  # Degree of the polynomial
+    poly_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    poly_model.fit(x_data[:, np.newaxis], y_data)
+    y_poly_pred = poly_model.predict(x_data[:, np.newaxis])
+    residuals_poly = y_data - y_poly_pred
+    std_residuals_poly = np.std(residuals_poly)
+    
+    # Confidence intervals for polynomial regression
+    t_value_poly = t.ppf(0.975, df=n-(degree+1))
+    X_poly = PolynomialFeatures(degree).fit_transform(x_data[:, np.newaxis])
+    leverage = np.sum(X_poly * np.linalg.pinv(X_poly).T, axis=1)
+    ci_poly = t_value_poly * std_residuals_poly * np.sqrt(1/n + leverage)
+    ax.fill_between(x_data, y_poly_pred - ci_poly, y_poly_pred + ci_poly, color=line_color, alpha=0.1, label=f'{algorithm} Polynomial 95% CI')
+    ax.plot(x_data, y_poly_pred, label=f'{algorithm} Polynomial', color=line_color, linestyle='dashed')
+    
+    # Scatter original data points
+    ax.scatter(x_data, y_data, color=data_color, s=10, label=f'{algorithm} Data')
+
+    # Labeling the axes and legend
+    ax.set_xlabel('Trial')
+    ax.set_ylabel('Average Survival Time')
+    ax.legend()
+
+# Load, process, and plot data
 data_dict = {}
-for file_path, details in get_files(OUTPUT_FOLDER):
-    algorithm, seed, horizon, k_factor, mct, num_mct, date_str = details
-    seed = int(seed)
+for file_path, (algorithm, seed, _) in get_files(SURVIVAL_FOLDER):
     if algorithm not in data_dict:
-        data_dict[algorithm] = {}
-    if seed not in data_dict[algorithm]:
-        data_dict[algorithm][seed] = []
-    data_dict[algorithm][seed].append(load_data(file_path))
+        data_dict[algorithm] = []
+    data_dict[algorithm].append(load_data(file_path))
+    
+# Average performances
+results = {alg: np.mean(np.array(data), axis=0) for alg, data in data_dict.items()}
+print(type(results))
+# Perform and log statistical comparisons
+x_data = np.linspace(0, 120, 120)  # Consistent x-values for all models
+perform_statistical_comparison(results)
+perform_statistical_comparison_polynomial(results, x_data)
 
-# Process data: average across seeds for each algorithm
-results = {}
-for algorithm, seeds_data in data_dict.items():
-    all_seeds = list(seeds_data.values())
-    concatenated_data = np.concatenate(all_seeds)
-    average_performance = np.mean(concatenated_data, axis=0)
-    results[algorithm] = average_performance
+# Plot all algorithms on one plot with regressions
+fig, ax = plt.subplots(figsize=(12, 8))
+colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
+markers = {'BA': 'o', 'BAUCB': '^', 'SI': 's', 'SL': 'x'}
 
-# Plot the average performance over iterations for each algorithm
-plt.figure(figsize=(12, 6))
 for algorithm, performance in results.items():
     iterations = np.arange(len(performance))
-    spl = make_interp_spline(iterations, performance, k=3)  # Smooth spline interpolation
-    smooth_iterations = np.linspace(iterations.min(), iterations.max(), 300)
-    smooth_performance = spl(smooth_iterations)
+    plot_regression(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
 
-    plt.plot(smooth_iterations, smooth_performance, label=f'{algorithm} (Smoothed)')
-    plt.scatter(iterations, performance, s=10, label=f'{algorithm} (Data)')
+ax.set_title('Comparison of Algorithm Performance Over Trials')
+ax.set_xlabel('Trial')
+ax.set_ylabel('Average Survival Time')
+ax.legend(title='Algorithm', loc='upper left')
+plt.tight_layout()
+plt.show()
 
-plt.title('Average Performance Over Iterations by Algorithm')
-plt.xlabel('Iteration')
-plt.ylabel('Average Time Steps Survived')
-plt.legend()
+# Plotting
+fig, ax = plt.subplots(figsize=(12, 6))
+colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
+markers = {'BA': 'o', 'BAUCB': '^', 'SI': 's', 'SL': 'x'}
+
+for algorithm, performance in results.items():
+    iterations = np.arange(len(performance))
+    ax.plot(iterations, performance, label=f'{algorithm}', color=colors[algorithm], marker=markers[algorithm])
+    ax.scatter(iterations, performance, color=colors[algorithm], s=10)
+
+ax.set_title('Comparison of Algorithm Performance Over Trials')
+ax.set_xlabel('Trial')
+ax.set_ylabel('Average Survival Time')
+ax.legend(title='Algorithm', loc='upper left')
+plt.tight_layout()
 plt.show()
