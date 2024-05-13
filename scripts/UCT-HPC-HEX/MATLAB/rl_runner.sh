@@ -4,12 +4,12 @@
 module load software/matlab-R2024a
 
 # Parameters
-declare -a ALGORITHMS=("model_free_RL") # "model_mixed_RL" 
-declare -a SEEDS=(1) # ({1..100})  # Seeds 1 to 100
+declare -a ALGORITHMS=("model_free_RL")
+declare -a SEEDS=({11..30})  # Seeds 1 to 100
 
 # SLURM Configuration
 export TIME_LIMIT="72:00:00"  # Adjust time limit based on expected runtime
-export MEMORY_ALLOCATION="4G"  # Increase if needed
+export MEMORY_ALLOCATION="8G"  # Increase if needed
 declare SCRIPT_PATH="${HOME}/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB"
 declare MAIN_PATH="${HOME}/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
 
@@ -34,7 +34,10 @@ do
                 s|\$SCRIPT_PATH|$SCRIPT_PATH|g" $SLURM_SCRIPT
 
         # Add the MATLAB command to run main.m with your parameters
-        echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${MAIN_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;\"" >> $SLURM_SCRIPT
+        # echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${MAIN_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;\"" >> $SLURM_SCRIPT
+        # echo "Running MATLAB command:"
+        # echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${MAIN_PATH}')); main('${ALGORITHM}', '${SEED}', '1000', '1.5', '${ROOT_FOLDER}', '500', '10', 'false'); exit;\""
+        echo "matlab -nodidsplay -nosplash -nodesktop -r \"addpath(genpath('${MAIN_PATH}')); main('${ALGORITHM}', ${SEED}, 1000, 1.5, '${ROOT_FOLDER}', 500, 10, 0); exit;\"" >> $SLURM_SCRIPT
 
         # Create an output directory for experiment logs
         output_dir=~/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/job_data/$ALGORITHM/$JOB_NAME

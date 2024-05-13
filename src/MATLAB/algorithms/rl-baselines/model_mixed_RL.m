@@ -168,7 +168,7 @@ function [survival] = model_mixed_RL(seed, results_file_name)
     t = 1;
     observation_count = 0;
 
-    % results_file_name = sprintf('C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\results\\model_free_results\\model_mixed_results_seed%d.txt', seed);    
+    % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/model_mixed_results_seed%d.txt', seed);    
     total_trials = 1000000;  % Total number of trials
     percent_interval = total_trials * 0.01;  % Calculate 1% of the total number of trials
     

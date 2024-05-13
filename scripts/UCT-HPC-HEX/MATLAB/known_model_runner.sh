@@ -72,7 +72,7 @@ submit_job() {
     local SLURM_SCRIPT="${SCRIPT_PATH}/submit_${JOB_NAME}.sh"
     cp "${SCRIPT_PATH}/SLURM_Template.sh" "$SLURM_SCRIPT"
     sed -i "s|\$JOB_NAME|$JOB_NAME|g; s|\$TIME_LIMIT|$TIME_LIMIT|g; s|\$MEMORY_ALLOCATION|$MEMORY_ALLOCATION|g; s|\$SCRIPT_PATH|$SCRIPT_PATH|g" "$SLURM_SCRIPT"
-    echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('$MAIN_PATH')); main('$ALGORITHM', '$SEED', '$HORIZON', '$K_FACTOR', '$ROOT_FOLDER', '$MCT', '$NUM_MCT', '$AUTO_REST'); exit;\"" >> "$SLURM_SCRIPT"
+    echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('$MAIN_PATH')); main('$ALGORITHM', $SEED, $HORIZON, $K_FACTOR, '$ROOT_FOLDER', $MCT, $NUM_MCT, $AUTO_REST); exit;\"" >> "$SLURM_SCRIPT"
 
     # Log job submission with correct type
     echo "$JOB_NAME type=$job_type, horizon=$HORIZON, mct=$MCT, seed=$SEED" >> "$JOB_TRACKING_FILE"

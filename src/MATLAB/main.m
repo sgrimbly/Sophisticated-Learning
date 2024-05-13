@@ -12,6 +12,17 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         results_file_name char = ''; % Will be set later if empty
     end
 
+    % Print out the values of the arguments
+    fprintf('Algorithm: %s\n', algorithm);
+    fprintf('Seed: %d\n', seed);
+    fprintf('Horizon: %d\n', horizon);
+    fprintf('K-factor: %.2f\n', k_factor);
+    fprintf('Root folder: %s\n', root_folder);
+    fprintf('MCT: %d\n', mct);
+    fprintf('Number of MCT: %d\n', num_mct);
+    fprintf('Auto restore: %d\n', auto_rest);
+    fprintf('Results file name: %s\n', results_file_name);
+
     % Set results_file_name if it was not provided, now incorporating the seed
     if isempty(results_file_name) 
         switch algorithm
