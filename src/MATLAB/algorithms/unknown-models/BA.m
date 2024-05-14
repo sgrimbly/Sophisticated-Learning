@@ -1,8 +1,5 @@
 function [survived] = BA(seed)
-
-    rng(seed);
-    rng
-
+    % rng(seed) % Seed now set in main.m
     hill_1 = 55;
     true_food_source_1 = 71;
     true_food_source_2 = 43;

@@ -1,7 +1,7 @@
 function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest, results_file_name)
     % Check the number of arguments and set default values if necessary
     arguments
-        algorithm char {mustBeMember(algorithm,{'model_mixed_RL','model_free_RL','SL','SI','BA','BAUCB','known_large_MCT'})} = 'model_mixed_RL';
+        algorithm char {mustBeMember(algorithm,{'model_mixed_RL','model_free_RL','SL','SI','BA','BAUCB','known_large_MCT'})} = 'SI';
         seed (1,1) double {mustBeInteger} = 1;  % Seed MUST be an integer
         horizon (1,1) double {mustBeInteger, mustBePositive} = 1000;
         k_factor (1,1) double = 1.5;
@@ -11,6 +11,8 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         auto_rest (1,1) logical = false; % Default is false, meaning memory is usually enabled
         results_file_name char = ''; % Will be set later if empty
     end
+
+    rng(seed,"threefry")
 
     % Print out the values of the arguments
     fprintf('Algorithm: %s\n', algorithm);
@@ -31,7 +33,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             case 'model_mixed_RL'
                 results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_mixed_RL_Seed%d.txt', seed);
             otherwise
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_Seed%d.txt', seed); 
+                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/results_Seed%d.txt', seed); 
         end
     end
     

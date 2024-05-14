@@ -1,6 +1,6 @@
 function [survived] = BA_UCB(seed)
-    rng(seed);
-    rng
+    % rng(seed) % Seed now set in main.m
+
     %%% Hyper Params %%%
     % clear
     hill_1 = 55;

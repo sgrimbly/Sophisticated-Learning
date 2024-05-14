@@ -1,6 +1,6 @@
 function [survived] = SI(seed)
-    rng(seed)
-    rng
+    % rng(seed) % Seed now set in main.m
+
 
     hill_1 = 55;
     true_food_source_1 = 71;

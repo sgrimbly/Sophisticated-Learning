@@ -1,7 +1,7 @@
 function [survival] = model_free_RL(seed, results_file_name)
     % clear
     %class(seed)
-    rng(seed);
+    % rng(seed) % Seed now set in main.m
     % rng(seed)
     %file_name = strcat(num2str(seed),'.txt');
     file_name = '07k.txt';

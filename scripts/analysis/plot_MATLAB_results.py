@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', f
                     format='%(levelname)s:%(message)s')
 
 # Specify the output folder and regex pattern
-BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
+BASE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\'
 SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\survival'
 file_pattern = re.compile(r"([A-Z]+)_Seed(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
 
