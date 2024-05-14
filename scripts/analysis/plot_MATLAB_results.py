@@ -14,22 +14,29 @@ logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', f
                     format='%(levelname)s:%(message)s')
 
 # Specify the output folder and regex pattern
-SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
-BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
-SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data'
-# BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
-# SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\120trials_data'
+# SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
+# BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+# SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data'
+BASE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\'
+SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\300trials_data'
 
 # Refined regular expression pattern
-file_pattern = re.compile(r"([A-Za-z]+)_Seed(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
+file_pattern = re.compile(r"([A-Za-z]+)_Seed_(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
 
 def load_data(file_path):
     with open(file_path, 'r') as file:
         data = np.array([float(line.strip()) for line in file.readlines()])
-    return data
+    if len(data) == 300:
+        return data
+    else:
+        print(f"File {file_path} does not have 300 lines.")
+        return None  # Return None for files that do not have 300 lines
 
 def get_files(directory):
+    print(f"Reading directory: {directory}")
     for file_name in os.listdir(directory):
+        print(f"File found: {file_name}")
+        file_name = file_name.strip()  # Remove any leading/trailing whitespace
         match = file_pattern.match(file_name)
         if match:
             yield os.path.join(directory, file_name), match.groups()
@@ -119,22 +126,57 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
     ax.set_ylabel('Average Survival Time')
     ax.legend()
 
+def plot_trimmed_regression(ax, x_data, y_data, algorithm, data_color, line_color):
+    # Trim data to only include values after 150 trials
+    trimmed_x = x_data[150:]
+    trimmed_y = y_data[150:]
+
+    # Linear Regression
+    lin_model = LinearRegression()
+    lin_model.fit(trimmed_x[:, np.newaxis], trimmed_y)
+    y_lin_pred = lin_model.predict(trimmed_x[:, np.newaxis])
+    residuals = trimmed_y - y_lin_pred
+    std_residuals = np.std(residuals)
+
+    # Confidence intervals for linear regression
+    n = len(trimmed_y)
+    t_value_lin = t.ppf(0.975, df=n-2)
+    ci_lin = t_value_lin * std_residuals * np.sqrt(1/n + (trimmed_x - np.mean(trimmed_x))**2 / np.sum((trimmed_x - np.mean(trimmed_x))**2))
+    ax.fill_between(trimmed_x, y_lin_pred - ci_lin, y_lin_pred + ci_lin, color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
+    ax.plot(trimmed_x, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
+
+    # Scatter original data points
+    ax.scatter(trimmed_x, trimmed_y, color=data_color, s=10, label=f'{algorithm} Data')
+    ax.set_xlabel('Trial (trimmed after 150)')
+    ax.set_ylabel('Average Survival Time')
+    ax.legend()
+
 # Load, process, and plot data
 data_dict = {}
 for file_path, (algorithm, seed, _) in get_files(SURVIVAL_FOLDER):
-    if algorithm not in data_dict:
-        data_dict[algorithm] = []
-    data_dict[algorithm].append(load_data(file_path))
+    data = load_data(file_path)
+    if data is not None:  # Only add data if it has 300 lines
+        if algorithm not in data_dict:
+            data_dict[algorithm] = []
+        data_dict[algorithm].append(data)
 
 # Ensure data_dict has data for at least one algorithm
 if not data_dict:
     raise ValueError("No matching files found for any algorithm.")
 
+# Debugging step to print shapes and contents
+# for alg, data in data_dict.items():
+#     print(f"Algorithm: {alg}")
+#     print(f"Number of data entries: {len(data)}")
+#     for entry in data:
+#         print(f"Entry shape: {entry.shape}")
+#         print(entry)
+
 # Average performances
 results = {alg: np.mean(np.array(data), axis=0) for alg, data in data_dict.items()}
 
 # Perform and log statistical comparisons
-x_data = np.linspace(0, 120, 120)
+x_data = np.linspace(0, 300, 300)
 perform_statistical_comparison(results)
 perform_statistical_comparison_polynomial(results, x_data)
 
@@ -152,7 +194,23 @@ ax.set_xlabel('Trial')
 ax.set_ylabel('Average Survival Time')
 ax.legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-plt.savefig(SAVE_PATH+'MATLAB_1.png')
+# plt.savefig(SAVE_PATH+'MATLAB_1.png')
+plt.show()
+
+# Additional plot: Trimmed data and linear regression after 150 trials
+fig, ax = plt.subplots(figsize=(12, 8))
+
+for algorithm, performance in results.items():
+    iterations = np.arange(len(performance))
+    plot_trimmed_regression(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+
+ax.set_title('Trimmed Data Comparison of Algorithm Performance After 150 Trials')
+ax.set_xlabel('Trial (trimmed after 150)')
+ax.set_ylabel('Average Survival Time')
+ax.legend(title='Algorithm', loc='upper left')
+plt.tight_layout()
+# plt.savefig(SAVE_PATH+'MATLAB_trimmed.png')
+plt.show()
 
 fig, ax = plt.subplots(figsize=(12, 6))
 for algorithm, performance in results.items():
@@ -165,4 +223,5 @@ ax.set_xlabel('Trial')
 ax.set_ylabel('Average Survival Time')
 ax.legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-plt.savefig(SAVE_PATH+'MATLAB_2.png')
+# plt.savefig(SAVE_PATH+'MATLAB_2.png')
+plt.show()
