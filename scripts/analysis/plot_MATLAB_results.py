@@ -14,11 +14,15 @@ logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', f
                     format='%(levelname)s:%(message)s')
 
 # Specify the output folder and regex pattern
-BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
-SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\survival'
-file_pattern = re.compile(r"([A-Z]+)_Seed(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
+SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
+BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data'
+# BASE_PATH = 'C:\\Users\\micro\\Documents\\ActiveInference_Work\\Sophisticated-Learning\\'
+# SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\120trials_data'
 
-# Load data from file paths
+# Refined regular expression pattern
+file_pattern = re.compile(r"([A-Za-z]+)_Seed(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
+
 def load_data(file_path):
     with open(file_path, 'r') as file:
         data = np.array([float(line.strip()) for line in file.readlines()])
@@ -30,7 +34,8 @@ def get_files(directory):
         if match:
             yield os.path.join(directory, file_name), match.groups()
         else:
-            print("Did not match:", file_name)
+            print(f"Did not match: {file_name}")
+            print(f"Expected pattern: {file_pattern.pattern}")
 
 def perform_statistical_comparison(results):
     algorithms = list(results.keys())
@@ -49,9 +54,8 @@ def perform_statistical_comparison(results):
             logging.info(f"T-test result: T-statistic = {t_stat}, P-value = {p_value}")
             logging.info(f"{algo1} Data 95% CI: {ci1}")
             logging.info(f"{algo2} Data 95% CI: {ci2}")
-            
+
 def perform_statistical_comparison_polynomial(results, x_values):
-    # Generate polynomial fits and predictions for comparison
     algorithms = list(results.keys())
     predictions = {}
     for algorithm in algorithms:
@@ -76,7 +80,6 @@ def perform_statistical_comparison_polynomial(results, x_values):
             logging.info(f"{algo2} Predictions 95% CI: {ci2}")
 
 def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
-    """Plots regression models with confidence intervals."""
     x_data = np.array(x_data)
     y_data = np.array(y_data)
     n = len(y_data)
@@ -95,7 +98,7 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
     ax.plot(x_data, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
     
     # Polynomial Regression
-    degree = 2  # Degree of the polynomial
+    degree = 2
     poly_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
     poly_model.fit(x_data[:, np.newaxis], y_data)
     y_poly_pred = poly_model.predict(x_data[:, np.newaxis])
@@ -112,8 +115,6 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
     
     # Scatter original data points
     ax.scatter(x_data, y_data, color=data_color, s=10, label=f'{algorithm} Data')
-
-    # Labeling the axes and legend
     ax.set_xlabel('Trial')
     ax.set_ylabel('Average Survival Time')
     ax.legend()
@@ -124,12 +125,16 @@ for file_path, (algorithm, seed, _) in get_files(SURVIVAL_FOLDER):
     if algorithm not in data_dict:
         data_dict[algorithm] = []
     data_dict[algorithm].append(load_data(file_path))
-    
+
+# Ensure data_dict has data for at least one algorithm
+if not data_dict:
+    raise ValueError("No matching files found for any algorithm.")
+
 # Average performances
 results = {alg: np.mean(np.array(data), axis=0) for alg, data in data_dict.items()}
-print(type(results))
+
 # Perform and log statistical comparisons
-x_data = np.linspace(0, 120, 120)  # Consistent x-values for all models
+x_data = np.linspace(0, 120, 120)
 perform_statistical_comparison(results)
 perform_statistical_comparison_polynomial(results, x_data)
 
@@ -147,13 +152,9 @@ ax.set_xlabel('Trial')
 ax.set_ylabel('Average Survival Time')
 ax.legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-plt.show()
+plt.savefig(SAVE_PATH+'MATLAB_1.png')
 
-# Plotting
 fig, ax = plt.subplots(figsize=(12, 6))
-colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
-markers = {'BA': 'o', 'BAUCB': '^', 'SI': 's', 'SL': 'x'}
-
 for algorithm, performance in results.items():
     iterations = np.arange(len(performance))
     ax.plot(iterations, performance, label=f'{algorithm}', color=colors[algorithm], marker=markers[algorithm])
@@ -164,4 +165,4 @@ ax.set_xlabel('Trial')
 ax.set_ylabel('Average Survival Time')
 ax.legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-plt.show()
+plt.savefig(SAVE_PATH+'MATLAB_2.png')

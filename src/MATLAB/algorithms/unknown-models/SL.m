@@ -187,10 +187,11 @@ function [survived] = SL(seed)
 
     % Convert seed to string
     seed_str = num2str(seed);
-    file_name = strcat(current_time, '_seed_', seed_str, '_SL_experiment.txt');
+    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
+    file_name = strcat(directory_path, '/SL_Seed_', seed_str, '_', current_time, '.txt');
 
     t = 1;
-    num_trials = 120;
+    num_trials = 300;
     memory_resets = zeros(num_trials, 1);
     pe_memory_resets = zeros(num_trials, 1);
     hill_memory_resets = zeros(num_trials, 1);

@@ -180,13 +180,13 @@ function [survived] = BA_UCB(seed)
 
     % Convert seed to string
     seed_str = num2str(seed);
-    file_name = strcat(current_time, '_seed_', seed_str, '_BAUCB_experiment.txt');
-
+    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
+    file_name = strcat(directory_path, '/BAUCB_Seed_', seed_str, '_', current_time, '.txt');
     t = 1;
     surety = 1;
     simulated_time = 0;
 
-    num_trials = 120;
+    num_trials = 300;
     memory_resets = zeros(num_trials, 1);
     pe_memory_resets = zeros(num_trials, 1);
     hill_memory_resets = zeros(num_trials, 1);
