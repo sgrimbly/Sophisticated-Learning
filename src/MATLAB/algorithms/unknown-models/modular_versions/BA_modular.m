@@ -1,4 +1,4 @@
-function [survived] = BA(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials)
+function [survived] = BA_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, hill_pos = 55; end

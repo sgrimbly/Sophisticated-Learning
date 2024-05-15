@@ -1,4 +1,4 @@
-function [survived] = SI(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
+function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, hill_pos = 55; end
