@@ -8,17 +8,18 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from scipy.stats import ttest_ind, t, sem
 import logging
+import imageio
 
 # Setup basic configuration for logging
 logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', filemode='w',
                     format='%(levelname)s:%(message)s')
 
 # Specify the output folder and regex pattern
-# SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
-# BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
-# SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data'
-BASE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\'
-SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\300trials_data'
+SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
+BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data'
+# BASE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\'
+# SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\300trials_data'
 
 # Refined regular expression pattern
 file_pattern = re.compile(r"([A-Za-z]+)_Seed_(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
@@ -86,6 +87,16 @@ def perform_statistical_comparison_polynomial(results, x_values):
             logging.info(f"{algo1} Predictions 95% CI: {ci1}")
             logging.info(f"{algo2} Predictions 95% CI: {ci2}")
 
+def moving_average(data, window_size=10):
+    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+
+def find_convergence_point(data, window_size=20, threshold=0.005):
+    mov_avg = moving_average(data, window_size)
+    for i in range(len(mov_avg) - window_size):
+        if np.max(np.abs(mov_avg[i:i+window_size] - mov_avg[i+window_size])) < threshold:
+            return i + window_size
+    return len(data) - 1
+
 def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
     x_data = np.array(x_data)
     y_data = np.array(y_data)
@@ -127,9 +138,10 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color):
     ax.legend()
 
 def plot_trimmed_regression(ax, x_data, y_data, algorithm, data_color, line_color):
-    # Trim data to only include values after 150 trials
-    trimmed_x = x_data[150:]
-    trimmed_y = y_data[150:]
+    # Find convergence point
+    conv_point = find_convergence_point(y_data, window_size=40, threshold=2)
+    trimmed_x = x_data[conv_point:]
+    trimmed_y = y_data[conv_point:]
 
     # Linear Regression
     lin_model = LinearRegression()
@@ -147,8 +159,55 @@ def plot_trimmed_regression(ax, x_data, y_data, algorithm, data_color, line_colo
 
     # Scatter original data points
     ax.scatter(trimmed_x, trimmed_y, color=data_color, s=10, label=f'{algorithm} Data')
-    ax.set_xlabel('Trial (trimmed after 150)')
+    ax.set_xlabel('Trial (after convergence)')
     ax.set_ylabel('Average Survival Time')
+    ax.legend()
+
+def plot_moving_average(ax, x_data, y_data, algorithm, color, window_size):
+    mov_avg = moving_average(y_data, window_size)
+    ax.plot(x_data[:len(mov_avg)], mov_avg, label=f'{algorithm} Moving Average (window={window_size})', color=color)
+    ax.set_xlabel('Trial')
+    ax.set_ylabel('Average Survival Time')
+    ax.legend()
+
+def plot_log_transformed(ax, x_data, y_data, algorithm, data_color, line_color):
+    x_data = np.array(x_data)
+    y_data = np.log(np.array(y_data))
+    n = len(y_data)
+    
+    # Linear Regression
+    lin_model = LinearRegression()
+    lin_model.fit(x_data[:, np.newaxis], y_data)
+    y_lin_pred = lin_model.predict(x_data[:, np.newaxis])
+    residuals = y_data - y_lin_pred
+    std_residuals = np.std(residuals)
+    
+    # Confidence intervals for linear regression
+    t_value_lin = t.ppf(0.975, df=n-2)
+    ci_lin = t_value_lin * std_residuals * np.sqrt(1/n + (x_data - np.mean(x_data))**2 / np.sum((x_data - np.mean(x_data))**2))
+    ax.fill_between(x_data, y_lin_pred - ci_lin, y_lin_pred + ci_lin, color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
+    ax.plot(x_data, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
+    
+    # Polynomial Regression
+    degree = 2
+    poly_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+    poly_model.fit(x_data[:, np.newaxis], y_data)
+    y_poly_pred = poly_model.predict(x_data[:, np.newaxis])
+    residuals_poly = y_data - y_poly_pred
+    std_residuals_poly = np.std(residuals_poly)
+    
+    # Confidence intervals for polynomial regression
+    t_value_poly = t.ppf(0.975, df=n-(degree+1))
+    X_poly = PolynomialFeatures(degree).fit_transform(x_data[:, np.newaxis])
+    leverage = np.sum(X_poly * np.linalg.pinv(X_poly).T, axis=1)
+    ci_poly = t_value_poly * std_residuals_poly * np.sqrt(1/n + leverage)
+    ax.fill_between(x_data, y_poly_pred - ci_poly, y_poly_pred + ci_poly, color=line_color, alpha=0.1, label=f'{algorithm} Polynomial 95% CI')
+    ax.plot(x_data, y_poly_pred, label=f'{algorithm} Polynomial', color=line_color, linestyle='dashed')
+    
+    # Scatter original data points
+    ax.scatter(x_data, y_data, color=data_color, s=10, label=f'{algorithm} Data')
+    ax.set_xlabel('Trial')
+    ax.set_ylabel('Log(Average Survival Time)')
     ax.legend()
 
 # Load, process, and plot data
@@ -164,14 +223,6 @@ for file_path, (algorithm, seed, _) in get_files(SURVIVAL_FOLDER):
 if not data_dict:
     raise ValueError("No matching files found for any algorithm.")
 
-# Debugging step to print shapes and contents
-# for alg, data in data_dict.items():
-#     print(f"Algorithm: {alg}")
-#     print(f"Number of data entries: {len(data)}")
-#     for entry in data:
-#         print(f"Entry shape: {entry.shape}")
-#         print(entry)
-
 # Average performances
 results = {alg: np.mean(np.array(data), axis=0) for alg, data in data_dict.items()}
 
@@ -180,48 +231,67 @@ x_data = np.linspace(0, 300, 300)
 perform_statistical_comparison(results)
 perform_statistical_comparison_polynomial(results, x_data)
 
-# Plot all algorithms on one plot with regressions
-fig, ax = plt.subplots(figsize=(12, 8))
+# Plot all algorithms on one plot with regressions (before and after convergence)
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 16))
 colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
-markers = {'BA': 'o', 'BAUCB': '^', 'SI': 's', 'SL': 'x'}
 
 for algorithm, performance in results.items():
     iterations = np.arange(len(performance))
-    plot_regression(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+    plot_regression(axes[0], iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+    plot_trimmed_regression(axes[1], iterations, performance, algorithm, colors[algorithm], colors[algorithm])
 
-ax.set_title('Comparison of Algorithm Performance Over Trials')
-ax.set_xlabel('Trial')
-ax.set_ylabel('Average Survival Time')
-ax.legend(title='Algorithm', loc='upper left')
+axes[0].set_title('Comparison of Algorithm Performance Over Trials')
+axes[1].set_title('Data Comparison of Algorithm Performance After Convergence')
+axes[0].set_xlabel('Trial')
+axes[0].set_ylabel('Average Survival Time')
+axes[1].set_xlabel('Trial (after convergence)')
+axes[1].set_ylabel('Average Survival Time')
+axes[0].legend(title='Algorithm', loc='upper left')
+axes[1].legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-# plt.savefig(SAVE_PATH+'MATLAB_1.png')
-plt.show()
+plt.savefig(SAVE_PATH+'MATLAB_combined.png')
+# plt.show()
 
-# Additional plot: Trimmed data and linear regression after 150 trials
+# Plot Polynomial Fits on Log-Transformed Data with Normal Axes
 fig, ax = plt.subplots(figsize=(12, 8))
 
 for algorithm, performance in results.items():
     iterations = np.arange(len(performance))
-    plot_trimmed_regression(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+    plot_log_transformed(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
 
-ax.set_title('Trimmed Data Comparison of Algorithm Performance After 150 Trials')
-ax.set_xlabel('Trial (trimmed after 150)')
-ax.set_ylabel('Average Survival Time')
-ax.legend(title='Algorithm', loc='upper left')
-plt.tight_layout()
-# plt.savefig(SAVE_PATH+'MATLAB_trimmed.png')
-plt.show()
-
-fig, ax = plt.subplots(figsize=(12, 6))
-for algorithm, performance in results.items():
-    iterations = np.arange(len(performance))
-    ax.plot(iterations, performance, label=f'{algorithm}', color=colors[algorithm], marker=markers[algorithm])
-    ax.scatter(iterations, performance, color=colors[algorithm], s=10)
-
-ax.set_title('Comparison of Algorithm Performance Over Trials')
+ax.set_title('Polynomial Fits on Log-Transformed Data with Normal Axes')
 ax.set_xlabel('Trial')
-ax.set_ylabel('Average Survival Time')
+ax.set_ylabel('Log(Average Survival Time)')
 ax.legend(title='Algorithm', loc='upper left')
 plt.tight_layout()
-# plt.savefig(SAVE_PATH+'MATLAB_2.png')
-plt.show()
+plt.savefig(SAVE_PATH+'MATLAB_logged.png')
+# plt.show()
+
+# Generate GIF of moving average with sliding window size
+gif_frames = []
+
+for window_size in range(1, 51):
+    fig, ax = plt.subplots(figsize=(12, 8))
+    for algorithm, performance in results.items():
+        iterations = np.arange(len(performance))
+        plot_moving_average(ax, iterations, performance, algorithm, colors[algorithm], window_size)
+    
+    ax.set_title(f'Moving Average of Algorithm Performance (Window Size={window_size})')
+    ax.set_xlabel('Trial')
+    ax.set_ylabel('Average Survival Time')
+    ax.legend(title='Algorithm', loc='upper left')
+    plt.tight_layout()
+    
+    # Save frame as PNG file
+    frame_path = f'/tmp/frame_{window_size}.png'
+    plt.savefig(frame_path)
+    plt.close(fig)
+    
+    # Append frame to list
+    gif_frames.append(imageio.imread(frame_path))
+
+# Save frames as GIF
+gif_path = SAVE_PATH + 'moving_average.gif'
+imageio.mimsave(gif_path, gif_frames, duration=0.2)
+
+print(f"GIF saved to {gif_path}")
