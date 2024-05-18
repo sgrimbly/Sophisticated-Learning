@@ -205,7 +205,7 @@ function [survived] = BA(seed)
         fprintf('----------------------------------------\n');
         fprintf('Start Time: %s\n', startTime);
 
-        short_term_memory(:, :, :, :) = 0;
+        short_term_memory(:, :, :, :, :) = 0;
         search_depth = 0;
         memory_accessed = 0;
 
@@ -376,7 +376,7 @@ function [survived] = BA(seed)
             end
 
             if current_pos(t) == hill_1
-                short_term_memory(:, :, :, :) = 0;
+                short_term_memory(:, :, :, :, :) = 0;
                 memory_resets(trial) = memory_resets(trial) + 1;
                 hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end

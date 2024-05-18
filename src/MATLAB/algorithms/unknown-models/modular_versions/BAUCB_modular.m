@@ -22,8 +22,9 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
     seed_str = num2str(seed);
-    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
-    file_name = strcat(directory_path, '/BAUCB_Seed_', seed_str, '_', current_time, '.txt');
+    % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
+    directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
+    file_name = strcat(directory_path, '\BAUCB_Seed_', seed_str, '_', current_time, '.txt');
 
     t = 1;
     surety = 1;
@@ -35,7 +36,7 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
     total_search_depth = 0;
     total_memory_accessed = 0;
     total_t = 0;
-    survived(1:num_trials) = 0;
+    survived = zeros(1, num_trials);
 
     t_at_25 = 0;
     t_at_50 = 0;
@@ -51,23 +52,32 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
         fprintf('----------------------------------------\n');
         fprintf('Start Time: %s\n', startTime);
 
-        short_term_memory = zeros(35, 35, 35, 400);
+        short_term_memory(:, :, :, :, :) = zeros(35, 35, 35, 400, 5);
         search_depth = 0;
         memory_accessed = 0;
 
+        for factor = 1:2
+            Q{1, factor} = D{factor}';
+            P{1, factor} = D{factor}';
+            true_states{trial}(1, t) = 51;
+            true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
+        end
+
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
             bb{2} = normalise_matrix(b{2});
-            [P, Q, true_states] = updateEnvironmentStates(t, num_states, chosen_action, D, B, bb, food_sources);
 
-            if ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, food_sources)
+            if t ~= 1
+                [P, Q, true_states] = updateEnvironmentStates(P, Q, true_states, trial, t, num_states, chosen_action, D, B, bb, food_sources);
+            end
+            if ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), food_sources)
                 time_since_food = 0;
                 time_since_water = time_since_water + 1;
                 time_since_sleep = time_since_sleep + 1;
-            elseif ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, water_sources)
+            elseif ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), water_sources)
                 time_since_water = 0;
                 time_since_food = time_since_food + 1;
                 time_since_sleep = time_since_sleep + 1;
-            elseif ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, sleep_sources)
+            elseif ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), sleep_sources)
                 time_since_sleep = 0;
                 time_since_food = time_since_food + 1;
                 time_since_water = time_since_water + 1;
@@ -80,8 +90,8 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
             end
 
             for modality = 1:num_modalities
-                ob = A{modality}(:, true_states{1, t}, true_states{2, t});
-                observations(modality, t) = find(cumsum(A{modality}(:, true_states{1, t}, true_states{2, t})) >= rand, 1);
+                ob = A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t));
+                observations(modality, t) = find(cumsum(A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t))) >= rand, 1);
                 vec = zeros(1, size(A{modality}, 1));
                 vec(1, observations(modality, t)) = 1;
                 O{modality, t} = vec;
@@ -98,7 +108,7 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
                 qs = spm_cross(Q{t, :});
                 predictive_observations_posterior{2, t} = normalise(y{2}(:, :) * qs(:))';
                 predictive_observations_posterior{3, t} = normalise(y{3}(:, :) * qs(:))';
-                predicted_posterior = calculatePosterior(Q, y, predictive_observations_posterior, t);
+                predicted_posterior = calculate_posterior(Q, y, predictive_observations_posterior, t);
 
                 for timey = start:t
                     L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
@@ -123,21 +133,21 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
                                 end
                             end
                             a{modality} = a{modality} + 0.7 * a_learning;
-                            a{modality}(a{modality} <= 0.1) = 0.05;
+                            a{modality}(a{modality} <= 0.05) = 0.05;
                         end
                     end
                 end
             end
 
-            if true_states{2, t} == 1
+           if true_states{trial}(2, t) == 1
                 food = food_sources(1);
                 water = water_sources(1);
                 sleep = sleep_sources(1);
-            elseif true_states{2, t} == 2
+            elseif true_states{trial}(2, t) == 2
                 food = food_sources(2);
                 water = water_sources(2);
                 sleep = sleep_sources(2);
-            elseif true_states{2, t} == 3
+            elseif true_states{trial}(2, t) == 3
                 food = food_sources(3);
                 water = water_sources(3);
                 sleep = sleep_sources(3);
@@ -157,7 +167,7 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
 
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
-            P = calculatePosterior(temp_Q, y, O, t);
+            P = calculate_posterior(temp_Q, y, O, t);
             long_term_memory = 0;
             trajectory = [];
             a_complexity = 0;
@@ -171,7 +181,7 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
             end
 
             if current_pos(t) == hill_pos
-                short_term_memory(:, :, :, :) = 0;
+                short_term_memory(:, :, :, :, :) = 0;
                 memory_resets(trial) = memory_resets(trial) + 1;
                 hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end

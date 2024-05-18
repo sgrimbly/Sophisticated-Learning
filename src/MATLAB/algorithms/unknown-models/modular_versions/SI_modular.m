@@ -9,8 +9,8 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
     if nargin < 8, num_states = 100; end
     if nargin < 9, num_trials = 300; end
 
-    rng(seed)
-    rng
+    rng(seed);
+    rng;
 
     novelty_weight = weights(1);
     learning_weight = weights(2);
@@ -26,8 +26,9 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
     seed_str = num2str(seed);
-    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
-    file_name = strcat(directory_path, '/SI_Seed_', seed_str, '_', current_time, '.txt');
+    % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
+    directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
+    file_name = strcat(directory_path, '\SI_Seed_', seed_str, '_', current_time, '.txt');
 
     t = 1;
     memory_resets = zeros(num_trials, 1);
@@ -36,7 +37,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
     total_search_depth = 0;
     total_memory_accessed = 0;
     total_t = 0;
-    survived(1:num_trials) = 0;
+    survived = zeros(1, num_trials);
 
     t_at_25 = 0;
     t_at_50 = 0;
@@ -56,19 +57,29 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
         search_depth = 0;
         memory_accessed = 0;
 
+        for factor = 1:2
+            Q{1, factor} = D{factor}';
+            P{1, factor} = D{factor}';
+            true_states{trial}(1, t) = 51;
+            true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
+        end
+
+        t = 1; % Reset t for each trial
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
             bb{2} = normalise_matrix(b{2});
-            [P, Q, true_states] = updateEnvironmentStates(t, num_states, chosen_action, D, B, bb, food_sources);
-
-            if ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, food_sources)
+            
+            if t ~= 1
+                [P, Q, true_states] = updateEnvironmentStates(P, Q, true_states, trial, t, num_states, chosen_action, D, B, bb, food_sources);
+            end
+            if ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), food_sources)
                 time_since_food = 0;
                 time_since_water = time_since_water + 1;
                 time_since_sleep = time_since_sleep + 1;
-            elseif ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, water_sources)
+            elseif ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), water_sources)
                 time_since_water = 0;
                 time_since_food = time_since_food + 1;
                 time_since_sleep = time_since_sleep + 1;
-            elseif ismember(true_states{2, t}, 1:4) && ismember(true_states{1, t}, sleep_sources)
+            elseif ismember(true_states{trial}(2, t), 1:4) && ismember(true_states{trial}(1, t), sleep_sources)
                 time_since_sleep = 0;
                 time_since_food = time_since_food + 1;
                 time_since_water = time_since_water + 1;
@@ -79,10 +90,10 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
                     time_since_sleep = time_since_sleep + 1;
                 end
             end
-
+            
             for modality = 1:num_modalities
-                ob = A{modality}(:, true_states{1, t}, true_states{2, t});
-                observations(modality, t) = find(cumsum(A{modality}(:, true_states{1, t}, true_states{2, t})) >= rand, 1);
+                ob = A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t));
+                observations(modality, t) = find(cumsum(A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t))) >= rand, 1);
                 vec = zeros(1, size(A{modality}, 1));
                 vec(1, observations(modality, t)) = 1;
                 O{modality, t} = vec;
@@ -99,7 +110,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
                 qs = spm_cross(Q{t, :});
                 predictive_observations_posterior{2, t} = normalise(y{2}(:, :) * qs(:))';
                 predictive_observations_posterior{3, t} = normalise(y{3}(:, :) * qs(:))';
-                predicted_posterior = calculatePosterior(Q, y, predictive_observations_posterior, t);
+                predicted_posterior = calculate_posterior(Q, y, predictive_observations_posterior, t);
 
                 for timey = start:t
                     L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
@@ -128,15 +139,15 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
                 end
             end
 
-            if true_states{2, t} == 1
+           if true_states{trial}(2, t) == 1
                 food = food_sources(1);
                 water = water_sources(1);
                 sleep = sleep_sources(1);
-            elseif true_states{2, t} == 2
+            elseif true_states{trial}(2, t) == 2
                 food = food_sources(2);
                 water = water_sources(2);
                 sleep = sleep_sources(2);
-            elseif true_states{2, t} == 3
+            elseif true_states{trial}(2, t) == 3
                 food = food_sources(3);
                 water = water_sources(3);
                 sleep = sleep_sources(3);
@@ -154,7 +165,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
 
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
-            P = calculatePosterior(temp_Q, y, O, t);
+            P = calculate_posterior(temp_Q, y, O, t);
             current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
@@ -195,7 +206,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
 
         survived(trial) = t;
 
-        endTime = datestr(now +1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
+        endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
         totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
         minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
         seconds = mod(totalRuntimeInSeconds, 60);
@@ -243,7 +254,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
     fprintf('TOTAL RUNTIME (hours/minutes/seconds): %02d:%02d:%02d\n', hours, minutes, seconds);
     fprintf('AVERAGE RUNTIME PER TIME STEP: %.3f seconds\n', totalRuntimeInSeconds / total_t);
     fprintf('Average hill visits per time step: %.3f. \n', sum(hill_memory_resets(:)) / total_t);
-    fprintf('Average predition errors per time step: %.3f. \n', sum(pe_memory_resets(:)) / total_t);
+    fprintf('Average prediction errors per time step: %.3f. \n', sum(pe_memory_resets(:)) / total_t);
     fprintf('Average search depth per time step: %.0f. \n', sum(total_search_depth(:)) / total_t);
     fprintf('Average times memory accessed per time step: %.0f. \n', total_memory_accessed / total_t);
     fprintf('----------------------------------------\n');

@@ -1,3 +1,4 @@
+
 function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, grid_size, hill_pos, food_sources, water_sources, sleep_sources)
     % Initialise Environment Variables
     A{1}(:, :, :) = zeros(num_states, num_states, 4);
@@ -75,23 +76,4 @@ function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, 
     end
 
     b{1} = B{1};
-end
-
-function [P, Q, true_states] = updateEnvironmentStates(t, num_states, chosen_action, D, B, bb, food_sources)
-    for factor = 1:2
-        if t == 1
-            P{t, factor} = D{factor}';
-            Q{t, factor} = D{factor}';
-            true_states{1, t} = 51;
-            true_states{2, t} = find(cumsum(D{2}) >= rand, 1);
-        else
-            if factor == 1
-                Q{t, factor} = (B{1}(:, :, chosen_action(t - 1)) * Q{t - 1, factor}')';
-                true_states{factor, t} = find(cumsum(B{1}(:, true_states{factor, t - 1}, chosen_action(t - 1))) >= rand, 1);
-            else
-                Q{t, factor} = (bb{2}(:, :, chosen_action(t - 1)) * Q{t - 1, factor}')';
-                true_states{factor, t} = find(cumsum(B{2}(:, true_states{factor, t - 1), 1)) >= rand, 1);
-            end
-        end
-    end
 end

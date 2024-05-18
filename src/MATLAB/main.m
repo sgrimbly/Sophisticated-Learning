@@ -2,43 +2,43 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
     % Check the number of arguments and set default values if necessary
     arguments
-        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'model_mixed_RL';
+        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'BA';
         seed (1, 1) double {mustBeInteger} = 1; % Seed MUST be an integer
         horizon (1, 1) double {mustBeInteger, mustBePositive} = 6;
         k_factor (1, 1) double = 1.5;
         root_folder char = '/home/grmstj001';
-        mct (1, 1) double {mustBeInteger, mustBePositive} = 500;
-        num_mct (1, 1) double {mustBeInteger, mustBePositive} = 10;
+        mct (1, 1) double {mustBeInteger, mustBePositive} = 10;
+        num_mct (1, 1) double {mustBeInteger, mustBePositive} = 100;
         auto_rest (1, 1) logical = false; % Default is false, meaning memory is usually enabled
         results_file_name char = ''; % Will be set later if empty
         grid_size (1, 1) double {mustBeInteger, mustBePositive} = 10;
         hill_pos (1, 1) double {mustBeInteger, mustBePositive} = 55;
-        food_sources (1, :) double = [71];
-        water_sources (1, :) double = [73];
-        sleep_sources (1, :) double = [64];
+        food_sources (1, :) double = [71, 43, 57, 78];
+        water_sources (1, :) double = [73, 33, 48, 67];
+        sleep_sources (1, :) double = [64, 44, 49, 59];
         weights (1, :) double = [10, 40, 1, 10];
         num_states (1, 1) double {mustBeInteger, mustBePositive} = 100;
         num_trials (1, 1) double {mustBeInteger, mustBePositive} = 300;
     end
 
     % Print out the values of the arguments
-    fprintf('Algorithm: %s\n', algorithm);
-    fprintf('Seed: %d\n', seed);
-    fprintf('Horizon: %d\n', horizon);
-    fprintf('K-factor: %.2f\n', k_factor);
-    fprintf('Root folder: %s\n', root_folder);
-    fprintf('MCT: %d\n', mct);
-    fprintf('Number of MCT: %d\n', num_mct);
-    fprintf('Auto restore: %d\n', auto_rest);
-    fprintf('Results file name: %s\n', results_file_name);
-    fprintf('Grid size: %d\n', grid_size);
-    fprintf('Hill position: %d\n', hill_pos);
-    fprintf('Food sources: %s\n', mat2str(food_sources));
-    fprintf('Water sources: %s\n', mat2str(water_sources));
-    fprintf('Sleep sources: %s\n', mat2str(sleep_sources));
-    fprintf('Weights: %s\n', mat2str(weights));
-    fprintf('Number of states: %d\n', num_states);
-    fprintf('Number of trials: %d\n', num_trials);
+    % fprintf('Algorithm: %s\n', algorithm);
+    % fprintf('Seed: %d\n', seed);
+    % fprintf('Horizon: %d\n', horizon);
+    % fprintf('K-factor: %.2f\n', k_factor);
+    % fprintf('Root folder: %s\n', root_folder);
+    % fprintf('MCT: %d\n', mct);
+    % fprintf('Number of MCT: %d\n', num_mct);
+    % fprintf('Auto restore: %d\n', auto_rest);
+    % fprintf('Results file name: %s\n', results_file_name);
+    % fprintf('Grid size: %d\n', grid_size);
+    % fprintf('Hill position: %d\n', hill_pos);
+    % fprintf('Food sources: %s\n', mat2str(food_sources));
+    % fprintf('Water sources: %s\n', mat2str(water_sources));
+    % fprintf('Sleep sources: %s\n', mat2str(sleep_sources));
+    % fprintf('Weights: %s\n', mat2str(weights));
+    % fprintf('Number of states: %d\n', num_states);
+    % fprintf('Number of trials: %d\n', num_trials);
 
     % Set results_file_name if it was not provided, now incorporating the seed and environment setup
     if isempty(results_file_name)
@@ -78,22 +78,28 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     survived = 0;
 
     switch algorithm
-        case 'SL'
-            survived = SL_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials);
-            disp('SL run complete');
         case 'SI'
+            disp('Starting SI.');
             survived = SI_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials);
             disp('SI run complete');
+        case 'SL'
+            disp('Starting SL.');
+            survived = SL_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials);
+            disp('SL run complete');
         case 'BA'
-            survived = BA_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials);
+            disp('Starting BA.');
+            survived = BA_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials);
             disp('BA run complete');
         case 'BAUCB'
-            survived = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials);
+            disp('Starting BAUCB.');
+            survived = BAUCB_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials);
             disp('BA_UCB run complete');
         case 'known_large_MCT'
+            disp('Starting known_large_MCT.');
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);
             disp('Known large MCT run complete');
         case 'model_free_RL'
+            disp('Starting model_free_RL.');
             survived = model_free_RL(seed, results_file_name);
             disp('Model free RL run complete');
         case 'model_mixed_RL'

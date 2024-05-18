@@ -156,7 +156,7 @@ function [survived] = SI(seed)
     total_search_depth = 0;
     total_memory_accessed = 0;
     total_t = 0;
-    survived(1:num_trials) = 0;
+    survived = zeros(1, num_trials);
 
     t_at_25 = 0;
     t_at_50 = 0;
