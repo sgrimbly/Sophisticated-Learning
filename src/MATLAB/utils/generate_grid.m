@@ -2,11 +2,11 @@
 generate_grids();
 
 function generate_grids()
-    rng(1);
+    rng(1);  % Seed for reproducibility
 
     % Define grid sizes and horizons
     grid_sizes = [3, 5, 7, 10];
-    horizons = {[1, 2], [2, 4], [3, 5], [3, 5, 7]};
+    horizons = {[1, 2], [2, 4], [3, 5], [4, 6]};
     num_configs_per_setup = [1, 2, 3, 4];
     
     outputFile = fopen('src/MATLAB/grid_configs.txt', 'w');
@@ -25,38 +25,53 @@ function generate_grids()
 
             while config_count < num_configs_per_setup(i)
                 seasons = cell(1, 4);
-                unique = true;
-                
-                % Generate four seasons
+                resources = {'Food', 'Water', 'Sleep'};
+                season_data = cell(1, 3);  % To store resource data across all seasons
+
+                % Generate four seasons and a start position
+                start_position = [];  % Initialize an empty array for start position
                 for k = 1:4
                     seasons{k} = generateConfig(hill_position, valid_positions);
+                    for r = 1:3
+                        season_data{r}(k) = seasons{k}(r+1);
+                    end
                 end
                 
+                % Ensure start position is neither hill nor resources
+                all_positions = [hill_position, [seasons{:}]];
+                remaining_positions = setdiff(valid_positions, all_positions);
+                if isempty(remaining_positions)
+                    continue;  % Skip if no valid start positions are available
+                end
+                start_position = remaining_positions(randperm(numel(remaining_positions), 1));  % Select one random valid start position
+
                 % Check uniqueness
                 config_strs = cellfun(@getConfigString, seasons, 'UniformOutput', false);
                 if any(isKey(generated_configs, config_strs))
-                    unique = false;
+                    continue;  % Skip if config is not unique
                 end
-                
-                if unique
-                    for k = 1:4
-                        generated_configs(config_strs{k}) = true;
-                    end
-                    config_count = config_count + 1;
 
-                    % Write to file
-                    fprintf(outputFile, 'Grid Size: %d, Horizon: %d, Hill: %d\n', grid_size, horizon, hill_position);
-                    for k = 1:4
-                        fprintf(outputFile, 'Season %d: Food(%d), Water(%d), Sleep(%d)\n', k, seasons{k}(2), seasons{k}(3), seasons{k}(4));
-                    end
-                    fprintf(outputFile, '\n');
+                for k = 1:4
+                    generated_configs(config_strs{k}) = true;
                 end
+                config_count = config_count + 1;
+
+                % Construct and write formatted output to file
+                line_to_write = sprintf('Grid Size: %d, Horizon: %d, Hill: %d, Start Position: %d, ', grid_size, horizon, hill_position, start_position);
+                for r = 1:3
+                    resource_string = sprintf('%d,', season_data{r});
+                    resource_string = resource_string(1:end-1);  % Remove the trailing comma
+                    line_to_write = [line_to_write sprintf('%s(%s), ', resources{r}, resource_string)];
+                end
+                line_to_write = line_to_write(1:end-2);  % Remove the last comma and space
+                fprintf(outputFile, '%s\n', line_to_write);
             end
         end
     end
 
     fclose(outputFile);
 end
+
 
 function positions = getValidPositions(grid_size, hill_position, horizon)
     [hill_row, hill_col] = ind2sub([grid_size, grid_size], hill_position);

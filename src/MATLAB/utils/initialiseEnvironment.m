@@ -1,5 +1,5 @@
 
-function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, grid_size, hill_pos, food_sources, water_sources, sleep_sources)
+function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources)
     % Initialise Environment Variables
     A{1}(:, :, :) = zeros(num_states, num_states, 4);
     a{1}(:, :, :) = zeros(num_states, num_states, 4);
@@ -32,7 +32,7 @@ function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, 
 
     D{1} = zeros(1, num_states)'; 
     D{2} = [0.25, 0.25, 0.25, 0.25]';
-    D{1}(51) = 1; 
+    D{1}(start_position) = 1; 
     D{1} = normalise(D{1});
     T = 27;
     num_modalities = 3;

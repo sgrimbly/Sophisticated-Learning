@@ -1,18 +1,20 @@
-function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials)
+function [survived] = BA_UCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
-    if nargin < 3, hill_pos = 55; end
-    if nargin < 4, food_sources = [71, 43, 57, 78]; end
-    if nargin < 5, water_sources = [73, 33, 48, 67]; end
-    if nargin < 6, sleep_sources = [64, 44, 49, 59]; end
-    if nargin < 7, num_states = 100; end
-    if nargin < 8, num_trials = 300; end
+    if nargin < 3, start_position = 51; end  % Default start position set to 51
+    if nargin < 4, hill_pos = 55; end
+    if nargin < 5, food_sources = [71, 43, 57, 78]; end
+    if nargin < 6, water_sources = [73, 33, 48, 67]; end
+    if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
+    if nargin < 8, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
+    if nargin < 9, num_trials = 300; end
+
 
     rng(seed)
     rng
 
     % Call the utility function to initialise the environment
-    [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
+    [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
 
     Nt = ones(400);
     chosen_action = zeros(1, T - 1);
@@ -59,7 +61,7 @@ function [survived] = BA_UCB_modular(seed, grid_size, hill_pos, food_sources, wa
         for factor = 1:2
             Q{1, factor} = D{factor}';
             P{1, factor} = D{factor}';
-            true_states{trial}(1, t) = 51;
+            true_states{trial}(1, t) = start_position;
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
         end
 

@@ -1,13 +1,14 @@
-function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
+function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
-    if nargin < 3, hill_pos = 55; end
-    if nargin < 4, food_sources = [71, 43, 57, 78]; end
-    if nargin < 5, water_sources = [73, 33, 48, 67]; end
-    if nargin < 6, sleep_sources = [64, 44, 49, 59]; end
-    if nargin < 7, weights = [10, 40, 1, 10]; end
-    if nargin < 8, num_states = 100; end
-    if nargin < 9, num_trials = 300; end
+    if nargin < 3, start_position = 51; end  % Default start position set to 51
+    if nargin < 4, hill_pos = 55; end
+    if nargin < 5, food_sources = [71, 43, 57, 78]; end
+    if nargin < 6, water_sources = [73, 33, 48, 67]; end
+    if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
+    if nargin < 8, weights = [10, 40, 1, 10]; end
+    if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
+    if nargin < 10, num_trials = 300; end
 
     rng(seed);
     rng;
@@ -17,7 +18,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
     epistemic_weight = weights(3);
     preference_weight = weights(4);
 
-    [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
+    [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
 
     chosen_action = zeros(1, T - 1);
     time_since_food = 0;
@@ -27,7 +28,7 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
     seed_str = num2str(seed);
     % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
-    directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
+    directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning';
     file_name = strcat(directory_path, '\SI_Seed_', seed_str, '_', current_time, '.txt');
 
     t = 1;
@@ -60,9 +61,9 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
         for factor = 1:2
             Q{1, factor} = D{factor}';
             P{1, factor} = D{factor}';
-            true_states{trial}(1, t) = 51;
-            true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
         end
+        true_states{trial}(1, t) = start_position;
+        true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
 
         t = 1; % Reset t for each trial
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
@@ -98,6 +99,31 @@ function [survived] = SI_modular(seed, grid_size, hill_pos, food_sources, water_
                 vec(1, observations(modality, t)) = 1;
                 O{modality, t} = vec;
             end
+            % for modality = 1:num_modalities
+            %     % Debug output to trace the indices and check if they are within bounds
+            %     fprintf('Modality: %d\n', modality);
+            %     fprintf('Current time step (t): %d\n', t);
+            %     fprintf('Indices being accessed - State 1: %d, State 2: %d\n', true_states{trial}(1, t), true_states{trial}(2, t));
+            %     fprintf('Dimensions of A{%d}: %d x %d x %d\n', modality, size(A{modality}, 1), size(A{modality}, 2), size(A{modality}, 3));
+            % 
+            %     % Check if the indices are within the valid range before accessing
+            %     if true_states{trial}(1, t) > size(A{modality}, 2) || true_states{trial}(2, t) > size(A{modality}, 3)
+            %         fprintf('Error: Index out of bounds before accessing A{%d}\n', modality);
+            %     else
+            %         ob = A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t));
+            %         observations(modality, t) = find(cumsum(A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t))) >= rand, 1);
+            % 
+            %         % Debug output to trace what observations are made
+            %         fprintf('Observations for modality %d at time %d: %d\n', modality, t, observations(modality, t));
+            % 
+            %         vec = zeros(1, size(A{modality}, 1));
+            %         vec(1, observations(modality, t)) = 1;
+            %         O{modality, t} = vec;
+            % 
+            %         % Debug output to confirm successful vector creation and assignment
+            %         fprintf('Vector for observations set for modality %d at time %d.\n', modality, t);
+            %     end
+            % end
 
             true_t = t;
 
