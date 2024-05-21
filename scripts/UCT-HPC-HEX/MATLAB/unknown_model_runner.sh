@@ -5,8 +5,8 @@ module load software/matlab-R2024a
 
 # Define the parameter ranges
 declare -a ALGORITHMS=("SI" "SL" "BA" "BAUCB")
-declare -a MISSING_SI_SEEDS=({61..120}) # All necessary SI seeds from 1 to 130 are accounted for
-declare -a MISSING_SL_SEEDS=({61..120}) # All necessary SL seeds from 1 to 130 are accounted for
+declare -a MISSING_SI_SEEDS=({120..180}) # All necessary SI seeds from 1 to 130 are accounted for
+declare -a MISSING_SL_SEEDS=({120..180}) # All necessary SL seeds from 1 to 130 are accounted for
 declare -a MISSING_BA_SEEDS=() # Adjusted to include only remaining BA seeds
 declare -a MISSING_BAUCB_SEEDS=() # Remaining seeds for BAUCB to run
 

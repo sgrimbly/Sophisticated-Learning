@@ -87,11 +87,30 @@ def perform_statistical_comparison_polynomial(results, x_values):
             logging.info(f"{algo1} Predictions 95% CI: {ci1}")
             logging.info(f"{algo2} Predictions 95% CI: {ci2}")
 
-def moving_average(data, window_size=10):
-    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+# def moving_average(data, window_size=10):
+#     return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+
+def moving_average_with_cumulative_start(data, window_size=10):
+    if window_size <= 0:
+        raise ValueError("Window size must be positive")
+
+    # Initialize the result array
+    result = np.empty(len(data))
+    
+    # Cumulative averaging for the initial part
+    for i in range(window_size):
+        result[i] = np.mean(data[:i+1])
+    
+    # Moving average for the rest
+    moving_avg = np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+    # Adjust the index where the moving average is assigned
+    result[window_size-1:] = moving_avg
+    
+    return result
 
 def find_convergence_point(data, window_size=20, threshold=0.005):
-    mov_avg = moving_average(data, window_size)
+    # mov_avg = moving_average(data, window_size)
+    mov_avg = moving_average_with_cumulative_start(data, window_size)
     for i in range(len(mov_avg) - window_size):
         if np.max(np.abs(mov_avg[i:i+window_size] - mov_avg[i+window_size])) < threshold:
             return i + window_size
@@ -164,7 +183,7 @@ def plot_trimmed_regression(ax, x_data, y_data, algorithm, data_color, line_colo
     ax.legend()
 
 def plot_moving_average(ax, x_data, y_data, algorithm, color, window_size):
-    mov_avg = moving_average(y_data, window_size)
+    mov_avg = moving_average_with_cumulative_start(y_data, window_size)
     ax.plot(x_data[:len(mov_avg)], mov_avg, label=f'{algorithm} Moving Average (window={window_size})', color=color)
     ax.set_xlabel('Trial')
     ax.set_ylabel('Average Survival Time')

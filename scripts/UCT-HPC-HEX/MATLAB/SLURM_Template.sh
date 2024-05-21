@@ -2,8 +2,8 @@
 # SLURM submission script for MATLAB jobs on UCT HPC
 
 # Essential SBATCH directives:
-#SBATCH --account=maths                           # Replace with your actual account
-#SBATCH --partition=ada                           # Confirm partition based on your access rights and job needs
+#SBATCH --account=maths                           
+#SBATCH --partition=ada                           
 #SBATCH --time=$TIME_LIMIT                        # Time limit placeholder
 #SBATCH --job-name=$JOB_NAME                      # Job name placeholder
 #SBATCH --nodes=1                                 # Single node
@@ -13,7 +13,7 @@
 #SBATCH --output=matlab_job_%j.out                # Standard output and error log
 
 # Currently excluding these nodes on HEX because there were issues with jobs not starting/ending correctly. MATLAB related?
-#SBATCH --nodelist=srvrochpc[108-111]
+# SBATCH --nodelist=srvrochpc[108-111]
 # SBATCH --exclude=srvrochpc103,srvrochpc107       # Exclude these nodes
 
 # Email notifications:

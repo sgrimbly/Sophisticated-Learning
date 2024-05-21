@@ -28,8 +28,8 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
     seed_str = num2str(seed);
     % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
-    directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
-    file_name = strcat(directory_path, '\SL_Seed_', seed_str, '_', current_time, '.txt');
+    % directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
+    file_name = strcat(directory_path, '/SL_Seed_', seed_str, '_', current_time, '.txt');
 
     t = 1;
     memory_resets = zeros(num_trials, 1);
@@ -157,7 +157,6 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
                 water = water_sources(4);
                 sleep = sleep_sources(4);
             end
-
 
             y{2} = normalise_matrix(a{2});
             y{1} = A{1};
