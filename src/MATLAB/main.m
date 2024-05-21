@@ -18,7 +18,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         water_sources (1, :) double = [73, 33, 48, 67];
         sleep_sources (1, :) double = [64, 44, 49, 59];
         weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);  % Default values for weights
-        num_states (1, 1) double {mustBeInteger, mustBePositive} = 100;
+        num_states (1, 1) double {mustBeInteger, mustBePositive} = grid_size^2;
         num_trials (1, 1) double {mustBeInteger, mustBePositive} = 300;
     end
 

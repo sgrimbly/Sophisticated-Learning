@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load the MATLAB module:
-module load software/matlab-R2024a
+module load software/matlab-R2022b
 
 # Define the parameter ranges
 declare -a ALGORITHMS=("SI" "SL" "BA" "BAUCB")

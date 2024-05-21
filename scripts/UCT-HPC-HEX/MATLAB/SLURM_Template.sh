@@ -17,15 +17,17 @@
 # SBATCH --exclude=srvrochpc103,srvrochpc107       # Exclude these nodes
 
 # Email notifications:
-#SBATCH --mail-user=GRMSTJ001@myuct.ac.za         # Replace with your UCT email address
+# SBATCH --mail-user=GRMSTJ001@myuct.ac.za         
 
 # Commented out so no emails: SBATCH --mail-type=FAIL #BEGIN,END,FAIL  
 
 # Load the MATLAB module:
-module load software/matlab-R2024a
+module load software/matlab-R2022b
 
 # Display the run configuration for debugging
 echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}"
+
+# Wait before submitting MATLAB job for random number of seconds to avoid congestion on MATLAB license server. Possible reason for not starting up of MATLAB jobs seen previously. 
 sleep $((5 + RANDOM % 25))
 
 # Run MATLAB script. This line will be added below here by the job runner that modifies this template. 
