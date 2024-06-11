@@ -81,7 +81,8 @@ def agent_loop(
         "pe_memory_resets": [],
         "time_steps": [],
         "search_depth": [],
-        "memory_accessed": []
+        "memory_accessed": [],
+        "tree_search_call_count": []
     }
     
     # Initialise trial-specific counters
@@ -90,6 +91,7 @@ def agent_loop(
     pe_memory_resets = 0
     hill_memory_resets = 0
     memory_accessed = 0
+    tree_search_call_count = np.zeros(100)
     
     # Main loop continues as long as time doesn't exceed constraint and agent's needs are met
     while t < t_constraint and is_alive(time_since_resource, resource_constraints):
@@ -153,7 +155,7 @@ def agent_loop(
         
         # Initialize best actions and perform tree search to find the best action
         best_actions = []
-        tree_search_call_count = 0
+        tree_search_call_count[t] += 1
         G, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search(algorithm,
             args=(short_term_memory, historical_agent_observations, historical_agent_posterior_Q, a, A, y, B, b, t, t + horizon, 
             time_since_resource, t, chosen_action, 
@@ -172,10 +174,13 @@ def agent_loop(
         # Prepare for the next iteration
         alive_status = is_alive(time_since_resource, resource_constraints)
         
-        if not alive_status:
+        if alive_status:
+            print(f"At time {t} the agent searched at depth {tree_search_call_count[t]}.", flush=True)
+        elif not alive_status:
             print(f"At time {t} the agent is dead.", flush=True)
             print(f"The agent had: {resource_constraints['Food'] - time_since_resource['Food']} food, {resource_constraints['Water'] - time_since_resource['Water']} water, and {resource_constraints['Sleep'] - time_since_resource['Sleep']} sleep.", flush=True)
             print(f"The total tree search depth for this trial was {search_depth}.", flush=True)
+            print(f"The total tree search call count for this trial was {np.sum(tree_search_call_count)}.", flush=True)
             print(f"The agent accessed its memory {memory_accessed} times.", flush=True)
             print(f"The agent cleared its short-term memory {pe_memory_resets + hill_memory_resets} times.", flush=True)
             print(f"    State prediction error memory resets: {pe_memory_resets}.", flush=True)
@@ -199,6 +204,7 @@ def agent_loop(
     trial_data["time_steps"] = t
     trial_data["search_depth"] = search_depth
     trial_data["memory_accessed"] = memory_accessed
+    trial_data["tree_search_call_count"] = np.sum(tree_search_call_count)
     
     
     if visualise:
@@ -207,7 +213,7 @@ def agent_loop(
 
     return a, trial_data
 
-def experiment(algorithm, seed, visualise=True):
+def experiment(algorithm, seed, visualise=False):
     random.seed(seed)
     np.random.seed(seed)
     
@@ -256,6 +262,7 @@ def experiment(algorithm, seed, visualise=True):
     total_pe_resets = 0
     total_memory_accessed = 0
     total_search_depth = 0
+    total_tree_search_call_count = 0
     t_at25 = 0
     t_at50 = 0
     t_at75 = 0
@@ -325,6 +332,7 @@ def experiment(algorithm, seed, visualise=True):
         total_pe_resets += trial_data["pe_memory_resets"]
         total_search_depth += trial_data["search_depth"]
         total_memory_accessed += trial_data["memory_accessed"]
+        total_tree_search_call_count += trial_data["tree_search_call_count"]
         
         # Calculate total runtime for the latest trial
         trial_end_time = datetime.now()    
@@ -338,6 +346,7 @@ def experiment(algorithm, seed, visualise=True):
         logging.info(f"Total hill visits: {total_hill_resets}")
         logging.info(f"Total prediction errors: {total_pe_resets}")
         logging.info(f"Total search depth: {total_search_depth}")
+        logging.info(f"Total tree search call count: {total_tree_search_call_count}")
         logging.info(f"Total times memory accessed: {total_memory_accessed}")
         logging.info(f"Total times 24 >= t < 49: {t_at25}")
         logging.info(f"Total times 49 >= t < 74: {t_at50}")
