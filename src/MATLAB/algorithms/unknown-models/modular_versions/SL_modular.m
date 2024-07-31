@@ -28,7 +28,8 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
     seed_str = num2str(seed);
     % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/300trials_data';
     % directory_path = 'C:\Users\micro\Documents\ActiveInference_Work\Sophisticated-Learning'
-    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
+    directory_path = 'C:\Users\stjoh\Documents\ActiveInference\Sophisticated-Learning'
+    % directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
 
     food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
     water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
