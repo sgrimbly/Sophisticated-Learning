@@ -42,10 +42,10 @@ def initialise_distributions(num_states, contextual_food_locations, contextual_w
 
     # Shifting distributions based on actions and states
     # Define the sets of states that will not be rolled for each direction
-    exclude_left = set(range(0, 100, 10))
-    exclude_right = set(range(9, 100, 10))
-    exclude_up = set(range(90, 100))
-    exclude_down = set(range(0, 10))
+    exclude_left = set(range(0, num_states, 10))
+    exclude_right = set(range(10 - 1, num_states, 10))
+    exclude_up = set(range(10))
+    exclude_down = set(range(num_states - 10, num_states))
 
     for i in range(num_states):
         if i not in exclude_left:
@@ -53,9 +53,9 @@ def initialise_distributions(num_states, contextual_food_locations, contextual_w
         if i not in exclude_right:
             B[0][:, i, 2] = np.roll(B[0][:, i, 2], 1)  # move right
         if i not in exclude_up:
-            B[0][:, i, 3] = np.roll(B[0][:, i, 3], 10)  # move up
+            B[0][:, i, 3] = np.roll(B[0][:, i, 3], -10)  # move up
         if i not in exclude_down:
-            B[0][:, i, 4] = np.roll(B[0][:, i, 4], -10)  # move down
+            B[0][:, i, 4] = np.roll(B[0][:, i, 4], 10)  # move down
 
     # Agent just knows the true dynamics here.
     b = copy.deepcopy(B)

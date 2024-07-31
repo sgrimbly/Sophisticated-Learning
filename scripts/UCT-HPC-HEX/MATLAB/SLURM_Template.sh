@@ -25,7 +25,7 @@
 module load software/matlab-R2022b
 
 # Display the run configuration for debugging
-echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}"
+echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}, GRID_SIZE=${GRID_SIZE}, START_POS=${START_POS}, HILL=${HILL}, FOOD=(${FOOD}), WATER=(${WATER}), SLEEP=(${SLEEP})"
 
 # Wait before submitting MATLAB job for random number of seconds to avoid congestion on MATLAB license server. Possible reason for not starting up of MATLAB jobs seen previously. 
 sleep $((5 + RANDOM % 25))

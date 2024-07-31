@@ -88,7 +88,8 @@ def forward_tree_search_SI(short_term_memory, historical_agent_O, historical_age
                     
                     # Prior over next states given transition function (calculated earlier)
                     # NOTE: We pass imagined_O and Q_action as lists to ensure that SI and SL tree search can run from a single function call in sophisticated_agent
-                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SI(short_term_memory, [imagined_O], [Q_action], a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count+1)
+                    tree_search_call_count[true_t] += 1
+                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SI(short_term_memory, [imagined_O], [Q_action], a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count)
                     S = np.max(expected_free_energy)
                     K[state] = S
                     memory_accessed +=1
@@ -115,6 +116,7 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
     imagined_historical_agent_O = copy.deepcopy(historical_agent_O)
     imagined_historical_agent_P = copy.deepcopy(historical_agent_P)
 
+    imagined_a = copy.deepcopy(a)
     imagined_O = copy.deepcopy(imagined_historical_agent_O[-1])    
     imagined_P = copy.deepcopy(imagined_historical_agent_P[-1])
     
@@ -159,7 +161,7 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
             # smoothed_posterior: Shape (4,1)
             smoothed_posterior = [P[0], smoothed_posterior]
             
-            a_prior = copy.deepcopy(a[1])  # Resource likelihood/preference
+            a_prior = copy.deepcopy(imagined_a[1])  # Resource likelihood/preference
             a_learning = copy.deepcopy(imagined_O[1]).T  # Shape (1,4)
             
             # Perform a cross product of the learning array with each posterior distribution
@@ -169,14 +171,14 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
                 a_learning = spm_cross(a_learning, smoothed_posterior[factor])
 
             # Element-wise multiplication to zero-out elements where a[1] is zero
-            a_learning = a_learning * (a[1] > 0)  # Shape (4,100,4)
+            a_learning = a_learning * (imagined_a[1] > 0)  # Shape (4,100,4)
 
             # Prepare the weighted update for learning
             # This operation scales the learning update by the learning weight, but keeps the first row unchanged
             a_learning_weighted = np.array(a_learning)
             a_learning_weighted[1:, :] = weights["Learning"] * a_learning[1:, :]
             
-            a[1] = a[1] + a_learning
+            imagined_a[1] = imagined_a[1] + a_learning
         
             # Combine the prior with the weighted learning update
             a_temp = a_prior + a_learning_weighted
@@ -237,7 +239,8 @@ def forward_tree_search_SL(short_term_memory, historical_agent_O, historical_age
                         imagined_historical_agent_P[-1] = Q_action
                         
                     # Prior over next states given transition function (calculated earlier)
-                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SL(short_term_memory, imagined_historical_agent_O, imagined_historical_agent_P, a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count+1)
+                    tree_search_call_count[true_t] += 1
+                    expected_free_energy, short_term_memory, best_actions, memory_accessed, tree_search_call_count = forward_tree_search_SL(short_term_memory, imagined_historical_agent_O, imagined_historical_agent_P, imagined_a, A, y, B, b, imagined_t+1, search_horizon, imagined_time_since_resource, true_t, imagined_chosen_action, best_actions, weights, num_modalities, num_factors, num_states, num_resource_observations, G_prior, resource_constraints, memory_accessed, tree_search_call_count)
                     S = np.max(expected_free_energy)
                     K[state] = S
                     memory_accessed +=1
