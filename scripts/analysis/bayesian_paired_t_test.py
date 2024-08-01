@@ -1,5 +1,7 @@
 import numpy as np
 import os
+# os.environ['JAX_PLATFORM_NAME'] = 'cpu'
+
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -19,7 +21,9 @@ logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', f
                     format='%(levelname)s:%(message)s')
 
 # Define paths and file pattern
-BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+# BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+BASE_PATH = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/'
+SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data/'
 SAVE_PATH = os.path.join(BASE_PATH, 'results/')
 DATA_PATH = os.path.join(SAVE_PATH, 'bayesian_t_test_sample_data/')  # New path for .nc files
 DENSITY_PATH = os.path.join(SAVE_PATH, 'densities')
@@ -282,36 +286,36 @@ def create_gif_from_density_plots():
 
 
 # Example usage (commented out for safety; uncomment for actual use)
-# data_dict = {}
-# for file_path, (algorithm, seed, timestamp) in get_files(SURVIVAL_FOLDER):
-#     data = load_data(file_path)
-#     if data is not None:
-#         if algorithm not in data_dict:
-#             data_dict[algorithm] = []
-#         data_dict[algorithm].append(data)
+data_dict = {}
+for file_path, (algorithm, seed, timestamp) in get_files(SURVIVAL_FOLDER):
+    data = load_data(file_path)
+    if data is not None:
+        if algorithm not in data_dict:
+            data_dict[algorithm] = []
+        data_dict[algorithm].append(data)
 
-# algorithms = list(data_dict.keys())
-# if len(algorithms) > 1:
-#     algo1, algo2 = algorithms[0], algorithms[1]
-#     data1 = np.array(data_dict[algo1])
-#     data2 = np.array(data_dict[algo2])
-#     time_point_results = bayesian_t_tests_by_time(data1, data2, num_timesteps=300, num_chains=1, num_warmup=1500, num_samples=5000)
-#     save_results_directly(time_point_results, algo1, algo2)
-# else:
-#     logging.warning("Not enough algorithms found for comparison.")
+algorithms = list(data_dict.keys())
+if len(algorithms) > 1:
+    algo1, algo2 = algorithms[0], algorithms[1]
+    data1 = np.array(data_dict[algo1])
+    data2 = np.array(data_dict[algo2])
+    time_point_results = bayesian_t_tests_by_time(data1, data2, num_timesteps=300, num_chains=1, num_warmup=1500, num_samples=5000)
+    save_results_directly(time_point_results, algo1, algo2)
+else:
+    logging.warning("Not enough algorithms found for comparison.")
 
-# plot_time_series_density()
-# plot_time_series_density_with_summary(300)  # Plot all timesteps
-# plot_time_series_density_with_summary(50)  # Plot the first 50 timesteps
+plot_time_series_density()
+plot_time_series_density_with_summary(300)  # Plot all timesteps
+plot_time_series_density_with_summary(50)  # Plot the first 50 timesteps
 
 # plt.savefig(SAVE_PATH+'timeseries_paired_test_improved.png')
 # check_nc_file("/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/Direct_Bayesian_Test_SI_vs_SL_time_0.nc")
 # test_create_nc()
 
 # Run the test and plot the results
-# significant_time_points, posterior_probabilities = bayesian_statistical_test(alpha=0.05)
-# plot_posterior_probabilities(posterior_probabilities, alpha=0.05)
-# plot_posterior_probabilities(posterior_probabilities, max_timesteps=50, alpha=0.05)
+significant_time_points, posterior_probabilities = bayesian_statistical_test(alpha=0.05)
+plot_posterior_probabilities(posterior_probabilities, alpha=0.05)
+plot_posterior_probabilities(posterior_probabilities, max_timesteps=50, alpha=0.05)
 
 # Call the function to generate and save plots
 plot_density_each_timepoint()
@@ -320,6 +324,6 @@ plot_density_each_timepoint()
 create_gif_from_density_plots()
 
 # Print significant time points
-# print("Significant Time Points (Time Point, Posterior Probability):")
-# for tp in significant_time_points:
-#     print(tp)
+print("Significant Time Points (Time Point, Posterior Probability):")
+for tp in significant_time_points:
+    print(tp)
