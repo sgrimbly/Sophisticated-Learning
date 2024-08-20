@@ -1,4 +1,4 @@
-function [P, Q, true_states] = updateEnvironmentStates(P, Q, true_states, trial, t, num_states, chosen_action, D, B, bb, food_sources)
+function [P, Q, true_states] = updateEnvironmentStates(P, Q, true_states, trial, t, chosen_action, B, bb)
     for factor = 1:2
         Q_prev = Q{t - 1, factor}';
         

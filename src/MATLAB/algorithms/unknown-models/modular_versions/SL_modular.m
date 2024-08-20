@@ -238,7 +238,7 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
         fprintf('The agent cleared its short-term memory %d times. \n', memory_resets(trial));
         fprintf('     State prediction error memory resets: %d. \n', pe_memory_resets(trial));
         fprintf('     Hill memory resets: %d. \n', hill_memory_resets(trial));
-        fprintf('TRIAL %d COMPLETE ?\n', trial);
+        fprintf('TRIAL %d COMPLETE \n', trial);
         fprintf('End Time: %s\n', endTime);
         fprintf('Total runtime for this trial (minutes/seconds): %02d:%02d\n', minutes, seconds);
         fprintf('----------------------------------------\n');
