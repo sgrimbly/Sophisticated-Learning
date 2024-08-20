@@ -8,7 +8,7 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
     if nargin < 8, weights = [10, 40, 1, 10]; end
     if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
-    if nargin < 10, num_trials = 120; end
+    if nargin < 10, num_trials = 200; end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
     directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -49,7 +49,7 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
 
     if ~isNew
         % Load variables from the saved state, using indices to access the cell array
-        rng(loadedState{1});       % Restore the RNG state
+        rng(loadedState{1}, "twister");       % Restore the RNG state
         trial = loadedState{2} + 1; % Start from the next trial to ensure continuity
         
         a_history = loadedState{3}; % Retrieve a_history
