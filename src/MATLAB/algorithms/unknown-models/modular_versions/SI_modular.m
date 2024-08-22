@@ -1,4 +1,4 @@
-function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
+function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end  % Default start position set to 51
@@ -9,16 +9,18 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     if nargin < 8, weights = [10, 40, 1, 10]; end
     if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
     if nargin < 10, num_trials = 200; end
+    if nargin < 11, grid_id = ''; end
 
-    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
-    directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons    
+    % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
+    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
     food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
     water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
     sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
     weights_str = strjoin(arrayfun(@num2str, weights, 'UniformOutput', false), '-');
     
     % Define file path for state and results
-    result_file = strcat(directory_path, '/SI_Seed_', num2str(seed), '_' , current_time, '.txt');
+    result_file = strcat(directory_path, '/SI_Seed_', num2str(seed), '_GridID_', grid_id, '_' , current_time, '.txt');
     
     % file_name = strcat(directory_path, '/SI_Seed_', num2str(seed), ...
     %                    '_Grid', num2str(grid_size), ...
@@ -37,19 +39,20 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     epistemic_weight = weights(3);
     preference_weight = weights(4);
 
-    % Initialize environment and weights once, outside of any saved state check
+    % Initialize environment once, outside of any saved state check
     [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
 
     % Organise state for experiment run
-    stateFile = strcat(directory_path, '/SI_Seed_', num2str(seed), '.mat')
+    stateFile = strcat(directory_path, '/SI_Seed_', num2str(seed), '_GridID_', grid_id, '.mat')
     [loadedState, isNew] = load_state(stateFile);
+
 
     if ~isNew
         % Load variables from the saved state, using indices to access the cell array
-        rng(loadedState{1}, "twister");       % Restore the RNG state
+        rng(loadedState{1});       % Restore the RNG state
         trial = loadedState{2} + 1; % Start from the next trial to ensure continuity
         
         a_history = loadedState{3}; % Retrieve a_history
@@ -123,7 +126,6 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
         end
         
-        
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
             bb{2} = normalise_matrix(b{2});
             
@@ -163,17 +165,15 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
 
             elseif (true_states{trial}(2, t) == 1 && true_states{trial}(1, t) == sleep_sources(1)) || (true_states{trial}(2, t) == 2 && true_states{trial}(1, t) == sleep_sources(2)) || (true_states{trial}(2, t) == 3 && true_states{trial}(1, t) == sleep_sources(3)) || (true_states{trial}(2, t) == 4 && true_states{trial}(1, t) == sleep_sources(4))
                 time_since_sleep = 0;
-                time_since_food = time_since_food +1;
-                time_since_water = time_since_water +1;
+                time_since_food = time_since_food + 1;
+                time_since_water = time_since_water + 1;
 
             else
-
                 if t > 1
-                    time_since_food = time_since_food +1;
-                    time_since_water = time_since_water +1;
-                    time_since_sleep = time_since_sleep +1;
+                    time_since_food = time_since_food + 1;
+                    time_since_water = time_since_water + 1;
+                    time_since_sleep = time_since_sleep + 1;
                 end
-
             end
             
             for modality = 1:num_modalities
@@ -270,7 +270,7 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
             y{2} = normalise_matrix(a{2});
             y{1} = A{1};
             y{3} = A{3};
-            displayGridWorld(true_states{trial}(1, t), food, water, sleep, hill_pos, 1)
+            % displayGridWorld(true_states{trial}(1, t), food, water, sleep, hill_pos, 1)
             horizon = min([9, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
             if horizon == 0, horizon = 1; end
 

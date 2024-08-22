@@ -15,31 +15,37 @@ import netCDF4 as nc
 from matplotlib.colors import Normalize
 from scipy.ndimage import gaussian_filter
 import imageio
+import pandas as pd
 
 # Basic logging setup
 logging.basicConfig(level=logging.INFO, filename='algorithm_comparison_2.log', filemode='w',
                     format='%(levelname)s:%(message)s')
 
 # Define paths and file pattern
-# BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
-BASE_PATH = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/'
-SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data/'
+BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
+# BASE_PATH = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/'
+# SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/300trials_data/'
+# SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/120trials_data_threefry/'
+SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/200trials_data_threefry/'
 SAVE_PATH = os.path.join(BASE_PATH, 'results/')
-DATA_PATH = os.path.join(SAVE_PATH, 'bayesian_t_test_sample_data/')  # New path for .nc files
+# DATA_PATH = os.path.join(SAVE_PATH, 'bayesian_t_test/bayesian_t_data_300trials_120seeds')  # New path for .nc files
+# DATA_PATH = os.path.join(SAVE_PATH, 'bayesian_t_test/bayesian_t_data_120trials_1881seeds')  # New path for .nc files
+DATA_PATH = os.path.join(SAVE_PATH, 'bayesian_t_test/bayesian_t_data_200trials_500seeds')  # New path for .nc files
 DENSITY_PATH = os.path.join(SAVE_PATH, 'densities')
 if not os.path.exists(DENSITY_PATH):
     os.makedirs(DENSITY_PATH)
 file_pattern = re.compile(r"([A-Za-z]+)_Seed_(\d+)_(\d{2}-\d{2}-\d{2}-\d{3})\.txt")
 
-def load_data(file_path):
-    """Loads data from a specified path and returns a numpy array if the data has exactly 300 lines."""
+def load_data(file_path, num_lines):
+    """Loads data from a specified path and returns a numpy array if the data has exactly {num_lines} lines."""
+
     with open(file_path, 'r') as file:
         data = np.array([float(line.strip()) for line in file.readlines()])
-    if len(data) == 300:
+    if len(data) == num_lines: # NOTE: Should be 300 for 300 trial data
         return data
     else:
-        logging.warning(f"File {file_path} does not have 300 lines.")
-        return None
+        # print(f"File {file_path} does not have {num_lines} lines.")
+        return None  # Return None for files that do not have 300 lines
 
 def get_files(directory):
     """Yield file paths and groups for files matching the defined regex within a directory."""
@@ -162,11 +168,12 @@ def plot_time_series_density_with_summary(max_timesteps=300):
     # Optionally smooth the densities
     densities = gaussian_filter(densities, sigma=1)
 
+
+    plt.figure(figsize=(12, 6))   
     # Plotting the density heatmap
-    plt.figure(figsize=(12, 6))
-    extent = [time_points.min(), time_points.max(), values.min(), values.max()]
-    plt.imshow(densities.T, aspect='auto', origin='lower', extent=extent, norm=Normalize(vmin=densities.min(), vmax=densities.max()), cmap='viridis')
-    plt.colorbar(label='Density')
+    # extent = [time_points.min(), time_points.max(), values.min(), values.max()]
+    # plt.imshow(densities.T, aspect='auto', origin='lower', extent=extent, norm=Normalize(vmin=densities.min(), vmax=densities.max()), cmap='viridis')
+    # plt.colorbar(label='Density')
 
     # Overlay summary statistics
     plt.plot(time_points, means, color='white', label='Mean')
@@ -182,6 +189,80 @@ def plot_time_series_density_with_summary(max_timesteps=300):
     plt.title(f'Time Series of Density Distributions with Summary Statistics for First {max_timesteps} Time Points')
     plt.legend()
     plt.savefig(SAVE_PATH + f'timeseries_density_plot_with_summary_first_{max_timesteps}.png')
+
+# def plot_time_series_density_with_summary(max_timesteps=300):
+#     files = [f for f in os.listdir(DATA_PATH) if f.startswith('Direct_Bayesian_Test') and f.endswith('.nc')]
+#     files.sort(key=lambda x: int(x.split('time_')[-1].split('.')[0]))
+
+#     densities = []
+#     time_points = []
+
+#     # Load densities and time points
+#     for file in files[:max_timesteps]:
+#         full_file_path = os.path.join(DATA_PATH, file)
+#         with nc.Dataset(full_file_path, 'r') as ds:
+#             values = ds.variables['mu'][:]  # Assuming 'mu' is your parameter of interest
+#             time_point = int(file.split('time_')[-1].split('.')[0])
+#             time_points.append(time_point)
+
+#             # Compute the density
+#             kde_values = np.linspace(values.min(), values.max(), 100)
+#             density, _ = np.histogram(values, bins=kde_values, density=True)
+#             density = np.interp(np.linspace(values.min(), values.max(), 100), kde_values[:-1], density)
+#             densities.append(density)
+
+#     # Convert list to numpy array for easier manipulation
+#     densities = np.array(densities)
+#     time_points = np.array(time_points)
+
+#     # Plotting
+#     plt.figure(figsize=(12, 6))
+#     norm = Normalize(vmin=densities.min(), vmax=densities.max())
+#     cax = plt.imshow(densities.T, aspect='auto', origin='lower', extent=[time_points.min(), time_points.max(), values.min(), values.max()], cmap='viridis', norm=norm)
+#     plt.colorbar(cax, label='Density')
+#     plt.xlabel('Time Point')
+#     plt.ylabel('Mu Values')
+#     plt.title('Time Series of Density Distributions with Summary Statistics')
+#     plt.savefig(os.path.join(SAVE_PATH, 'timeseries_density_plot_with_summary.png'))
+#     plt.close()
+
+def plot_time_series_density_with_individual_norm(max_timesteps=300):
+    files = [f for f in os.listdir(DATA_PATH) if f.startswith('Direct_Bayesian_Test') and f.endswith('.nc')]
+    files.sort(key=lambda x: int(x.split('time_')[-1].split('.')[0]))
+
+    # Prepare an array to hold all densities
+    max_value_per_timepoint = []
+    
+    # First, determine the maximum density value for each time point to normalize individually
+    for file in files[:max_timesteps]:
+        full_file_path = os.path.join(DATA_PATH, file)
+        with nc.Dataset(full_file_path, 'r') as ds:
+            values = ds.variables['mu'][:]
+            kde_values = np.linspace(values.min(), values.max(), 100)
+            density, _ = np.histogram(values, bins=kde_values, density=True)
+            max_value_per_timepoint.append(density.max())
+
+    # Now plot with individual normalizations
+    fig, ax = plt.subplots(figsize=(12, 6))
+    densities = []
+
+    for idx, file in enumerate(files[:max_timesteps]):
+        full_file_path = os.path.join(DATA_PATH, file)
+        with nc.Dataset(full_file_path, 'r') as ds:
+            values = ds.variables['mu'][:]
+            kde_values = np.linspace(values.min(), values.max(), 100)
+            density, _ = np.histogram(values, bins=kde_values, density=True)
+            density = np.interp(np.linspace(values.min(), values.max(), 100), kde_values[:-1], density)
+            densities.append(density / max_value_per_timepoint[idx])  # Normalize individually
+
+    densities = np.array(densities).T  # Transpose for correct orientation
+    cax = ax.imshow(densities, aspect='auto', origin='lower', cmap='viridis', interpolation='nearest')
+    plt.colorbar(cax, label='Normalized Density')
+    plt.xlabel('Time Point')
+    plt.ylabel('Mu Values Interpolated')
+    plt.title('Time Series of Density Distributions with Independent Normalization')
+    plt.savefig(os.path.join(SAVE_PATH, 'timeseries_density_plot_independent_norm.png'))
+    plt.close()
 
 def check_nc_file(file_path):
     try:
@@ -284,31 +365,32 @@ def create_gif_from_density_plots():
     gif_path = os.path.join(SAVE_PATH, 'density_timepoints.gif')
     imageio.mimsave(gif_path, images, duration=0.5)  # Adjust duration for the speed of the GIF
 
-
-# Example usage (commented out for safety; uncomment for actual use)
+# NOTE: Run this section to do the Bayesian t test procedure.
 data_dict = {}
 for file_path, (algorithm, seed, timestamp) in get_files(SURVIVAL_FOLDER):
-    data = load_data(file_path)
+    data = load_data(file_path, num_lines=200)
     if data is not None:
         if algorithm not in data_dict:
             data_dict[algorithm] = []
         data_dict[algorithm].append(data)
 
 algorithms = list(data_dict.keys())
+print(algorithms)
 if len(algorithms) > 1:
     algo1, algo2 = algorithms[0], algorithms[1]
     data1 = np.array(data_dict[algo1])
     data2 = np.array(data_dict[algo2])
-    time_point_results = bayesian_t_tests_by_time(data1, data2, num_timesteps=300, num_chains=1, num_warmup=1500, num_samples=5000)
+    time_point_results = bayesian_t_tests_by_time(data1, data2, num_timesteps=200, num_chains=1, num_warmup=1500, num_samples=5000)
     save_results_directly(time_point_results, algo1, algo2)
 else:
     logging.warning("Not enough algorithms found for comparison.")
 
 plot_time_series_density()
-plot_time_series_density_with_summary(300)  # Plot all timesteps
-plot_time_series_density_with_summary(50)  # Plot the first 50 timesteps
+plot_time_series_density_with_summary(200)  # Plot all timesteps
+plot_time_series_density_with_summary(60)  # Plot the first 50 timesteps
+plot_time_series_density_with_individual_norm(60)
 
-# plt.savefig(SAVE_PATH+'timeseries_paired_test_improved.png')
+plt.savefig(SAVE_PATH+'timeseries_paired_test_improved.png')
 # check_nc_file("/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/Direct_Bayesian_Test_SI_vs_SL_time_0.nc")
 # test_create_nc()
 
@@ -324,6 +406,41 @@ plot_density_each_timepoint()
 create_gif_from_density_plots()
 
 # Print significant time points
-print("Significant Time Points (Time Point, Posterior Probability):")
-for tp in significant_time_points:
-    print(tp)
+# print("Significant Time Points (Time Point, Posterior Probability):")
+# for tp in significant_time_points:
+#     print(tp)
+
+# Summarize the results from Bayesian t-tests
+def summarize_results():
+    files = [f for f in os.listdir(DATA_PATH) if f.startswith('Direct_Bayesian_Test') and f.endswith('.nc')]
+    files.sort(key=lambda x: int(x.split('time_')[-1].split('.')[0]))
+
+    summary_data = []
+
+    for file in files:
+        full_file_path = os.path.join(DATA_PATH, file)
+        with nc.Dataset(full_file_path, 'r') as ds:
+            mu_values = ds.variables['mu'][:]
+            time_point = int(file.split('time_')[-1].split('.')[0])
+
+            # Bayesian statistics
+            mean_mu = np.mean(mu_values)
+            ci_lower = np.percentile(mu_values, 2.5)
+            ci_upper = np.percentile(mu_values, 97.5)
+            prob_pos = np.mean(mu_values > 0)
+
+            # Add summary data for the current time point
+            summary_data.append({
+                'Time Point': time_point,
+                'Bayesian Mean': mean_mu,
+                '95% Credible Interval': f"[{ci_lower:.2f}, {ci_upper:.2f}]",
+                'Posterior Prob > 0': prob_pos
+            })
+
+    # Create a pandas DataFrame for easy export and visualization
+    df_summary = pd.DataFrame(summary_data)
+    df_summary = df_summary.round({'Bayesian Mean': 2, 'Posterior Prob > 0': 3})  # Adjust precision as needed
+    return df_summary
+
+# Print the summary table
+print(summarize_results().to_string(index=False))

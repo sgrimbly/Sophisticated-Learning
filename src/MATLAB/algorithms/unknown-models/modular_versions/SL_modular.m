@@ -1,104 +1,107 @@
-function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
+function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
-        if nargin < 3, start_position = 51; end  % Default start position set to 51
-        if nargin < 4, hill_pos = 55; end
-        if nargin < 5, food_sources = [71, 43, 57, 78]; end
-        if nargin < 6, water_sources = [73, 33, 48, 67]; end
-        if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
-        if nargin < 8, weights = [10, 40, 1, 10]; end
-        if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
-        if nargin < 10, num_trials = 200; end
+    if nargin < 3, start_position = 51; end  % Default start position set to 51
+    if nargin < 4, hill_pos = 55; end
+    if nargin < 5, food_sources = [71, 43, 57, 78]; end
+    if nargin < 6, water_sources = [73, 33, 48, 67]; end
+    if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
+    if nargin < 8, weights = [10, 40, 1, 10]; end
+    if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
+    if nargin < 10, num_trials = 200; end
+    if nargin < 11, grid_id = ''; end
+
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons    
+    % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
+    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
+    food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
+    water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
+    sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
+    weights_str = strjoin(arrayfun(@num2str, weights, 'UniformOutput', false), '-');
     
-        current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));
-        directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
-        food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
-        water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
-        sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
-        weights_str = strjoin(arrayfun(@num2str, weights, 'UniformOutput', false), '-');
+    % Define file path for state and results
+    % TODO: Label these with more detail as this won't distinguish files for the grid experiments, for example. 
+    result_file = strcat(directory_path, '/SL_Seed_', num2str(seed), '_GridID_', grid_id, '_' , current_time, '.txt');
+    
+    % file_name = strcat(directory_path, '/SL_Seed_', num2str(seed), ...
+    %                    '_Grid', num2str(grid_size), ...
+    %                    '_Start', num2str(start_position), ...
+    %                    '_Hill', num2str(hill_pos), ...
+    %                    '_Food', food_str, ...
+    %                    '_Water', water_str, ...
+    %                    '_Sleep', sleep_str, ...
+    %                    '_Weights', weights_str, ...
+    %                    '_States', num2str(num_states), ...
+    %                    '_Trials', num2str(num_trials), ...
+    %                    '_', current_time, '.txt');
+    % Define variables for weights
+    novelty_weight = weights(1);
+    learning_weight = weights(2);
+    epistemic_weight = weights(3);
+    preference_weight = weights(4);
+
+    % Initialize environment and weights once, outside of any saved state check
+    [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
+    time_since_food = 0;
+    time_since_water = 0;
+    time_since_sleep = 0;
+
+    % Organise state for experiment run
+    stateFile = strcat(directory_path, '/SL_Seed_', num2str(seed), '_GridID_', grid_id, '.mat')
+    [loadedState, isNew] = load_state(stateFile);
+
+    if ~isNew
+        % Load variables from the saved state, using indices to access the cell array
+        rng(loadedState{1});       % Restore the RNG state
+        trial = loadedState{2} + 1; % Start from the next trial to ensure continuity
         
-        % Define file path for state and results
-        result_file = strcat(directory_path, '/SL_Seed_', num2str(seed), '_' , current_time, '.txt');
+        a_history = loadedState{3}; % Retrieve a_history
+        a = a_history{trial-1};          % Access the last valid entry in a_history
         
-        % file_name = strcat(directory_path, '/SL_Seed_', num2str(seed), ...
-        %                    '_Grid', num2str(grid_size), ...
-        %                    '_Start', num2str(start_position), ...
-        %                    '_Hill', num2str(hill_pos), ...
-        %                    '_Food', food_str, ...
-        %                    '_Water', water_str, ...
-        %                    '_Sleep', sleep_str, ...
-        %                    '_Weights', weights_str, ...
-        %                    '_States', num2str(num_states), ...
-        %                    '_Trials', num2str(num_trials), ...
-        %                    '_', current_time, '.txt');
-        % Define variables for weights
-        novelty_weight = weights(1);
-        learning_weight = weights(2);
-        epistemic_weight = weights(3);
-        preference_weight = weights(4);
-    
-        % Initialize environment and weights once, outside of any saved state check
-        [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
-        time_since_food = 0;
-        time_since_water = 0;
-        time_since_sleep = 0;
-    
-        % Organise state for experiment run
-        stateFile = strcat(directory_path, '/SL_Seed_', num2str(seed), '.mat')
-        [loadedState, isNew] = load_state(stateFile);
-    
-        if ~isNew
-            % Load variables from the saved state, using indices to access the cell array
-            rng(loadedState{1}, "twister");       % Restore the RNG state
-            trial = loadedState{2} + 1; % Start from the next trial to ensure continuity
-            
-            a_history = loadedState{3}; % Retrieve a_history
-            a = a_history{trial-1};          % Access the last valid entry in a_history
-            
-            b_history = loadedState{4}; % Retrieve b_history
-            b = b_history{trial-1};          % Access the last valid entry in b_history
-            
-            Q = loadedState{5};          % Retrieve Q
-            P = loadedState{6};          % Retrieve P
-            
-            true_states = loadedState{7}; % Retrieve true_states
-            
-            chosen_action = loadedState{8}; % Retrieve chosen_action
-            memory_resets = loadedState{9}; % Retrieve memory_resets
-            pe_memory_resets = loadedState{10}; % Retrieve pe_memory_resets
-            hill_memory_resets = loadedState{11}; % Retrieve hill_memory_resets
-            
-            total_search_depth = loadedState{12}; % Retrieve total_search_depth
-            total_memory_accessed = loadedState{13}; % Retrieve total_memory_accessed
-            total_t = loadedState{14}; % Retrieve total_t
-            survived = loadedState{15}; % Retrieve survived
-            
-            t_at_25 = loadedState{16};  % Retrieve t_at_25
-            t_at_50 = loadedState{17};  % Retrieve t_at_50
-            t_at_75 = loadedState{18};  % Retrieve t_at_75
-            t_at_100 = loadedState{19}; % Retrieve t_at_100
-    
-            result_file = loadedState{20}
-        else
-            % Initialization of variables for a new simulation
-            rng(seed, 'twister') % Set the initial random state
-            trial = 1;
+        b_history = loadedState{4}; % Retrieve b_history
+        b = b_history{trial-1};          % Access the last valid entry in b_history
         
-            a_history = cell(1, num_trials);
-            b_history = cell(1, num_trials);
-            chosen_action = zeros(1, T - 1);
-            memory_resets = zeros(num_trials, 1);
-            pe_memory_resets = zeros(num_trials, 1);
-            hill_memory_resets = zeros(num_trials, 1);
-            total_search_depth = 0;
-            total_memory_accessed = 0;
-            total_t = 0;
-            survived = zeros(1, num_trials);
-            t_at_25 = 0;
-            t_at_50 = 0;
-            t_at_75 = 0;
-            t_at_100 = 0;
-        end    
+        Q = loadedState{5};          % Retrieve Q
+        P = loadedState{6};          % Retrieve P
+        
+        true_states = loadedState{7}; % Retrieve true_states
+        
+        chosen_action = loadedState{8}; % Retrieve chosen_action
+        memory_resets = loadedState{9}; % Retrieve memory_resets
+        pe_memory_resets = loadedState{10}; % Retrieve pe_memory_resets
+        hill_memory_resets = loadedState{11}; % Retrieve hill_memory_resets
+        
+        total_search_depth = loadedState{12}; % Retrieve total_search_depth
+        total_memory_accessed = loadedState{13}; % Retrieve total_memory_accessed
+        total_t = loadedState{14}; % Retrieve total_t
+        survived = loadedState{15}; % Retrieve survived
+        
+        t_at_25 = loadedState{16};  % Retrieve t_at_25
+        t_at_50 = loadedState{17};  % Retrieve t_at_50
+        t_at_75 = loadedState{18};  % Retrieve t_at_75
+        t_at_100 = loadedState{19}; % Retrieve t_at_100
+
+        result_file = loadedState{20}
+    else
+        % Initialization of variables for a new simulation
+        rng(seed, 'twister') % Set the initial random state
+        trial = 1;
+    
+        a_history = cell(1, num_trials);
+        b_history = cell(1, num_trials);
+        chosen_action = zeros(1, T - 1);
+        memory_resets = zeros(num_trials, 1);
+        pe_memory_resets = zeros(num_trials, 1);
+        hill_memory_resets = zeros(num_trials, 1);
+        total_search_depth = 0;
+        total_memory_accessed = 0;
+        total_t = 0;
+        survived = zeros(1, num_trials);
+        t_at_25 = 0;
+        t_at_50 = 0;
+        t_at_75 = 0;
+        t_at_100 = 0;
+    end    
 
     % TODO: This time tracking doesn't work properly when experiment
     % start/stops, e.g. on prioritised HPC or resuming from saved state.
@@ -270,7 +273,7 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
             y{2} = normalise_matrix(a{2});
             y{1} = A{1};
             y{3} = A{3};
-            displayGridWorld(true_states{trial}(1, t), food, water, sleep, hill_pos, 1)
+            % displayGridWorld(true_states{trial}(1, t), food, water, sleep, hill_pos, 1)
             horizon = min([9, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
             if horizon == 0, horizon = 1; end
 

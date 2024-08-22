@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # Load the MATLAB module:
-module load software/matlab-R2022b
+# module load software/matlab-R2022b
+module load software/matlab-R2024b
 
 # Define the parameter ranges
-declare -a ALGORITHMS=("SI" "SL")
-declare -a SEEDS=({131..132})
+declare -a ALGORITHMS=("BA" "BAUCB") # "SI" "SL")
+declare -a SEEDS=({0..5})
+# declare -a SEEDS=(1021 1022 1023) # Test seeds for MATLAB 2024b
 
 # Default configuration parameters
 export HORIZON="6"
@@ -16,11 +18,12 @@ export ROOT_FOLDER="/home/grmstj001"
 export TIME_LIMIT="72:00:00"
 export SCRIPT_PATH="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
 export JOB_TRACKING_FILE="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB/job_submissions.txt"
+export MAX_SLOTS=240
 
 # Function to check available slots and return the count
 check_available_slots() {
-    local num_jobs=$(squeue -u grmstj001 | grep -E "R|PD" | wc -l)
-    local available_slots=$((240 - num_jobs))
+    local num_jobs=$(squeue -u grmstj001 | grep -E "R|PD" | tail -n +2 | wc -l)
+    local available_slots=$((MAX_SLOTS - num_jobs))
     echo "$available_slots"
 }
 
@@ -67,7 +70,9 @@ submit_jobs() {
             SLURM_SCRIPT="submit_${JOB_NAME}.sh"
             cp SLURM_Template.sh "$SLURM_SCRIPT"
             sed -i "s|\$JOB_NAME|$JOB_NAME|g; s|\$TIME_LIMIT|$TIME_LIMIT|g; s|\$SCRIPT_PATH|$SCRIPT_PATH|g" "$SLURM_SCRIPT"
-            echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', ${SEED}, ${HORIZON}, ${K_FACTOR}, '${ROOT_FOLDER}', ${MCT}, ${NUM_MCT}); exit;\"" >> "$SLURM_SCRIPT"
+            # echo "matlab -nodisplay -nosplash -nodesktop -r \"addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', ${SEED}, ${HORIZON}, ${K_FACTOR}, '${ROOT_FOLDER}', ${MCT}, ${NUM_MCT}); exit;\"" >> "$SLURM_SCRIPT"
+            # I was asked to remove -nodisplay -nosplash -nodesktop -r and add -batch for the 2024b version of MATLAB.
+            echo "matlab -batch \"addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', ${SEED}, ${HORIZON}, ${K_FACTOR}, '${ROOT_FOLDER}', ${MCT}, ${NUM_MCT}); exit;\"" >> "$SLURM_SCRIPT"
             output_dir="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/job_data/$ALGORITHM/$JOB_NAME"
             mkdir -p "$output_dir"
 
