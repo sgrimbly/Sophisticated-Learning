@@ -7,12 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 module load software/matlab-R2024b
 
 # Define the parameter ranges
-declare -a ALGORITHMS=(
-    "SI" "SI_novelty" "SI_smooth" "SI_novelty_smooth"
-    "SL" "SL_noNovelty" "SL_noSmooth" "SL_noNovelty_noSmooth"
-    "BA" "BAUCB"
-)
-declare -a SEEDS=({0..1000})
+declare -a ALGORITHMS=("BA" "BAUCB") # "SI" "SL")
+declare -a SEEDS=({0..200})
 
 # Parameters
 export K_FACTOR="0.7"
@@ -75,7 +71,7 @@ mapfile -t GRID_CONFIGS < "${SCRIPT_PATH}/grid_configs.txt"
 # Function to check available slots and return the count
 check_available_slots() {
     NUM_JOBS=$(squeue -u grmstj001 | grep -E "R|PD" | tail -n +2 | wc -l)
-    AVAILABLE_SLOTS=$((140 - NUM_JOBS))
+    AVAILABLE_SLOTS=$((120 - NUM_JOBS))
     echo "$AVAILABLE_SLOTS"
 }
 

@@ -63,8 +63,6 @@ import imageio
 SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
 BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
 SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/200trials_data_threefry'
-# BASE_PATH = 'C:\\Users\\stjoh\\Documents\\ActiveInference\\Sophisticated-Learning\\'
-# SURVIVAL_FOLDER = BASE_PATH + 'results\\unknown_model\\MATLAB\\300trials_data'
 
 # Setup basic configuration for logging
 LOGFILE_PATH = SAVE_PATH + 'algorithm_comparison_2.log'
@@ -475,6 +473,8 @@ if __name__ == '__main__':
             if algorithm not in data_dict:
                 data_dict[algorithm] = []
             data_dict[algorithm].append(data)
+    if data_dict:
+        print("Data loaded.")
 
     if not data_dict:
         raise ValueError("No matching files found for any algorithm.")
@@ -518,7 +518,7 @@ if __name__ == '__main__':
         axes[0].legend(title='Algorithm', loc='upper left')
         axes[1].legend(title='Algorithm', loc='upper left')
         plt.tight_layout()
-        plt.savefig(SAVE_PATH+'test_SI_data.png')
+        plt.savefig(SAVE_PATH + 'regression_comparison_all_algorithms.png')
 
     # Plot log-transformed data
     if args.plot_log:
@@ -533,7 +533,7 @@ if __name__ == '__main__':
         ax.set_ylabel('Log(Average Survival Time)')
         ax.legend(title='Algorithm', loc='upper left')
         plt.tight_layout()
-        plt.savefig(SAVE_PATH+'MATLAB_logged.png')
+        plt.savefig(SAVE_PATH + 'log_transformed_polynomial_fits_all_algorithms.png')
 
     # Generate GIF of moving averages
     if args.make_gif:
@@ -560,7 +560,8 @@ if __name__ == '__main__':
             gif_frames.append(imageio.imread(frame_path))
 
         # Save frames as GIF
-        gif_path = SAVE_PATH + 'moving_average.gif'
+        gif_path = SAVE_PATH + 'moving_average_all_algorithms.gif'
+
         imageio.mimsave(gif_path, gif_frames, duration=0.2)
         print(f"GIF saved to {gif_path}")
 
@@ -617,5 +618,5 @@ if __name__ == '__main__':
 
             # Save the plot
             plt.tight_layout()
-            plt.savefig(SAVE_PATH + f'ks_statistic_bootstrap_{algo1}_vs_{algo2}.png')
-            plt.show()
+            plt.savefig(SAVE_PATH + f'ks_statistic_{algo1}_vs_{algo2}_dkw_confidence.png')
+            # plt.show()
