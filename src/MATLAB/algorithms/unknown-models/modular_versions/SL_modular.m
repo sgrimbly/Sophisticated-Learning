@@ -1,7 +1,7 @@
 function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
-    if nargin < 3, start_position = 51; end  % Default start position set to 51
+    if nargin < 3, start_position = 51; end % Default start position set to 51
     if nargin < 4, hill_pos = 55; end
     if nargin < 5, food_sources = [71, 43, 57, 78]; end
     if nargin < 6, water_sources = [73, 33, 48, 67]; end
@@ -126,7 +126,6 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
         end
 
-        
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
             bb{2} = normalise_matrix(b{2});
 
@@ -186,27 +185,28 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
                 vec(1, observations(modality, t)) = 1;
                 O{modality, t} = vec;
             end
+
             % for modality = 1:num_modalities
             %     % Debug output to trace the indices and check if they are within bounds
             %     fprintf('Modality: %d\n', modality);
             %     fprintf('Current time step (t): %d\n', t);
             %     fprintf('Indices being accessed - State 1: %d, State 2: %d\n', true_states{trial}(1, t), true_states{trial}(2, t));
             %     fprintf('Dimensions of A{%d}: %d x %d x %d\n', modality, size(A{modality}, 1), size(A{modality}, 2), size(A{modality}, 3));
-            % 
+            %
             %     % Check if the indices are within the valid range before accessing
             %     if true_states{trial}(1, t) > size(A{modality}, 2) || true_states{trial}(2, t) > size(A{modality}, 3)
             %         fprintf('Error: Index out of bounds before accessing A{%d}\n', modality);
             %     else
             %         ob = A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t));
             %         observations(modality, t) = find(cumsum(A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t))) >= rand, 1);
-            % 
+            %
             %         % Debug output to trace what observations are made
             %         fprintf('Observations for modality %d at time %d: %d\n', modality, t, observations(modality, t));
-            % 
+            %
             %         vec = zeros(1, size(A{modality}, 1));
             %         vec(1, observations(modality, t)) = 1;
             %         O{modality, t} = vec;
-            % 
+            %
             %         % Debug output to confirm successful vector creation and assignment
             %         fprintf('Vector for observations set for modality %d at time %d.\n', modality, t);
             %     end
@@ -231,28 +231,38 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
                     LL{1} = Q{timey, 1};
 
                     if (timey > start && ~isequal(round(L, 3), round(Q{timey, 2}, 3)')) || (timey == t)
+
                         for modality = 2:2
                             a_learning = O(modality, timey)';
+
                             for factor = 1:2
                                 a_learning = spm_cross(a_learning, LL{factor});
                             end
+
                             a_learning = a_learning .* (a{modality} > 0);
                             proportion = 0.3;
+
                             for i = 1:size(a_learning, 3)
+
                                 for j = 1:size(a_learning, 2)
                                     max_value = max(a_learning(2:end, j, i));
                                     amount_to_subtract = proportion * max_value;
                                     a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
                                 end
+
                             end
+
                             a{modality} = a{modality} + 0.7 * a_learning;
                             a{modality}(a{modality} <= 0.05) = 0.05;
                         end
+
                     end
+
                 end
+
             end
 
-           if true_states{trial}(2, t) == 1
+            if true_states{trial}(2, t) == 1
                 food = food_sources(1);
                 water = water_sources(1);
                 sleep = sleep_sources(1);
@@ -320,7 +330,7 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
 
         survived(trial) = t;
 
-        endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
+        endTime = datestr(now +1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
         totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));
         minutes = floor(mod(totalRuntimeInSeconds, 3600) / 60);
         seconds = mod(totalRuntimeInSeconds, 60);
@@ -355,12 +365,12 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
         % Update variable histories at the end of each trial
         a_history{trial} = a;
         b_history{trial} = b;
-        
+
         % Prepare the state to save (end of each trial)
         currentState = {rng, trial, a_history, b_history, Q, P, true_states, ...
-                        chosen_action, memory_resets, pe_memory_resets, hill_memory_resets, ...
-                        total_search_depth, total_memory_accessed, total_t, survived, ...
-                        t_at_25, t_at_50, t_at_75, t_at_100, result_file};
+                            chosen_action, memory_resets, pe_memory_resets, hill_memory_resets, ...
+                            total_search_depth, total_memory_accessed, total_t, survived, ...
+                            t_at_25, t_at_50, t_at_75, t_at_100, result_file};
 
         % Save the state at the end of each trial
         save_state(stateFile, currentState);

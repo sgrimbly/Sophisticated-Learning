@@ -1,4 +1,3 @@
-
 function [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources)
     % Initialise Environment Variables
     A{1}(:, :, :) = zeros(num_states, num_states, 4);
