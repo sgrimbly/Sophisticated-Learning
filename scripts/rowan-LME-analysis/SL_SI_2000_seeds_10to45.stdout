@@ -1,0 +1,54 @@
+[1] "Model Summary:"
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: Survival ~ Iteration + Model + Iteration * Model + (1 | Id)
+   Data: combined_df
+
+REML criterion at convergence: 1206495
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.7241 -0.5891 -0.2382  0.1434  4.7036 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Id       (Intercept)   5.833   2.415  
+ Residual             270.796  16.456  
+Number of obs: 142740, groups:  Id, 1992
+
+Fixed effects:
+                   Estimate Std. Error        df t value Pr(>|t|)    
+(Intercept)       2.030e+01  1.373e-01 2.691e+04 147.866  < 2e-16 ***
+Iteration         5.555e-01  5.944e-03 1.407e+05  93.458  < 2e-16 ***
+ModelSL           1.824e+00  1.780e-01 1.409e+05  10.250  < 2e-16 ***
+Iteration:ModelSL 5.169e-02  8.386e-03 1.407e+05   6.164 7.13e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) Itertn ModlSL
+Iteration   -0.801              
+ModelSL     -0.652  0.618       
+Itrtn:MdlSL  0.568 -0.709 -0.872
+[1] "ANOVA Results:"
+Analysis of Deviance Table (Type II Wald F tests with Kenward-Roger df)
+
+Response: Survival
+                       F Df Df.res    Pr(>F)    
+Iteration       19232.18  1 140746 < 2.2e-16 ***
+Model            1016.54  1 141256 < 2.2e-16 ***
+Iteration:Model    37.99  1 140746 7.129e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+[1] "Estimated Marginal Means:"
+$emmeans
+ Model emmean      SE  df asymp.LCL asymp.UCL
+ SI     30.58 0.08220 Inf     30.42     30.74
+ SL     33.36 0.08188 Inf     33.20     33.52
+
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast estimate     SE  df z.ratio p.value
+ SI - SL     -2.78 0.0872 Inf -31.883  <.0001
