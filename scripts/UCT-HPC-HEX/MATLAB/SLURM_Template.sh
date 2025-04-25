@@ -28,7 +28,7 @@ module load software/matlab-R2022b
 echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}, GRID_SIZE=${GRID_SIZE}, START_POS=${START_POS}, HILL=${HILL}, FOOD=(${FOOD}), WATER=(${WATER}), SLEEP=(${SLEEP})"
 
 # Wait before submitting MATLAB job for random number of seconds to avoid congestion on MATLAB license server. Possible reason for not starting up of MATLAB jobs seen previously. 
-sleep $((5 + RANDOM % 25))
+# sleep $((5 + RANDOM % 25))
 
 # Run MATLAB script. This line will be added below here by the job runner that modifies this template. 
 # matlab -nodisplay -nosplash -nodesktop -r "addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', '${SEED}', '${HORIZON}', '${K_FACTOR}', '${ROOT_FOLDER}', '${MCT}', '${NUM_MCT}'); exit;"

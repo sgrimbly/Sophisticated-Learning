@@ -1,5 +1,5 @@
 function [survived] = SI(seed)
-    rng(seed)
+    rng(seed,"threefry");
     rng
 
     hill_1 = 55;

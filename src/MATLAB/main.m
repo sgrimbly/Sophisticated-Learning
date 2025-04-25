@@ -2,7 +2,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
     % Check the number of arguments and set default values if necessary
     arguments
-        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'BA';
+        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SI';
         seed (1, 1) double {mustBeInteger} = 1;
         horizon (1, 1) double {mustBeInteger, mustBePositive} = 6;
         k_factor (1, 1) double = 1.5;
@@ -19,28 +19,9 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         sleep_sources (1, :) double = [64, 44, 49, 59];
         weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);  % Default values for weights
         num_states (1, 1) double {mustBeInteger, mustBePositive} = grid_size^2;
-        num_trials (1, 1) double {mustBeInteger, mustBePositive} = 300;
+        num_trials (1, 1) double {mustBeInteger, mustBePositive} = 120;
     end
-
-    % Print out the values of the arguments
-    % fprintf('Algorithm: %s\n', algorithm);
-    % fprintf('Seed: %d\n', seed);
-    % fprintf('Horizon: %d\n', horizon);
-    % fprintf('K-factor: %.2f\n', k_factor);
-    % fprintf('Root folder: %s\n', root_folder);
-    % fprintf('MCT: %d\n', mct);
-    % fprintf('Number of MCT: %d\n', num_mct);
-    % fprintf('Auto restore: %d\n', auto_rest);
-    % fprintf('Results file name: %s\n', results_file_name);
-    % fprintf('Grid size: %d\n', grid_size);
-    % fprintf('Hill position: %d\n', hill_pos);
-    % fprintf('Food sources: %s\n', mat2str(food_sources));
-    % fprintf('Water sources: %s\n', mat2str(water_sources));
-    % fprintf('Sleep sources: %s\n', mat2str(sleep_sources));
-    % fprintf('Weights: %s\n', mat2str(weights));
-    % fprintf('Number of states: %d\n', num_states);
-    % fprintf('Number of trials: %d\n', num_trials);
-
+    weight_info = '';
     % Set results_file_name if it was not provided, now incorporating the seed and environment setup
     if isempty(results_file_name)
         weight_info = sprintf('novelty_%d-learning_%d-epistemic_%d-preference_%d', ...
@@ -71,6 +52,25 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 
     end
 
+    % Print out the values of the arguments
+    fprintf('Algorithm: %s\n', algorithm);
+    fprintf('Seed: %d\n', seed);
+    fprintf('Horizon: %d\n', horizon);
+    fprintf('K-factor: %.2f\n', k_factor);
+    fprintf('Root folder: %s\n', root_folder);
+    fprintf('MCT: %d\n', mct);
+    fprintf('Number of MCT: %d\n', num_mct);
+    fprintf('Auto restore: %d\n', auto_rest);
+    fprintf('Results file name: %s\n', results_file_name);
+    fprintf('Grid size: %d\n', grid_size);
+    fprintf('Hill position: %d\n', hill_pos);
+    fprintf('Food sources: %s\n', mat2str(food_sources));
+    fprintf('Water sources: %s\n', mat2str(water_sources));
+    fprintf('Sleep sources: %s\n', mat2str(sleep_sources));
+    fprintf('Weights: %s\n', weight_info);
+    fprintf('Number of states: %d\n', num_states);
+    fprintf('Number of trials: %d\n', num_trials);
+
     % Directory and path setup (unchanged)
     currentDir = fileparts(mfilename('fullpath'));
     srcPath = fullfile(currentDir, '../MATLAB');
@@ -84,10 +84,14 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         case 'SI'
             disp('Starting SI.');
             survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials);
+            % survived = SI(seed);
+            % SI_rowan(seed);
             disp('SI run complete');
         case 'SL'
             disp('Starting SL.');
             survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials);
+            % survived = SL(seed);
+            % SL_rowan(seed);
             disp('SL run complete');
         case 'BA'
             disp('Starting BA.');
