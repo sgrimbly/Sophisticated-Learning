@@ -157,7 +157,6 @@ def plot_data_comparison(excel_df, log_df, python_df):
     plt.legend()
     plt.show()
 
-
 def perform_statistical_comparison(excel_df, log_df, python_df):
     """Performs statistical tests to compare all three datasets and logs additional statistics."""
 
@@ -181,7 +180,6 @@ def perform_statistical_comparison(excel_df, log_df, python_df):
     t_stat_lp, p_value_lp = ttest_ind(log_df['SurvivalTime'], python_df['SurvivalTime'])
     logging.info(f"\nLog vs. Python:")
     logging.info(f"T-test result: T-statistic = {t_stat_lp}, P-value = {p_value_lp}")
-
 
 def extract_survival_times(file_path):
     """Extracts survival times from the Python-generated .out files."""

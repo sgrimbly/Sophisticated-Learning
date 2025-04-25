@@ -12,8 +12,7 @@
 # SBATCH --mem=$MEMORY_ALLOCATION                  # Memory placeholder
 #SBATCH --output=matlab_job_%j.out                # Standard output and error log
 
-# Currently excluding these nodes on HEX because there were issues with jobs not starting/ending correctly. MATLAB related?
-# SBATCH --nodelist=srvrochpc[108-111]
+# SBATCH --nodelist=srvrochpc[108-112]
 # SBATCH --exclude=srvrochpc103,srvrochpc107       # Exclude these nodes
 
 # Email notifications:
@@ -22,7 +21,8 @@
 # Commented out so no emails: SBATCH --mail-type=FAIL #BEGIN,END,FAIL  
 
 # Load the MATLAB module:
-module load software/matlab-R2022b
+# module load software/matlab-R2022b
+module load software/matlab-R2024b
 
 # Display the run configuration for debugging
 echo "Running main with ALGORITHM=${ALGORITHM}, SEED=${SEED}, HORIZON=${HORIZON}, K_FACTOR=${K_FACTOR}, ROOT_FOLDER=${ROOT_FOLDER}, MCT=${MCT}, NUM_MCT=${NUM_MCT}, AUTO_REST=${AUTO_REST}, GRID_SIZE=${GRID_SIZE}, START_POS=${START_POS}, HILL=${HILL}, FOOD=(${FOOD}), WATER=(${WATER}), SLEEP=(${SLEEP})"

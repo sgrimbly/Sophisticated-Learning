@@ -1,5 +1,5 @@
 function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest, results_file_name, ...
-        grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials)
+    grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Check the number of arguments and set default values if necessary
     arguments
         algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SI';
@@ -9,7 +9,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         root_folder char = '/home/grmstj001';
         mct (1, 1) double {mustBeInteger} = 0;
         num_mct (1, 1) double {mustBeInteger, mustBePositive} = 100;
-        auto_rest (1, 1) logical = false;
+        auto_rest (1, 1) logical = false; % Auto restore
         results_file_name char = '';
         grid_size (1, 1) double {mustBeInteger, mustBePositive} = 10;
         start_position (1, 1) double {mustBeInteger, mustBePositive} = 51;
@@ -17,10 +17,12 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         food_sources (1, :) double = [71, 43, 57, 78];
         water_sources (1, :) double = [73, 33, 48, 67];
         sleep_sources (1, :) double = [64, 44, 49, 59];
-        weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);  % Default values for weights
-        num_states (1, 1) double {mustBeInteger, mustBePositive} = grid_size^2;
+        weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);
+        num_states (1, 1) double {mustBeInteger, mustBePositive} = grid_size ^ 2;
         num_trials (1, 1) double {mustBeInteger, mustBePositive} = 120;
+        grid_id char = '';  % Default empty string if not provided
     end
+
     weight_info = '';
     % Set results_file_name if it was not provided, now incorporating the seed and environment setup
     if isempty(results_file_name)
@@ -37,9 +39,11 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             case 'model_mixed_RL'
                 results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_mixed_RL_Seed%d%s.txt', seed, env_info);
             case 'SL'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
+                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
+                % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
             case 'SI'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SI-runs/results_SI_Seed%d%s.txt', seed, env_info);
+                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SI-runs/results_SI_Seed%d%s.txt', seed, env_info);
+                % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SI_Seed%d%s.txt', seed, env_info);
             case 'BA'
                 results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/BA-runs/results_BA_Seed%d%s.txt', seed, env_info);
             case 'BAUCB'
@@ -83,23 +87,23 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     switch algorithm
         case 'SI'
             disp('Starting SI.');
-            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials);
+            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials, grid_id);
             % survived = SI(seed);
             % SI_rowan(seed);
             disp('SI run complete');
         case 'SL'
             disp('Starting SL.');
-            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials);
+            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials, grid_id);
             % survived = SL(seed);
             % SL_rowan(seed);
             disp('SL run complete');
         case 'BA'
             disp('Starting BA.');
-            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials);
+            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials, grid_id);
             disp('BA run complete');
         case 'BAUCB'
             disp('Starting BAUCB.');
-            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials);
+            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials, grid_id);
             disp('BA_UCB run complete');
         case 'known_large_MCT'
             disp('Starting known_large_MCT.');

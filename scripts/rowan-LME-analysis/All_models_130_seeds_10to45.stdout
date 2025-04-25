@@ -1,0 +1,68 @@
+[1] "Model Summary:"
+Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
+Formula: Survival ~ Iteration + Model + Iteration * Model + (1 | Id)
+   Data: combined_df
+
+REML criterion at convergence: 165383.4
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.7034 -0.4736 -0.2727  0.0088  5.3356 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Id       (Intercept)   4.209   2.052  
+ Residual             208.372  14.435  
+Number of obs: 20196, groups:  Id, 229
+
+Fixed effects:
+                        Estimate Std. Error         df t value Pr(>|t|)    
+(Intercept)            2.450e+01  3.519e-01  3.049e+03  69.629  < 2e-16 ***
+Iteration              1.749e-01  1.530e-02  1.995e+04  11.431  < 2e-16 ***
+ModelBA_UCB           -4.594e-01  5.851e-01  1.946e+04  -0.785    0.432    
+ModelSI               -4.274e+00  5.930e-01  1.947e+04  -7.207 5.94e-13 ***
+ModelSL               -3.053e+00  5.592e-01  1.956e+04  -5.461 4.80e-08 ***
+Iteration:ModelBA_UCB -3.158e-02  2.712e-02  1.995e+04  -1.164    0.244    
+Iteration:ModelSI      3.760e-01  2.748e-02  1.995e+04  13.686  < 2e-16 ***
+Iteration:ModelSL      4.223e-01  2.596e-02  1.995e+04  16.268  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) Itertn MBA_UC ModlSI ModlSL I:MBA_ It:MSI
+Iteration   -0.805                                          
+ModelBA_UCB -0.512  0.484                                   
+ModelSI     -0.505  0.477  0.336                            
+ModelSL     -0.536  0.506  0.351  0.346                     
+Itr:MBA_UCB  0.454 -0.564 -0.857 -0.269 -0.286              
+Itrtn:MdlSI  0.448 -0.557 -0.270 -0.857 -0.282  0.314       
+Itrtn:MdlSL  0.474 -0.590 -0.285 -0.281 -0.859  0.333  0.328
+[1] "ANOVA Results:"
+Analysis of Deviance Table (Type II Wald F tests with Kenward-Roger df)
+
+Response: Survival
+                      F Df Df.res    Pr(>F)    
+Iteration       1137.62  1  19975 < 2.2e-16 ***
+Model            143.89  3  13336 < 2.2e-16 ***
+Iteration:Model  142.79  3  19975 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+[1] "Estimated Marginal Means:"
+$emmeans
+ Model  emmean    SE  df asymp.LCL asymp.UCL
+ BA       27.7 0.209 Inf      27.3      28.1
+ BA_UCB   26.7 0.289 Inf      26.1      27.3
+ SI       30.4 0.294 Inf      29.8      31.0
+ SL       32.5 0.274 Inf      32.0      33.0
+
+Degrees-of-freedom method: asymptotic 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast    estimate    SE  df z.ratio p.value
+ BA - BA_UCB     1.04 0.301 Inf   3.466  0.0030
+ BA - SI        -2.68 0.305 Inf  -8.787  <.0001
+ BA - SL        -4.76 0.286 Inf -16.613  <.0001
+ BA_UCB - SI    -3.73 0.333 Inf -11.198  <.0001
+ BA_UCB - SL    -5.80 0.322 Inf -18.035  <.0001
+ SI - SL        -2.08 0.326 Inf  -6.372  <.0001
