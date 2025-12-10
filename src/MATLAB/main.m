@@ -2,7 +2,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Check the number of arguments and set default values if necessary
     arguments
-        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SI', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SI';
+        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SL_noSmooth', 'SI', 'SI_smooth', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SI';
         seed (1, 1) double {mustBeInteger} = 1;
         horizon (1, 1) double {mustBeInteger, mustBePositive} = 6;
         k_factor (1, 1) double = 1.5;
@@ -48,9 +48,13 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             case 'SL'
                 results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
                 % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
+            case 'SL_noSmooth'
+                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SL-runs/results_SL_noSmooth_Seed%d%s.txt', seed, env_info);
             case 'SI'
                 results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SI-runs/results_SI_Seed%d%s.txt', seed, env_info);
                 % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SI_Seed%d%s.txt', seed, env_info);
+            case 'SI_smooth'
+                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SI-runs/results_SI_smooth_Seed%d%s.txt', seed, env_info);
             case 'BA'
                 results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/BA-runs/results_BA_Seed%d%s.txt', seed, env_info);
             case 'BAUCB'
@@ -105,6 +109,10 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             % survived = SL(seed);
             % SL_rowan(seed);
             disp('SL run complete');
+        case 'SL_noSmooth'
+            disp('Starting SL_noSmooth.');
+            survived = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            disp('SL_noSmooth run complete');
         case 'BA'
             disp('Starting BA.');
             survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
@@ -113,6 +121,10 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             disp('Starting BAUCB.');
             survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, weights.ucb_scale);
             disp('BA_UCB run complete');
+        case 'SI_smooth'
+            disp('Starting SI_smooth.');
+            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            disp('SI_smooth run complete');
         case 'known_large_MCT'
             disp('Starting known_large_MCT.');
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);
