@@ -1,6 +1,9 @@
 % Call the function to generate configurations
 % Define the file path and grid size
-CONFIGS_FILE = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB/grid_configs.txt';
+utilsDir = fileparts(mfilename('fullpath'));
+configsDir = fileparts(utilsDir);
+CONFIGS_FILE = fullfile(configsDir, 'grid_configs_horizon3only.txt');  % Repo-relative to avoid machine-specific paths
+
 GRID_SIZE = 10;  % Set this to your grid size
 defaultConfigStr = 'Grid Size: 10, Horizon: 5, Hill: 55, Start Position: 51, Food(71,43,57,78), Water(73,33,48,67), Sleep(64,44,49,59)';
 
@@ -34,8 +37,8 @@ function generate_grids(output_file)
     fprintf(outputFile, 'Grid ID: %s, %s\n', defaultConfigHash, defaultConfigStr);
 
     grid_sizes = [10];
-    horizons = {[3,5]};
-    num_configs_per_setup = [5];
+    horizons = {[3]};%{[3,5]};
+    num_configs_per_setup = [15];
 
     for i = 1:length(grid_sizes)
         grid_size = grid_sizes(i);
