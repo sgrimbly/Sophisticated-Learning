@@ -1,4 +1,4 @@
-function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials, grid_id)
+function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, ucb_scale)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end  % Default start position set to 51
@@ -6,9 +6,11 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     if nargin < 5, food_sources = [71, 43, 57, 78]; end
     if nargin < 6, water_sources = [73, 33, 48, 67]; end
     if nargin < 7, sleep_sources = [64, 44, 49, 59]; end
-    if nargin < 8, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
-    if nargin < 9, num_trials = 200; end
-    if nargin < 10, grid_id = ''; end
+    if nargin < 8, weights = [10, 40, 1, 10]; end
+    if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
+    if nargin < 10, num_trials = 200; end
+    if nargin < 11, grid_id = ''; end
+    if nargin < 12, ucb_scale = 5; end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons    
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -44,6 +46,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     t = 1;
     surety = 1;
     simulated_time = 0;
+    preference_weight = weights(4);
 
     if ~isNew
         % Load variables from the saved state, using indices to access the cell array
@@ -84,7 +87,8 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     
         a_history = cell(1, num_trials);
         b_history = cell(1, num_trials);
-        Nt = ones(400);
+        num_contexts = numel(D{2});
+        Nt = ones(num_states, num_contexts);
         chosen_action = zeros(1, T - 1);
         memory_resets = zeros(num_trials, 1);
         pe_memory_resets = zeros(num_trials, 1);
@@ -97,6 +101,11 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         t_at_50 = 0;
         t_at_75 = 0;
         t_at_100 = 0;
+    end
+
+    if ~exist('Nt', 'var')
+        num_contexts = numel(D{2});
+        Nt = ones(num_states, num_contexts);
     end
 
     memory_resets = zeros(num_trials, 1);
@@ -277,11 +286,8 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
                 hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end
 
-            cur_state = spm_cross(P{t});
-            cur_state = find(cumsum(cur_state(:)) >= rand, 1);
-            Nt(cur_state) = Nt(cur_state) + 1;
             best_actions = [];
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;

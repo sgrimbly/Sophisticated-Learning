@@ -17,10 +17,14 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         food_sources (1, :) double = [71, 43, 57, 78];
         water_sources (1, :) double = [73, 33, 48, 67];
         sleep_sources (1, :) double = [64, 44, 49, 59];
-        weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);
+        weights struct = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10, 'ucb_scale', 5);
         num_states (1, 1) double {mustBeInteger, mustBePositive} = grid_size ^ 2;
         num_trials (1, 1) double {mustBeInteger, mustBePositive} = 120;
         grid_id char = '';  % Default empty string if not provided
+    end
+
+    if ~isfield(weights, 'ucb_scale')
+        weights.ucb_scale = 5;
     end
 
     weight_info = '';
@@ -28,6 +32,9 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     if isempty(results_file_name)
         weight_info = sprintf('novelty_%d-learning_%d-epistemic_%d-preference_%d', ...
             weights.novelty, weights.learning, weights.epistemic, weights.preference);
+        if strcmp(algorithm, 'BAUCB')
+            weight_info = sprintf('%s-ucb_%g', weight_info, weights.ucb_scale);
+        end
         env_info = sprintf('_GS%d_HP%d_FS%s_WS%s_SS%s_W%s_NS%d_NT%d', ...
             grid_size, hill_pos, mat2str(food_sources), mat2str(water_sources), ...
             mat2str(sleep_sources), weight_info, num_states, num_trials);
@@ -83,27 +90,28 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 
     % Execute based on the selected algorithm
     survived = 0;
+    weight_vector = [weights.novelty, weights.learning, weights.epistemic, weights.preference];
 
     switch algorithm
         case 'SI'
             disp('Starting SI.');
-            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials, grid_id);
+            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
             % survived = SI(seed);
             % SI_rowan(seed);
             disp('SI run complete');
         case 'SL'
             disp('Starting SL.');
-            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  [weights.novelty, weights.learning, weights.epistemic, weights.preference], num_states, num_trials, grid_id);
+            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  weight_vector, num_states, num_trials, grid_id);
             % survived = SL(seed);
             % SL_rowan(seed);
             disp('SL run complete');
         case 'BA'
             disp('Starting BA.');
-            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials, grid_id);
+            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
             disp('BA run complete');
         case 'BAUCB'
             disp('Starting BAUCB.');
-            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, num_states, num_trials, grid_id);
+            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, weights.ucb_scale);
             disp('BA_UCB run complete');
         case 'known_large_MCT'
             disp('Starting known_large_MCT.');

@@ -26,7 +26,7 @@ root_folder = 'defaultFolder';
 mct = 0;
 num_mct = 100;
 num_trials = 100;
-weights = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10);
+weights = struct('novelty', 10, 'learning', 40, 'epistemic', 1, 'preference', 10, 'ucb_scale', 5);
 
 % Ensure output log directory exists
 % outputLogDir = 'C:\Users\stjoh\Documents\ActiveInference\Sophisticated-Learning\results\output_logs';
@@ -126,4 +126,3 @@ function run_experiment(expData, logDir, k_factor, root_folder, mct, num_mct, nu
     
     diary off;
 end
-

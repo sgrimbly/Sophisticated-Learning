@@ -1,4 +1,8 @@
-function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed)
+function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, preference_weight, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed)
+
+    if nargin < 17
+        preference_weight = 1;
+    end
 
     G = 0.02;
     P = calculate_posterior(P, y, O, t);
@@ -23,7 +27,7 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
         if modality == 2
             C = determineObservationPreference(t_food, t_water, t_sleep);
             %reduce preference precision
-            C{modality} = C{modality};
+            C{modality} = C{modality} / preference_weight;
         end
 
         if modality == 2
@@ -85,7 +89,7 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
                     chosen_action(t) = action;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, D, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, chosen_action, 0, true_t_food, true_t_water, true_t_sleep, best_actions,memory_accessed);
+                    [expected_free_energy, D, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, preference_weight, chosen_action, 0, true_t_food, true_t_water, true_t_sleep, best_actions,memory_accessed);
 
                     S = max(expected_free_energy);
                     K(state) = S;

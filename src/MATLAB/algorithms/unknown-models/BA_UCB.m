@@ -113,6 +113,8 @@ function [survived] = BA_UCB(seed)
     num_states = 100;
 
     short_term_memory(:, :, :, :, :) = zeros(35, 35, 35, 400, 5);
+    preference_weight = 10;
+    ucb_scale = 5;
 
     %%% Distributions %%%
 
@@ -166,7 +168,8 @@ function [survived] = BA_UCB(seed)
 
     end
 
-    Nt = ones(400);
+    num_contexts = numel(D{2});
+    Nt = ones(num_states, num_contexts);
     b{1} = B{1};
 
     chosen_action = zeros(1, T - 1);
@@ -392,12 +395,9 @@ function [survived] = BA_UCB(seed)
                 hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end
 
-            cur_state = spm_cross(P{t});
-            cur_state = find(cumsum(cur_state(:)) >= rand, 1);
-            Nt(cur_state) = Nt(cur_state) + 1;
             best_actions = [];
             % Start tree search from current time point
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;

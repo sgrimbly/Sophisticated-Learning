@@ -1,11 +1,21 @@
-function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t, T, N, t_food, t_water, t_sleep, f, w, s, current_state, true_t, chosen_action, novelty, surety, simulated_time, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed)
+function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t, T, N, t_food, t_water, t_sleep, f, w, s, current_state, true_t, chosen_action, novelty, surety, simulated_time, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale)
+
+    if nargin < 34
+        preference_weight = 1;
+    end
+
+    if nargin < 35
+        ucb_scale = 5;
+    end
 
     G = 0.02;
     P = calculate_posterior(P, y, O, t);
     bb{2} = normalise_matrix(b{2});
     cur_state = find(cumsum(P{t, 1}) >= rand, 1);
     cur_context = find(cumsum(P{t, 2}) >= rand, 1);
-    Nt(cur_state * cur_context) = Nt(current_state * cur_context) + 1;
+    if t == true_t
+        Nt(cur_state, cur_context) = Nt(cur_state, cur_context) + 1;
+    end
 
     if t_food > 35
         t_food = 35;
@@ -23,13 +33,14 @@ function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actio
 
         if modality == 2
             C = determineObservationPreference(t_food, t_water, t_sleep);
+            C{modality} = C{modality} / preference_weight;
 
         end
 
         if modality == 2
             % add extrinsic term (see EFE equation)
             extrinsic = O{2, t} * C{2}';
-            exploration = 5 * sqrt(nat_log(t) / Nt(cur_state * cur_context));
+            exploration = ucb_scale * sqrt(log(t) / Nt(cur_state, cur_context));
             G = G + extrinsic + exploration;
         end
 
@@ -88,7 +99,7 @@ function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actio
                     chosen_action(t) = action;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, d, D, short_term_memory, long_term_memory, optimal_traj, best_actions,memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, t_food_approx, t_water_approx, t_sleep_approx, state, true_t, chosen_action, novelty, surety, 0, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed);
+                    [expected_free_energy, d, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, t_food_approx, t_water_approx, t_sleep_approx, state, true_t, chosen_action, novelty, surety, 0, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
                     S = max(expected_free_energy);
                     K(state) = S;
                 end
