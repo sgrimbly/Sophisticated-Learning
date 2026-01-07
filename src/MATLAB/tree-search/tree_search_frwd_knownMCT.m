@@ -125,7 +125,7 @@ function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actio
     end
 
     if t < N
-        actions = randperm(5);
+        actions = 1:5;
         efe = [0, 0, 0, 0, 0];
         validFieldName = ['h_', history];
 

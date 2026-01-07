@@ -91,37 +91,37 @@ for action = 1:5
                         0.05,   0.95,   0,    0;
                         0,     0.05,   0.95,  0;
                         0,     0,     0.05   0.95 ];
-    
+
     % Uniform prior over season transitions. This is what the agent must
     % learn
     b{2}(:,:,action) = [  0.25,  0.25,     0.25     0.25;
                0.25,     0.25,     0.25,    0.25;
                0.25,     0.25,     0.25,    0.25;
-               0.25,     0.25,       0.25     0.25]; 
+               0.25,     0.25,       0.25     0.25];
 end
 b = B;
 for i = 1:num_states
     if i ~= [1,11,21,31,41,51,61,71,81,91]
         B{1}(:,i,2) = circshift(B{1}(:,i,2),-1); % move left
-    end  
+    end
 end
 
 for i = 1:num_states
     if i ~= [10,20,30,40,50,60,70,80,90,100]
         B{1}(:,i,3) = circshift(B{1}(:,i,3),1); % move right
-    end  
+    end
 end
 
 for i = 1:num_states
     if i ~= [91,92,93,94,95,96,97,98,99,100]
         B{1}(:,i,4) = circshift(B{1}(:,i,4),10); % move rup
-    end  
+    end
 end
 
 for i = 1:num_states
     if i ~= [1,2,3,4,5,6,7,8,9,10]
         B{1}(:,i,5) = circshift(B{1}(:,i,5),-10); % move down
-    end  
+    end
 end
 
 
@@ -129,16 +129,16 @@ b{1} = B{1};
 
 chosen_action = zeros(1,T-1);
 
-time_since_food = 0;    
+time_since_food = 0;
 time_since_water = 0;
 time_since_sleep = 0;
 file_name = strcat(seed,'.txt');
 t = 1;
 
 for trial = 1:120
-short_term_memory(:,:,:,:) = 0;    
+short_term_memory(:,:,:,:) = 0;
 while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
- 
+
     bb{2} = normalise_matrix(b{2});
     for factor = 1:2
         if t == 1
@@ -152,19 +152,19 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
                 true_states{trial}(factor, t) = find(cumsum(B{1}(:,true_states{trial}(factor,t-1),chosen_action(t-1)))>= rand,1);
             else
                 Q{t,factor} = (bb{2}(:,:,chosen_action(t-1))*Q{t-1,factor}')';%(B{2}(:,:)'
-                true_states{trial}(factor, t) = find(cumsum(B{2}(:,true_states{trial}(factor,t-1),1))>= rand,1);   
-                 
+                true_states{trial}(factor, t) = find(cumsum(B{2}(:,true_states{trial}(factor,t-1),1))>= rand,1);
+
             end
         end
-        
-      
+
+
     end
-    
+
     if (true_states{trial}(2,t) == 1 && true_states{trial}(1,t) == true_food_source_1) || (true_states{trial}(2,t) == 2 && true_states{trial}(1,t) == true_food_source_2) || (true_states{trial}(2,t) == 3 && true_states{trial}(1,t) == true_food_source_3) || (true_states{trial}(2,t) == 4 && true_states{trial}(1,t) == true_food_source_4)
             time_since_food = 0;
             time_since_water = time_since_water +1;
             time_since_sleep = time_since_sleep +1;
-                       
+
     elseif (true_states{trial}(2,t) == 1 && true_states{trial}(1,t) == true_water_source_1) || (true_states{trial}(2,t) == 2 && true_states{trial}(1,t) == true_water_source_2) || (true_states{trial}(2,t) == 3 && true_states{trial}(1,t) == true_water_source_3) || (true_states{trial}(2,t) == 4 && true_states{trial}(1,t) == true_water_source_4)
         time_since_water = 0;
         time_since_food = time_since_food +1;
@@ -174,7 +174,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
         time_since_sleep = 0;
         time_since_food = time_since_food +1;
         time_since_water = time_since_water +1;
-      
+
     else
         if t > 1
             time_since_food = time_since_food +1;
@@ -184,8 +184,8 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
 
     end
     % sample the next observation. Same technique as sampling states
-    
-    for modality = 1:num_modalities     
+
+    for modality = 1:num_modalities
         ob = A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t));
         observations(modality,t) = find(cumsum(A{modality}(:,true_states{trial}(1,t),true_states{trial}(2,t)))>=rand,1);
         %create a temporary vectore of 0s
@@ -203,9 +203,9 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     end
     bb{2} = normalise_matrix(b{2});
     y{2} = normalise_matrix(a{2});
-    
+
     qs = spm_cross(Q{t,:});
-    predictive_observations_posterior{2,t} = normalise(y{2}(:,:)*qs(:))'; 
+    predictive_observations_posterior{2,t} = normalise(y{2}(:,:)*qs(:))';
     predictive_observations_posterior{3,t} = normalise(y{3}(:,:)*qs(:))';
     predicted_posterior = calculate_posterior(Q,y,predictive_observations_posterior,t);
     for timey = start:t
@@ -214,7 +214,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
             LL{2} = L;
             LL{1} = Q{timey,1};
 
-        if (timey > start && ~isequal(round(L,3),round(Q{timey,2},3)')) || (timey == t) 
+        if (timey > start && ~isequal(round(L,3),round(Q{timey,2},3)')) || (timey == t)
          for modality = 2:2
            a_learning = O(modality,timey)';
            for  factor = 1:2
@@ -229,17 +229,17 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
                max_value = max(a_learning(2:end,j,i)); % find the maximum value in column j
                amount_to_subtract = proportion * max_value; % calculate the amount to subtract
                a_learning(a_learning(1,j,i) ==0,j ,i) = a_learning(a_learning(1,j,i) ==0,j ,i) - amount_to_subtract;
-               
+
            end
         end
         a{modality} = a{modality} + 0.7*a_learning;
         a{modality}(a{modality} <=0.05) = 0.05;
-        
-         end        
+
+         end
         end
     end
     end
-     
+
       if true_states{trial}(2,t) == 1
            food = true_food_source_1;
            water = true_water_source_1;
@@ -272,8 +272,8 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     current_pos = find(cumsum(P{t,1})>=rand,1);
     if t > 1 && ~isequal(round(predicted_posterior{t,2},1), round(P{t,2},1))
         % if there is a relatively large state-prediction error, reset
-        % memory as it's probably innacurate. 
-          short_term_memory(:,:,:,:) = 0;      
+        % memory as it's probably innacurate.
+          short_term_memory(:,:,:,:) = 0;
     end
     if current_pos == 55
         short_term_memory(:,:,:,:) = 0;
@@ -281,7 +281,7 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
     best_actions = [];
     % Start tree search from current time point
    [G,Q, short_term_memory, best_actions] = tree_search_frwd_SI(short_term_memory, O, Q ,a, A,y, B,B, t, T, t+horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight);
-        
+
    chosen_action(t) = best_actions(1);
    t = t+1;
     % end loop over time points
@@ -291,6 +291,7 @@ end
 fid = fopen(file_name, 'a+');
 fprintf(fid, '%f\n', t);
 
+fclose(fid);
 % reset for next iteration
 t = 1;
 time_since_food = 0;
@@ -324,7 +325,7 @@ end
 function a = displayGridWorld(agent_position, food_position_1,water_position_1,sleep_position_1,hill_1_pos,alive_status)
 if alive_status == 1
     agent_text = 'A';
-else 
+else
     agent_text = 'Dead';
 end
 
@@ -398,7 +399,7 @@ locations_1(end+1) = food_1_dim1;
 %     end
 % end
 % locations_1(end+1) = food_3_dim1;
-% 
+%
 % food_4_dim2 = idivide(int16(food_position_4), 10, 'floor')+1;
 % food_4_dim1 = rem(food_position_4, 10);
 % if food_4_dim1 == 0
@@ -427,7 +428,7 @@ end
 %     end
 % end
 % locations_1(end+1) = water_2_dim1;
-% 
+%
 % water_3_dim2 = idivide(int16(water_position_3), 10, 'floor')+1;
 % water_3_dim1 = rem(water_position_3, 10);
 % if water_3_dim1 == 0
@@ -437,7 +438,7 @@ end
 %     end
 % end
 % locations_1(end+1) = water_2_dim1;
-% 
+%
 % water_4_dim2 = idivide(int16(water_position_4), 10, 'floor')+1;
 % water_4_dim1 = rem(water_position_4, 10);
 % if water_4_dim1 == 0
@@ -464,7 +465,7 @@ locations_1(end+1) = sleep_1_dim1;
 %         sleep_2_dim2 = sleep_2_dim2-1;
 %     end
 % end
-% 
+%
 % sleep_3_dim2 = idivide(int16(sleep_position_3), 10, 'floor')+1;
 % sleep_3_dim1 = rem(sleep_position_2, 10);
 % if sleep_3_dim1 == 0
@@ -473,7 +474,7 @@ locations_1(end+1) = sleep_1_dim1;
 %         sleep_3_dim2 = sleep_3_dim2-1;
 %     end
 % end
-% 
+%
 % sleep_4_dim2 = idivide(int16(sleep_position_4), 10, 'floor')+1;
 % sleep_4_dim1 = rem(sleep_position_4, 10);
 % if sleep_4_dim1 == 0
@@ -511,49 +512,49 @@ for n=1:10
 
         end
 
-        if (n == food_1_dim1 & p == food_1_dim2) 
+        if (n == food_1_dim1 & p == food_1_dim2)
             text(y(n)-.2,x(p)+.3,'F','FontSize',16, 'FontWeight','bold');
             %text(y(n)-.2,x(p)-.3,food_pref,'FontSize', 12);
             q=q+1;
         end
 
-%          if (n == food_2_dim1 & p == food_2_dim2) 
+%          if (n == food_2_dim1 & p == food_2_dim2)
 %             text(y(n)-.2,x(p)+.3,'F','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,food_pref,'FontSize', 12);
 %             q=q+1;
 %          end
-% 
-%           if (n == food_3_dim1 & p == food_3_dim2) 
+%
+%           if (n == food_3_dim1 & p == food_3_dim2)
 %             text(y(n)-.2,x(p)+.3,'F','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,food_pref,'FontSize', 12);
 %             q=q+1;
 %           end
-% 
-%            if (n == food_4_dim1 & p == food_4_dim2) 
+%
+%            if (n == food_4_dim1 & p == food_4_dim2)
 %             text(y(n)-.2,x(p)+.3,'F','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,food_pref,'FontSize', 12);
 %             q=q+1;
 %         end
 
-        if (n == water_1_dim1 & p == water_1_dim2) 
+        if (n == water_1_dim1 & p == water_1_dim2)
             text(y(n)-.2,x(p)+.3,'W','FontSize',16, 'FontWeight','bold');
             %text(y(n)-.2,x(p)-.3,water_pref,'FontSize', 12);
             q=q+1;
         end
 
-%          if (n == water_2_dim1 & p == water_2_dim2) 
+%          if (n == water_2_dim1 & p == water_2_dim2)
 %             text(y(n)-.2,x(p)+.3,'W','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,water_pref,'FontSize', 12);
 %             q=q+1;
 %          end
-% 
-%           if (n == water_3_dim1 & p == water_3_dim2) 
+%
+%           if (n == water_3_dim1 & p == water_3_dim2)
 %             text(y(n)-.2,x(p)+.3,'W','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,water_pref,'FontSize', 12);
 %             q=q+1;
 %           end
-% 
-%            if (n == water_4_dim1 & p == water_4_dim2) 
+%
+%            if (n == water_4_dim1 & p == water_4_dim2)
 %             text(y(n)-.2,x(p)+.3,'W','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,water_pref,'FontSize', 12);
 %             q=q+1;
@@ -578,13 +579,13 @@ for n=1:10
 %             %text(y(n)-.2,x(p)-.3,sleep_pref,'FontSize', 12);
 %             q=q+1;
 %         end
-% 
+%
 %         if (n == sleep_3_dim1 & p == sleep_3_dim2)
 %             text(y(n)-.2,x(p)+.3,'S','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,sleep_pref,'FontSize', 12);
 %             q=q+1;
 %         end
-% 
+%
 %         if (n == sleep_4_dim1 & p == sleep_4_dim2)
 %             text(y(n)-.2,x(p)+.3,'S','FontSize',16, 'FontWeight','bold');
 %             %text(y(n)-.2,x(p)-.3,sleep_pref,'FontSize', 12);
@@ -605,16 +606,3 @@ end
 
 
 %--------------------------------------------------------------------------
-
-
-
-
-
-
-        
-        
-   
-
-
-
-   

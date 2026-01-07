@@ -1,12 +1,12 @@
-function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed)
+function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed)
 
     G = 0.02;
     P_prior = P;
     P = calculate_posterior(P, y, O, t);
     bb{2} = normalise_matrix(b{2});
-    t_food_approx = round(t_food + 1);
-    t_water_approx = round(t_water + 1);
-    t_sleep_approx = round(t_sleep + 1);
+    t_food_idx = min(max(round(t_food) + 1, 1), 35);
+    t_water_idx = min(max(round(t_water) + 1, 1), 35);
+    t_sleep_idx = min(max(round(t_sleep) + 1, 1), 35);
     num_factors = 2;
     %fprintf('At time step %d, non-zero memmory length: %d\n', t, length(short_term_memory(find(short_term_memory > 0))));
 
@@ -56,7 +56,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
             if modality == 2
                 C = determineObservationPreference(t_food, t_water, t_sleep);
                 %reduce preference precision
-                C{modality} = C{modality} / preference_weight;
+                C{modality} = C{modality} / preference_inverse_precision;
             end
 
             if modality == 2
@@ -72,18 +72,19 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
         % extrinsic
         % novelty
 
-        t_food = round(t_food * (1 - O{2, t}(2))) + 1;
-        t_water = round(t_water * (1 - O{2, t}(3))) + 1;
-        t_sleep = round(t_sleep * (1 - O{2, t}(4))) + 1;
-        t_food_approx = t_food;
-        t_water_approx = t_water;
-        t_sleep_approx = t_sleep;
+        t_food = round((t_food + 1) * (1 - O{2, t}(2)));
+        t_water = round((t_water + 1) * (1 - O{2, t}(3)));
+        t_sleep = round((t_sleep + 1) * (1 - O{2, t}(4)));
+
+        t_food_idx = min(max(t_food + 1, 1), 35);
+        t_water_idx = min(max(t_water + 1, 1), 35);
+        t_sleep_idx = min(max(t_sleep + 1, 1), 35);
 
     end
 
     if t < N
 
-        actions = randperm(5);
+        actions = 1:5;
         % actions = 1:5;
         efe = [0, 0, 0, 0, 0];
 
@@ -105,8 +106,8 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
             % for each of those likely states
             for state = likely_states(:)'
 
-                if short_term_memory(t_food_approx, t_water_approx, t_sleep_approx, state) ~= 0
-                    sh = short_term_memory(t_food_approx, t_water_approx, t_sleep_approx, state);
+                if short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, state) ~= 0
+                    sh = short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, state);
                     K(state) = sh;
                     memory_accessed = memory_accessed + 1;
                 else
@@ -123,10 +124,10 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
+                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed);
                     S = max(expected_free_energy);
                     K(state) = S;
-                    short_term_memory(t_food_approx, t_water_approx, t_sleep_approx, state) = S;
+                    short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, state) = S;
                 end
 
             end

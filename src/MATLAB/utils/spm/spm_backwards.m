@@ -16,8 +16,9 @@ function [L] = spm_backwards(O, Q, A, B, u, t, T)
             %------------------------------------------------------------------
             for g = 3:3
                 % possible_states = O{g,timestep}*A{g}(:,:);
-                obs = find(cumsum(O{g, timestep}) >= rand, 1);
-                temp = A{g}(obs, :, :);
+                obs_dist = O{g, timestep};
+                obs_dist = obs_dist(:);
+                temp = sum(A{g} .* reshape(obs_dist, [], 1, 1), 1);
                 temp = permute(temp, [3, 2, 1]);
                 temp = temp * Q{timestep, 1}';
                 aaa = temp' * p(:, state);

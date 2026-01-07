@@ -368,7 +368,7 @@ function [survived] = BA(seed)
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
-            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
+            [~, current_pos(t)] = max(P{t, 1});
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1)) %~all(a1 == a2)
                 short_term_memory(:, :, :, :, :) = 0;
@@ -382,9 +382,7 @@ function [survived] = BA(seed)
                 hill_memory_resets(trial) = hill_memory_resets(trial) + 1;
             end
 
-            cur_state = spm_cross(P{t});
-            cur_state = find(cumsum(cur_state(:)) >= rand, 1);
-            best_actions = [];
+                        best_actions = [];
             % Start tree search from current time point
 
             [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, preference_weight, chosen_action, 0, time_since_food, time_since_water, time_since_sleep, best_actions, memory_accessed);
@@ -414,6 +412,7 @@ function [survived] = BA(seed)
         fid = fopen(file_name, 'a+');
         fprintf(fid, '%f\n', t);
 
+        fclose(fid);
         survived(trial) = t;
 
         % Sample data for demonstration

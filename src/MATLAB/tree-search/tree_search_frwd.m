@@ -1,14 +1,12 @@
-function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, preference_weight, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed)
+function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, preference_inverse_precision, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed)
 
     if nargin < 17
-        preference_weight = 1;
+        preference_inverse_precision = 1;
     end
 
     G = 0.02;
     P = calculate_posterior(P, y, O, t);
     bb{2} = normalise_matrix(b{2});
-    cur_state = find(cumsum(P{t, 1}) >= rand, 1);
-    cur_context = find(cumsum(P{t, 2}) >= rand, 1);
 
     if t_food > 35
         t_food = 35;
@@ -27,7 +25,7 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
         if modality == 2
             C = determineObservationPreference(t_food, t_water, t_sleep);
             %reduce preference precision
-            C{modality} = C{modality} / preference_weight;
+            C{modality} = C{modality} / preference_inverse_precision;
         end
 
         if modality == 2
@@ -38,24 +36,26 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
 
     end
 
-    t_food = round(t_food * (1 - O{2, t}(2))) + 1;
-    t_water = round(t_water * (1 - O{2, t}(3))) + 1;
-    t_sleep = round(t_sleep * (1 - O{2, t}(4))) + 1;
-    t_food_approx = t_food;
-    t_water_approx = t_water;
-    t_sleep_approx = t_sleep;
+    t_food = round((t_food + 1) * (1 - O{2, t}(2)));
+    t_water = round((t_water + 1) * (1 - O{2, t}(3)));
+    t_sleep = round((t_sleep + 1) * (1 - O{2, t}(4)));
+
+    t_food_idx = min(max(t_food + 1, 1), 35);
+    t_water_idx = min(max(t_water + 1, 1), 35);
+    t_sleep_idx = min(max(t_sleep + 1, 1), 35);
 
     if t < N %&& t_sleep_approx < 14 && t_water_approx < 10 && t_food_approx < 12
 
-        actions = randperm(5);
-        cur_state = spm_cross(P(t, :));
-        cur_state = find(cumsum(cur_state(:)) >= rand, 1);
+        actions = 1:5;
+        [~, cur_state_factor] = max(P{t, 1});
+        [~, cur_context_factor] = max(P{t, 2});
+        cur_state = sub2ind([numel(P{t, 1}), numel(P{t, 2})], cur_state_factor, cur_context_factor);
         efe_future = [0, 0, 0, 0, 0];
 
         for action = actions
 
-            if short_term_memory(t_food, t_water, t_sleep, cur_state, action) ~= 0
-                sh = short_term_memory(t_food, t_water, t_sleep, cur_state, action);
+            if short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action) ~= 0
+                sh = short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action);
                 %S =  sh;
                 efe_future(action) = sh;
                 memory_accessed = memory_accessed + 1;
@@ -89,7 +89,7 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
                     chosen_action(t) = action;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, D, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, true_t, preference_weight, chosen_action, 0, true_t_food, true_t_water, true_t_sleep, best_actions,memory_accessed);
+                    [expected_free_energy, D, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food, t_water, t_sleep, true_t, preference_inverse_precision, chosen_action, 0, true_t_food, true_t_water, true_t_sleep, best_actions,memory_accessed);
 
                     S = max(expected_free_energy);
                     K(state) = S;
@@ -97,7 +97,7 @@ function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_f
 
                 action_fe = K(likely_states) * qs(likely_states);
                 efe_future(action) = efe_future(action) + 0.7 * action_fe;
-                short_term_memory(t_food, t_water, t_sleep, cur_state, action) = 0.7 * action_fe;
+                short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action) = 0.7 * action_fe;
             end
 
         end

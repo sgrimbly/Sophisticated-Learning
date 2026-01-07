@@ -339,7 +339,7 @@ function [survived] = SI(seed)
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
-            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
+            [~, current_pos(t)] = max(P{t, 1});
             % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search.
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
                 % if there is a relatively large state-prediction error, reset
@@ -384,6 +384,7 @@ function [survived] = SI(seed)
         fid = fopen(file_name, 'a+');
         fprintf(fid, '%f\n', t);
 
+        fclose(fid);
         survived(trial) = t;
 
         % Sample data for demonstration

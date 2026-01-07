@@ -9,8 +9,9 @@ function P = calculate_posterior(P, A, O, t)
         num = numel(A);
 
         for modal = 2:num
-            obs = find(cumsum(O{modal, t}) >= rand, 1);
-            temp = A{modal}(obs, :, :);
+            obs_dist = O{modal, t};
+            obs_dist = obs_dist(:);
+            temp = sum(A{modal} .* reshape(obs_dist, [], 1, 1), 1);
             temp = permute(temp, [3, 2, 1]);
             L = L .* temp;
         end

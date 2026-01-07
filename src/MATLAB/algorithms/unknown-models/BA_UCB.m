@@ -380,7 +380,9 @@ function [survived] = BA_UCB(seed)
             long_term_memory = 0;
             trajectory = [];
             a_complexity = 0;
-            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
+            [~, current_pos(t)] = max(P{t, 1});
+            [~, current_context] = max(P{t, 2});
+            current_joint_state = sub2ind([num_states, num_contexts], current_pos(t), current_context);
             optimal_traj = [];
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1)) %~all(a1 == a2)
@@ -397,7 +399,7 @@ function [survived] = BA_UCB(seed)
 
             best_actions = [];
             % Start tree search from current time point
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
@@ -424,6 +426,7 @@ function [survived] = BA_UCB(seed)
         fid = fopen(file_name, 'a+');
         fprintf(fid, '%f\n', t);
 
+        fclose(fid);
         survived(trial) = t;
 
         % Sample data for demonstration
