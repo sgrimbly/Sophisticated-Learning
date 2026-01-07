@@ -11,16 +11,34 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
     if nargin < 10, num_trials = 200; end
     if nargin < 11, grid_id = ''; end
 
-    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons    
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
     directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
     food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
     water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
     sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
-    
+
     % Define file path for state and results
-    result_file = strcat(directory_path, '/BA_Seed_', num2str(seed), '_GridID_', grid_id, '_' , current_time, '.txt');
-    
+    grid_id_safe = sanitize_file_component(grid_id);
+    run_config = struct(...
+        'algorithm', 'BA', ...
+        'seed', seed, ...
+        'grid_size', grid_size, ...
+        'start_position', start_position, ...
+        'hill_pos', hill_pos, ...
+        'food_sources', food_sources, ...
+        'water_sources', water_sources, ...
+        'sleep_sources', sleep_sources, ...
+        'weights', weights, ...
+        'num_states', num_states, ...
+        'num_trials', num_trials, ...
+        'grid_id', grid_id ...
+    );
+    config_id = config_hash(run_config);
+    run_meta = struct('config_id', config_id, 'run_config', run_config);
+
+    result_file = strcat(directory_path, '/BA_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
+
     % file_name = strcat(directory_path, '/BA_Seed_', num2str(seed), ...
     %                    '_Grid', num2str(grid_size), ...
     %                    '_Start', num2str(start_position), ...
@@ -34,13 +52,16 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
     % Initialize environment once, outside of any saved state check
     [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
 
+    num_contexts = numel(D{2});
+    num_joint_states = num_states * num_contexts;
+
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
     preference_weight = weights(4);
 
     % Organise state for experiment run
-    stateFile = strcat(directory_path, '/BA_Seed_', num2str(seed), '_GridID_', grid_id, '.mat')
+    stateFile = strcat(directory_path, '/BA_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat')
     [loadedState, isNew] = load_state(stateFile);
 
     t = 1;
@@ -50,39 +71,46 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
         % Load variables from the saved state, using indices to access the cell array
         rng(loadedState{1});       % Restore the RNG state
         trial = loadedState{2} + 1; % Start from the next trial to ensure continuity
-        
+
         a_history = loadedState{3}; % Retrieve a_history
         a = a_history{trial-1};          % Access the last valid entry in a_history
-        
+
         b_history = loadedState{4}; % Retrieve b_history
         b = b_history{trial-1};          % Access the last valid entry in b_history
-        
+
         Q = loadedState{5};          % Retrieve Q
         P = loadedState{6};          % Retrieve P
-        
+
         true_states = loadedState{7}; % Retrieve true_states
-        
+
         chosen_action = loadedState{8}; % Retrieve chosen_action
         memory_resets = loadedState{9}; % Retrieve memory_resets
         pe_memory_resets = loadedState{10}; % Retrieve pe_memory_resets
         hill_memory_resets = loadedState{11}; % Retrieve hill_memory_resets
-        
+
         total_search_depth = loadedState{12}; % Retrieve total_search_depth
         total_memory_accessed = loadedState{13}; % Retrieve total_memory_accessed
         total_t = loadedState{14}; % Retrieve total_t
         survived = loadedState{15}; % Retrieve survived
-        
+
         t_at_25 = loadedState{16};  % Retrieve t_at_25
         t_at_50 = loadedState{17};  % Retrieve t_at_50
         t_at_75 = loadedState{18};  % Retrieve t_at_75
         t_at_100 = loadedState{19}; % Retrieve t_at_100
 
         result_file = loadedState{20}
+
+        if numel(loadedState) >= 21
+            loaded_meta = loadedState{21};
+            if isstruct(loaded_meta) && isfield(loaded_meta, 'config_id') && ~strcmp(loaded_meta.config_id, config_id)
+                error('Loaded state config_id does not match current run_config.');
+            end
+        end
     else
         % Initialization of variables for a new simulation
         rng(seed, 'twister') % Set the initial random state
         trial = 1;
-    
+
         a_history = cell(1, num_trials);
         b_history = cell(1, num_trials);
         chosen_action = zeros(1, T - 1);
@@ -110,7 +138,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
         fprintf('----------------------------------------\n');
         fprintf('Start Time: %s\n', startTime);
 
-        short_term_memory = zeros(35, 35, 35, 400, 5);
+        short_term_memory = zeros(35, 35, 35, num_joint_states, 5);
         search_depth = 0;
         memory_accessed = 0;
 
@@ -119,7 +147,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
             P{1, factor} = D{factor}';
             true_states{trial}(1, t) = start_position;
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
-        end  
+        end
 
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
             bb{2} = normalise_matrix(b{2});
@@ -247,7 +275,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
-            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
+            [~, current_pos(t)] = max(P{t, 1});
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
                 short_term_memory(:, :, :, :, :) = 0;
@@ -284,6 +312,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
 
         fid = fopen(result_file, 'a+');
         fprintf(fid, '%f\n', t);
+        fclose(fid);
 
         survived(trial) = t;
 
@@ -322,12 +351,12 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
         % Update variable histories at the end of each trial
         a_history{trial} = a;
         b_history{trial} = b;
-        
+
         % Prepare the state to save (end of each trial)
         currentState = {rng, trial, a_history, b_history, Q, P, true_states, ...
                         chosen_action, memory_resets, pe_memory_resets, hill_memory_resets, ...
                         total_search_depth, total_memory_accessed, total_t, survived, ...
-                        t_at_25, t_at_50, t_at_75, t_at_100, result_file};
+                        t_at_25, t_at_50, t_at_75, t_at_100, result_file, run_meta};
 
         % Save the state at the end of each trial
         save_state(stateFile, currentState);

@@ -12,35 +12,47 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     if nargin < 11, grid_id = ''; end
     if nargin < 12, ucb_scale = 5; end
 
-    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons    
+    current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
     directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
     food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
     water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
     sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
-    
-    % Define file path for state and results
-    result_file = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id, '_' , current_time, '.txt');
-    
-    % file_name = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), ...
-    %                    '_Grid', num2str(grid_size), ...
-    %                    '_Start', num2str(start_position), ...
-    %                    '_Hill', num2str(hill_pos), ...
-    %                    '_Food', food_str, ...
-    %                    '_Water', water_str, ...
-    %                    '_Sleep', sleep_str, ...
-    %                    '_States', num2str(num_states), ...
-    %                    '_Trials', num2str(num_trials), ...
-    %                    '_', current_time, '.txt');
+
     % Initialize environment once, outside of any saved state check
     [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
+
+    num_contexts = numel(D{2});
+    num_joint_states = num_states * num_contexts;
 
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
 
+    grid_id_safe = sanitize_file_component(grid_id);
+    run_config = struct(...
+        'algorithm', 'BAUCB', ...
+        'seed', seed, ...
+        'grid_size', grid_size, ...
+        'start_position', start_position, ...
+        'hill_pos', hill_pos, ...
+        'food_sources', food_sources, ...
+        'water_sources', water_sources, ...
+        'sleep_sources', sleep_sources, ...
+        'weights', weights, ...
+        'num_states', num_states, ...
+        'num_trials', num_trials, ...
+        'grid_id', grid_id, ...
+        'ucb_scale', ucb_scale ...
+    );
+    config_id = config_hash(run_config);
+    run_meta = struct('config_id', config_id, 'run_config', run_config);
+
+    % Define file path for state and results
+    result_file = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
+
     % Organise state for experiment run
-    stateFile = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id, '.mat')
+    stateFile = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat');
     [loadedState, isNew] = load_state(stateFile);
 
     t = 1;
@@ -80,6 +92,19 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         t_at_100 = loadedState{19}; % Retrieve t_at_100
 
         result_file = loadedState{20}
+
+        if numel(loadedState) >= 21
+            Nt = loadedState{21};
+        else
+            Nt = ones(num_states, num_contexts);
+        end
+
+        if numel(loadedState) >= 22
+            loaded_meta = loadedState{22};
+            if isstruct(loaded_meta) && isfield(loaded_meta, 'config_id') && ~strcmp(loaded_meta.config_id, config_id)
+                error('Loaded state config_id does not match current run_config.');
+            end
+        end
     else
         % Initialization of variables for a new simulation
         rng(seed, 'twister') % Set the initial random state
@@ -87,7 +112,6 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     
         a_history = cell(1, num_trials);
         b_history = cell(1, num_trials);
-        num_contexts = numel(D{2});
         Nt = ones(num_states, num_contexts);
         chosen_action = zeros(1, T - 1);
         memory_resets = zeros(num_trials, 1);
@@ -103,34 +127,16 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         t_at_100 = 0;
     end
 
-    if ~exist('Nt', 'var')
-        num_contexts = numel(D{2});
-        Nt = ones(num_states, num_contexts);
-    end
-
-    memory_resets = zeros(num_trials, 1);
-    pe_memory_resets = zeros(num_trials, 1);
-    hill_memory_resets = zeros(num_trials, 1);
-    total_search_depth = 0;
-    total_memory_accessed = 0;
-    total_t = 0;
-    survived = zeros(1, num_trials);
-
-    t_at_25 = 0;
-    t_at_50 = 0;
-    t_at_75 = 0;
-    t_at_100 = 0;
-
     total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
 
-    for trial = 1:num_trials
+    for trial = trial:num_trials
         startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
         fprintf('\n----------------------------------------\n');
         fprintf('TRIAL %d STARTED\n', trial);
         fprintf('----------------------------------------\n');
         fprintf('Start Time: %s\n', startTime);
 
-        short_term_memory = zeros(35, 35, 35, 400, 5);
+        short_term_memory = zeros(35, 35, 35, num_joint_states, 5);
         search_depth = 0;
         memory_accessed = 0;
 
@@ -271,7 +277,9 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             long_term_memory = 0;
             % trajectory = [];
             a_complexity = 0;
-            current_pos(t) = find(cumsum(P{t, 1}) >= rand, 1);
+            [~, current_pos(t)] = max(P{t, 1});
+            [~, current_context] = max(P{t, 2});
+            current_joint_state = sub2ind([num_states, num_contexts], current_pos(t), current_context);
             optimal_traj = [];
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
@@ -287,7 +295,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             end
 
             best_actions = [];
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
@@ -310,6 +318,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
 
         fid = fopen(result_file, 'a+');
         fprintf(fid, '%f\n', t);
+        fclose(fid);
 
         survived(trial) = t;
 
@@ -353,7 +362,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         currentState = {rng, trial, a_history, b_history, Q, P, true_states, ...
                         chosen_action, memory_resets, pe_memory_resets, hill_memory_resets, ...
                         total_search_depth, total_memory_accessed, total_t, survived, ...
-                        t_at_25, t_at_50, t_at_75, t_at_100, result_file};
+                        t_at_25, t_at_50, t_at_75, t_at_100, result_file, Nt, run_meta};
 
         % Save the state at the end of each trial
         save_state(stateFile, currentState);
