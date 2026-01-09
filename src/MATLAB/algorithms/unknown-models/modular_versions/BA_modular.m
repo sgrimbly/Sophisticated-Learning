@@ -1,4 +1,4 @@
-function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
+function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, results_file_override)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end  % Default start position set to 51
@@ -10,6 +10,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
     if nargin < 9, num_states = 100; end  % Assumes grid size 10x10, aligns with default grid_size
     if nargin < 10, num_trials = 200; end
     if nargin < 11, grid_id = ''; end
+    if nargin < 12, results_file_override = ''; end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -58,10 +59,27 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
     time_since_food = 0;
     time_since_water = 0;
     time_since_sleep = 0;
-    preference_weight = weights(4);
+    preference_inverse_precision = weights(4);
 
     % Organise state for experiment run
     stateFile = strcat(directory_path, '/BA_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat')
+
+    if ~isempty(results_file_override)
+        result_file = results_file_override;
+        [results_dir, result_base, result_ext] = fileparts(result_file);
+        if isempty(results_dir)
+            results_dir = pwd;
+            result_file = fullfile(results_dir, [result_base, result_ext]);
+        end
+        if ~exist(results_dir, 'dir')
+            [ok, msg] = mkdir(results_dir);
+            if ~ok
+                error('Unable to create results directory: %s', msg);
+            end
+        end
+        stateFile = fullfile(results_dir, sprintf('BA_Seed_%d_GridID_%s_Cfg_%s.mat', seed, grid_id_safe, config_id));
+    end
+
     [loadedState, isNew] = load_state(stateFile);
 
     t = 1;
@@ -290,7 +308,7 @@ function [survived] = BA_modular(seed, grid_size, start_position, hill_pos, food
             end
 
             best_actions = [];
-            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, preference_weight, chosen_action, 0, time_since_food, time_since_water, time_since_sleep, best_actions, memory_accessed);
+            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, preference_inverse_precision, chosen_action, 0, time_since_food, time_since_water, time_since_sleep, best_actions, memory_accessed);
             chosen_action(t) = best_actions(1);
             t = t + 1;
             search_depth = search_depth + length(best_actions);

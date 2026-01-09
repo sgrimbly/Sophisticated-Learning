@@ -2,7 +2,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
     grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Check the number of arguments and set default values if necessary
     arguments
-        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SL_noSmooth', 'SI', 'SI_smooth', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SI';
+        algorithm char {mustBeMember(algorithm, {'model_mixed_RL', 'model_free_RL', 'SL', 'SL_noSmooth', 'SI', 'SI_smooth', 'BA', 'BAUCB', 'known_large_MCT'})} = 'SL';
         seed (1, 1) double {mustBeInteger} = 1;
         horizon (1, 1) double {mustBeInteger, mustBePositive} = 6;
         k_factor (1, 1) double = 1.5;
@@ -27,11 +27,18 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         weights.ucb_scale = 5;
     end
 
+    % Preference uses inverse precision: larger values weaken extrinsic terms.
+    if isfield(weights, 'preference_inverse_precision')
+        preference_inverse_precision = weights.preference_inverse_precision;
+    else
+        preference_inverse_precision = weights.preference;
+    end
+
     weight_info = '';
     % Set results_file_name if it was not provided, now incorporating the seed and environment setup
     if isempty(results_file_name)
         weight_info = sprintf('novelty_%d-learning_%d-epistemic_%d-preference_%d', ...
-            weights.novelty, weights.learning, weights.epistemic, weights.preference);
+            weights.novelty, weights.learning, weights.epistemic, preference_inverse_precision);
         if strcmp(algorithm, 'BAUCB')
             weight_info = sprintf('%s-ucb_%g', weight_info, weights.ucb_scale);
         end
@@ -40,30 +47,49 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             mat2str(sleep_sources), weight_info, num_states, num_trials);
         env_info = strrep(env_info, ' ', ''); % Remove spaces from the string
 
-        switch algorithm
-            case 'model_free_RL'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_free_RL_Seed%d%s.txt', seed, env_info);
-            case 'model_mixed_RL'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_model_mixed_RL_Seed%d%s.txt', seed, env_info);
-            case 'SL'
-                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
-                % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SL_Seed%d%s.txt', seed, env_info);
-            case 'SL_noSmooth'
-                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SL-runs/results_SL_noSmooth_Seed%d%s.txt', seed, env_info);
-            case 'SI'
-                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SI-runs/results_SI_Seed%d%s.txt', seed, env_info);
-                % results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/SL-runs/results_SI_Seed%d%s.txt', seed, env_info);
-            case 'SI_smooth'
-                results_file_name = sprintf('/Users/stjohngrimbly/Documents/Sophisticated-Learning/results/SI-runs/results_SI_smooth_Seed%d%s.txt', seed, env_info);
-            case 'BA'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/BA-runs/results_BA_Seed%d%s.txt', seed, env_info);
-            case 'BAUCB'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/BAUCB-runs/results_BAUCB_Seed%d%s.txt', seed, env_info);
-            case 'known_large_MCT'
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/MCT-runs/results_known_large_MCT_Seed%d%s.txt', seed, env_info);
-            otherwise
-                results_file_name = sprintf('/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/RL-runs/results_Seed%d%s.txt', seed, env_info);
+        % ---------- PORTABLE RESULTS PATH (macOS/Linux) ----------
+        % Allow override via environment variable if you want:
+        %   export SL_RESULTS_ROOT="/some/path/results"
+        results_root = getenv('SL_RESULTS_ROOT');
+        if isempty(results_root)
+            % Default: put results under the repo root (one level above src/MATLAB)
+            thisFileDir  = fileparts(mfilename('fullpath'));         % .../src/MATLAB
+            projectRoot  = fullfile(thisFileDir, '..', '..');        % .../ (repo root)
+            results_root = fullfile(projectRoot, 'results');
         end
+        
+        % Map algorithm -> subfolder + filename prefix
+        switch algorithm
+            case {'model_free_RL','model_mixed_RL'}
+                run_folder = 'RL-runs';
+                file_prefix = ['results_' algorithm];
+            case {'SI','SI_smooth'}
+                run_folder = 'SI-runs';
+                file_prefix = ['results_' algorithm];
+            case {'SL','SL_noSmooth'}
+                run_folder = 'SL-runs';
+                file_prefix = ['results_' algorithm];
+            case 'BA'
+                run_folder = 'BA-runs';
+                file_prefix = 'results_BA';
+            case 'BAUCB'
+                run_folder = 'BAUCB-runs';
+                file_prefix = 'results_BAUCB';
+            case 'known_large_MCT'
+                run_folder = 'MCT-runs';
+                file_prefix = 'results_known_large_MCT';
+            otherwise
+                run_folder = 'misc-runs';
+                file_prefix = ['results_' algorithm];
+        end
+        
+        results_dir = fullfile(results_root, run_folder);
+        if ~exist(results_dir, 'dir')
+            mkdir(results_dir);
+        end
+        
+        results_file_name = fullfile(results_dir, sprintf('%s_Seed%d%s.txt', file_prefix, seed, env_info));
+        % --------------------------------------------------------
 
     end
 
@@ -94,36 +120,36 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 
     % Execute based on the selected algorithm
     survived = 0;
-    weight_vector = [weights.novelty, weights.learning, weights.epistemic, weights.preference];
+    weight_vector = [weights.novelty, weights.learning, weights.epistemic, preference_inverse_precision];
 
     switch algorithm
         case 'SI'
             disp('Starting SI.');
-            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name);
             % survived = SI(seed);
             % SI_rowan(seed);
             disp('SI run complete');
         case 'SL'
             disp('Starting SL.');
-            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  weight_vector, num_states, num_trials, grid_id);
+            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  weight_vector, num_states, num_trials, grid_id, results_file_name);
             % survived = SL(seed);
             % SL_rowan(seed);
             disp('SL run complete');
         case 'SL_noSmooth'
             disp('Starting SL_noSmooth.');
-            survived = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            survived = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name);
             disp('SL_noSmooth run complete');
         case 'BA'
             disp('Starting BA.');
-            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name);
             disp('BA run complete');
         case 'BAUCB'
             disp('Starting BAUCB.');
-            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, weights.ucb_scale);
+            survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, weights.ucb_scale, results_file_name);
             disp('BA_UCB run complete');
         case 'SI_smooth'
             disp('Starting SI_smooth.');
-            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id);
+            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name);
             disp('SI_smooth run complete');
         case 'known_large_MCT'
             disp('Starting known_large_MCT.');

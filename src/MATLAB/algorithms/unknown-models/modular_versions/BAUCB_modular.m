@@ -1,4 +1,4 @@
-function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, ucb_scale)
+function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, ucb_scale, results_file_override)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end  % Default start position set to 51
@@ -11,6 +11,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     if nargin < 10, num_trials = 200; end
     if nargin < 11, grid_id = ''; end
     if nargin < 12, ucb_scale = 5; end
+    if nargin < 13, results_file_override = ''; end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -50,15 +51,30 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
 
     % Define file path for state and results
     result_file = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
-
-    % Organise state for experiment run
     stateFile = strcat(directory_path, '/BAUCB_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat');
+
+    if ~isempty(results_file_override)
+        result_file = results_file_override;
+        [results_dir, result_base, result_ext] = fileparts(result_file);
+        if isempty(results_dir)
+            results_dir = pwd;
+            result_file = fullfile(results_dir, [result_base, result_ext]);
+        end
+        if ~exist(results_dir, 'dir')
+            [ok, msg] = mkdir(results_dir);
+            if ~ok
+                error('Unable to create results directory: %s', msg);
+            end
+        end
+        stateFile = fullfile(results_dir, sprintf('BAUCB_Seed_%d_GridID_%s_Cfg_%s.mat', seed, grid_id_safe, config_id));
+    end
+
     [loadedState, isNew] = load_state(stateFile);
 
     t = 1;
     surety = 1;
     simulated_time = 0;
-    preference_weight = weights(4);
+    preference_inverse_precision = weights(4);
 
     if ~isNew
         % Load variables from the saved state, using indices to access the cell array
@@ -295,7 +311,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             end
 
             best_actions = [];
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_inverse_precision, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
