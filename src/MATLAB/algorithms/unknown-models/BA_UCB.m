@@ -113,7 +113,7 @@ function [survived] = BA_UCB(seed)
     num_states = 100;
 
     short_term_memory(:, :, :, :, :) = zeros(35, 35, 35, 400, 5);
-    preference_weight = 10;
+    preference_inverse_precision = 10;
     ucb_scale = 5;
 
     %%% Distributions %%%
@@ -399,7 +399,7 @@ function [survived] = BA_UCB(seed)
 
             best_actions = [];
             % Start tree search from current time point
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_weight, ucb_scale);
+            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_inverse_precision, ucb_scale);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;

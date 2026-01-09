@@ -1,4 +1,4 @@
-﻿function hash = config_hash(config, nChars)
+function hash = config_hash(config, nChars)
 
     if nargin < 2
         nChars = 8;

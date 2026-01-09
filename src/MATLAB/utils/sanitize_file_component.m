@@ -1,4 +1,4 @@
-﻿function out = sanitize_file_component(in)
+function out = sanitize_file_component(in)
 
     if nargin < 1 || isempty(in)
         in = 'none';

@@ -1,4 +1,4 @@
-﻿function run_sanity_checks()
+function run_sanity_checks()
 
     currentDir = fileparts(mfilename('fullpath'));
     srcPath = fullfile(currentDir, '..');
@@ -112,10 +112,11 @@ end
 function sanity_ucb_bonus_monotonicity()
 
     ucb_scale = 5;
-    true_t = 10;
 
     counts = [1, 2, 5, 10];
-    bonus = ucb_scale * sqrt(log(true_t + 1) ./ counts);
+    base_visits = 100;
+    total_visits = base_visits + counts;
+    bonus = ucb_scale * sqrt(log(total_visits + 1) ./ counts);
 
     assert(all(diff(bonus) < 0), 'UCB bonus did not decrease with increasing visit count.');
 
@@ -125,18 +126,29 @@ function sanity_state_roundtrip()
 
     tmp = [tempname, '.mat'];
 
+    rng(42, 'twister');
+    rand(1, 3);
+    saved_rng = rng;
+    expected = rand(1, 3);
+
     cfg = struct('algorithm', 'unit', 'seed', 1);
     id = config_hash(cfg);
     meta = struct('config_id', id, 'run_config', cfg);
 
-    state = {rng, 1, meta};
+    Nt = reshape(1:4, [2, 2]);
+    state = {saved_rng, 1, meta, Nt};
     save_state(tmp, state);
 
     [loaded, isNew] = load_state(tmp);
     assert(~isNew, 'Expected existing state file to load.');
-    assert(iscell(loaded) && numel(loaded) == 3, 'Unexpected loaded state shape.');
+    assert(iscell(loaded) && numel(loaded) == 4, 'Unexpected loaded state shape.');
     assert(isstruct(loaded{3}) && isfield(loaded{3}, 'config_id'), 'Missing run_meta in loaded state.');
     assert(strcmp(loaded{3}.config_id, id), 'run_meta.config_id did not round-trip.');
+    assert(isequal(loaded{4}, Nt), 'Nt did not round-trip.');
+
+    rng(loaded{1});
+    resumed = rand(1, 3);
+    assert(isequal(expected, resumed), 'RNG resume did not reproduce expected sequence.');
 
     delete(tmp);
 

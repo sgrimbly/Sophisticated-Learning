@@ -19,7 +19,7 @@ function [survived] = SL(seed)
     novelty_weight = 10;
     learning_weight = 40;
     epistemic_weight = 1;
-    preference_weight = 10;
+    preference_inverse_precision = 10;
 
     num_states = 100;
 
@@ -390,7 +390,7 @@ function [survived] = SL(seed)
             best_actions = [];
             % Start tree search from current time point
 
-            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_weight, memory_accessed);
+            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed);
             chosen_action(t) = best_actions(1);
             t = t + 1;
             % end loop over time points

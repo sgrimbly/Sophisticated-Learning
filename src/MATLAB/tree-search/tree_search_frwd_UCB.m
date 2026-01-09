@@ -42,7 +42,8 @@ function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actio
         if modality == 2
             % add extrinsic term (see EFE equation)
             extrinsic = O{2, t} * C{2}';
-            exploration = ucb_scale * sqrt(log(true_t + 1) / Nt(cur_state_factor, cur_context_factor));
+            total_visits = sum(Nt(:));
+            exploration = ucb_scale * sqrt(log(total_visits + 1) / Nt(cur_state_factor, cur_context_factor));
             G = G + extrinsic + exploration;
         end
 

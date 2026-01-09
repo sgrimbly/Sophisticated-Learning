@@ -1,6 +1,6 @@
 function [G, P, short_term_memory, best_actions,memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, preference_inverse_precision, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed)
 
-    if nargin < 17
+    if nargin < 16
         preference_inverse_precision = 1;
     end
 
