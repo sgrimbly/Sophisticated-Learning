@@ -1,6 +1,10 @@
-function [survived] = BA_UCB(seed)
+function [survived] = BA_UCB(seed, state_selection)
     rng(seed);
     rng
+
+    if nargin < 2 || isempty(state_selection)
+        state_selection = 'sample';
+    end
     %%% Hyper Params %%%
     % clear
     hill_1 = 55;
@@ -380,8 +384,8 @@ function [survived] = BA_UCB(seed)
             long_term_memory = 0;
             trajectory = [];
             a_complexity = 0;
-            [~, current_pos(t)] = max(P{t, 1});
-            [~, current_context] = max(P{t, 2});
+            current_pos(t) = select_from_posterior(P{t, 1}, state_selection);
+            current_context = select_from_posterior(P{t, 2}, state_selection);
             current_joint_state = sub2ind([num_states, num_contexts], current_pos(t), current_context);
             optimal_traj = [];
 

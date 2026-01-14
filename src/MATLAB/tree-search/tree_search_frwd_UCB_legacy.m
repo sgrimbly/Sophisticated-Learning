@@ -1,16 +1,19 @@
-function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, preference_inverse_precision, chosen_action, novelty, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed, state_selection)
+function [G, P, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB_legacy(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t, T, N, t_food, t_water, t_sleep, f, w, s, current_state, true_t, chosen_action, novelty, surety, simulated_time, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed, ucb_scale, state_selection)
 
-    if nargin < 16
-        preference_inverse_precision = 1;
+    if nargin < 35 || isempty(ucb_scale)
+        ucb_scale = 5;
     end
 
-    if nargin < 24 || isempty(state_selection)
+    if nargin < 36 || isempty(state_selection)
         state_selection = 'sample';
     end
 
     G = 0.02;
     P = calculate_posterior(P, y, O, t);
     bb{2} = normalise_matrix(b{2});
+    cur_state = select_from_posterior(P{t, 1}, state_selection);
+    cur_context = select_from_posterior(P{t, 2}, state_selection);
+    Nt(cur_state * cur_context) = Nt(current_state * cur_context) + 1;
 
     if t_food > 35
         t_food = 35;
@@ -28,37 +31,35 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
         if modality == 2
             C = determineObservationPreference(t_food, t_water, t_sleep);
-            %reduce preference precision
-            C{modality} = C{modality} / preference_inverse_precision;
         end
 
         if modality == 2
             % add extrinsic term (see EFE equation)
             extrinsic = O{2, t} * C{2}';
-            G = G + extrinsic;
+            exploration = ucb_scale * sqrt(nat_log(t) / Nt(cur_state * cur_context));
+            G = G + extrinsic + exploration;
         end
 
     end
 
-    t_food = round((t_food + 1) * (1 - O{2, t}(2)));
-    t_water = round((t_water + 1) * (1 - O{2, t}(3)));
-    t_sleep = round((t_sleep + 1) * (1 - O{2, t}(4)));
-
-    t_food_idx = min(max(t_food + 1, 1), 35);
-    t_water_idx = min(max(t_water + 1, 1), 35);
-    t_sleep_idx = min(max(t_sleep + 1, 1), 35);
+    t_food = round(t_food * (1 - O{2, t}(2))) + 1;
+    t_water = round(t_water * (1 - O{2, t}(3))) + 1;
+    t_sleep = round(t_sleep * (1 - O{2, t}(4))) + 1;
+    t_food_approx = t_food;
+    t_water_approx = t_water;
+    t_sleep_approx = t_sleep;
 
     if t < N %&& t_sleep_approx < 14 && t_water_approx < 10 && t_food_approx < 12
 
-        actions = 1:5;
-        cur_state_dist = spm_cross(P(t, :));
-        cur_state = select_from_posterior(cur_state_dist(:), state_selection);
+        actions = randperm(5);
+        cur_state = spm_cross(P(t, :));
+        cur_state = select_from_posterior(cur_state(:), state_selection);
         efe_future = [0, 0, 0, 0, 0];
 
         for action = actions
 
-            if short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action) ~= 0
-                sh = short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action);
+            if short_term_memory(t_food, t_water, t_sleep, cur_state, action) ~= 0
+                sh = short_term_memory(t_food, t_water, t_sleep, cur_state, action);
                 %S =  sh;
                 efe_future(action) = sh;
                 memory_accessed = memory_accessed + 1;
@@ -70,10 +71,12 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                 qs = qs(:);
                 % only consider relatively likely states
                 likely_states = find(qs > 1/8);
-                %                 if isempty(likely_states)
-                %                     threshold = 1/numel(qs)*1/numel(qs);
-                %                     likely_states = find(qs > (1/numel(qs)-threshold));
-                %                 end
+
+                if isempty(likely_states)
+                    threshold = 1 / numel(qs) * 1 / numel(qs);
+                    likely_states = find(qs > (1 / numel(qs) - threshold));
+                end
+
                 % for each of those likely states
                 for state = likely_states(:)'
                     % check to see if we have already calculated a value for
@@ -92,15 +95,14 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                     chosen_action(t) = action;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, D, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food, t_water, t_sleep, true_t, preference_inverse_precision, chosen_action, 0, true_t_food, true_t_water, true_t_sleep, best_actions, memory_accessed, state_selection);
-
+                    [expected_free_energy, d, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB_legacy(long_term_memory, short_term_memory, O, P, a, A, y, D, B, b, t + 1, T, N, t_food_approx, t_water_approx, t_sleep_approx, t_food_approx, t_water_approx, t_sleep_approx, state, true_t, chosen_action, novelty, surety, 0, true_t_food, true_t_water, true_t_sleep, hill_visited, optimal_traj, best_actions, Nt, memory_accessed, ucb_scale, state_selection);
                     S = max(expected_free_energy);
                     K(state) = S;
                 end
 
                 action_fe = K(likely_states) * qs(likely_states);
                 efe_future(action) = efe_future(action) + 0.7 * action_fe;
-                short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, cur_state, action) = 0.7 * action_fe;
+                short_term_memory(t_food, t_water, t_sleep, cur_state, action) = 0.7 * action_fe;
             end
 
         end
@@ -111,3 +113,4 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
     end
 
 end
+

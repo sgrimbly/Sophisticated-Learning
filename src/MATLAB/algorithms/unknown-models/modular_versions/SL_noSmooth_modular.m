@@ -1,4 +1,4 @@
-function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, results_file_override)
+function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, results_file_override, max_horizon, run_options)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end % Default start position set to 51
@@ -11,6 +11,35 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     if nargin < 10, num_trials = 200; end
     if nargin < 11, grid_id = ''; end
     if nargin < 12, results_file_override = ''; end
+    if nargin < 13, max_horizon = 9; end
+    if nargin < 14, run_options = struct(); end
+
+    if ~isstruct(run_options)
+        error('run_options must be a struct.');
+    end
+    if ~isfield(run_options, 'algorithm_label')
+        run_options.algorithm_label = 'SL_noSmooth';
+    end
+    if ~isfield(run_options, 'state_selection')
+        run_options.state_selection = 'sample';
+    end
+    if ~isfield(run_options, 'preference_param')
+        run_options.preference_param = 'weight';
+    end
+    if ~isfield(run_options, 'collect_efe_components')
+        run_options.collect_efe_components = false;
+    end
+    if ~isfield(run_options, 'real_smoothing')
+        run_options.real_smoothing = true;
+    end
+    if ~isfield(run_options, 'adaptive_likelihood_in_plan')
+        run_options.adaptive_likelihood_in_plan = false;
+    end
+    if ~isfield(run_options, 'progress_queue')
+        run_options.progress_queue = [];
+    end
+    algorithm_label = run_options.algorithm_label;
+    algorithm_label_safe = sanitize_file_component(algorithm_label);
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -24,7 +53,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     % TODO: Label these with more detail as this won't distinguish files for the grid experiments, for example.
     grid_id_safe = sanitize_file_component(grid_id);
     run_config = struct(...
-        'algorithm', 'SL_noSmooth', ...
+        'algorithm', algorithm_label, ...
         'seed', seed, ...
         'grid_size', grid_size, ...
         'start_position', start_position, ...
@@ -33,14 +62,19 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         'water_sources', water_sources, ...
         'sleep_sources', sleep_sources, ...
         'weights', weights, ...
+        'state_selection', run_options.state_selection, ...
+        'preference_param', run_options.preference_param, ...
+        'real_smoothing', logical(run_options.real_smoothing), ...
+        'adaptive_likelihood_in_plan', logical(run_options.adaptive_likelihood_in_plan), ...
         'num_states', num_states, ...
         'num_trials', num_trials, ...
-        'grid_id', grid_id ...
+        'grid_id', grid_id, ...
+        'max_horizon', max_horizon ...
     );
     config_id = config_hash(run_config);
     run_meta = struct('config_id', config_id, 'run_config', run_config);
 
-    result_file = strcat(directory_path, '/SL_noSmooth_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
+    result_file = strcat(directory_path, '/', algorithm_label_safe, '_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
 
     % file_name = strcat(directory_path, '/SL_Seed_', num2str(seed), ...
     %                    '_Grid', num2str(grid_size), ...
@@ -57,7 +91,19 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     novelty_weight = weights(1);
     learning_weight = weights(2);
     epistemic_weight = weights(3);
-    preference_inverse_precision = weights(4);
+    preference_value = weights(4);
+    switch run_options.preference_param
+        case 'inverse_precision'
+            preference_inverse_precision = preference_value;
+        case 'weight'
+            if preference_value == 0
+                preference_inverse_precision = Inf;
+            else
+                preference_inverse_precision = 1 / preference_value;
+            end
+        otherwise
+            error('Unknown run_options.preference_param "%s". Expected ''weight'' or ''inverse_precision''.', run_options.preference_param);
+    end
 
     % Initialize environment and weights once, outside of any saved state check
     [A, a, B, b, D, T, num_modalities] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
@@ -69,7 +115,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     time_since_sleep = 0;
 
     % Organise state for experiment run
-    stateFile = strcat(directory_path, '/SL_noSmooth_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat')
+    stateFile = strcat(directory_path, '/', algorithm_label_safe, '_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat')
 
     if ~isempty(results_file_override)
         result_file = results_file_override;
@@ -84,7 +130,14 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
                 error('Unable to create results directory: %s', msg);
             end
         end
-        stateFile = fullfile(results_dir, sprintf('SL_noSmooth_Seed_%d_GridID_%s_Cfg_%s.mat', seed, grid_id_safe, config_id));
+        stateFile = fullfile(results_dir, sprintf('%s_Seed_%d_GridID_%s_Cfg_%s.mat', algorithm_label_safe, seed, grid_id_safe, config_id));
+    end
+
+    log_metrics = ~isempty(getenv('SL_LOG_METRICS')) && ~strcmp(getenv('SL_LOG_METRICS'), '0');
+    metrics_file = '';
+    if log_metrics
+        [metrics_dir, metrics_base, ~] = fileparts(result_file);
+        metrics_file = fullfile(metrics_dir, sprintf('%s_metrics.csv', metrics_base));
     end
 
     [loadedState, isNew] = load_state(stateFile);
@@ -164,6 +217,12 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         search_depth = 0;
         memory_accessed = 0;
         t = 1; % Reset t for each trial
+        param_update_kl_sum = 0;
+        efe_novelty_term_sum = 0;
+        efe_epistemic_term_sum = 0;
+        efe_extrinsic_term_sum = 0;
+        efe_future_term_sum = 0;
+        efe_components_steps = 0;
 
         for factor = 1:2
             Q{1, factor} = D{factor}';
@@ -261,51 +320,83 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
             true_t = t;
 
             if t > 1
-                start = t - 6;
-                if start <= 0, start = 1; end
-
                 bb{2} = normalise_matrix(b{2});
                 y{2} = normalise_matrix(a{2});
                 qs = spm_cross(Q{t, :});
                 predictive_observations_posterior{2, t} = normalise(y{2}(:, :) * qs(:))';
                 predictive_observations_posterior{3, t} = normalise(y{3}(:, :) * qs(:))';
                 predicted_posterior = calculate_posterior(Q, y, predictive_observations_posterior, t);
+                a_prior_step = a{2};
 
-                for timey = start:t
-                    L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
-                    LL{2} = L;
-                    LL{1} = Q{timey, 1};
+                if run_options.real_smoothing
+                    start = t - 6;
+                    if start <= 0, start = 1; end
 
-                    if (timey > start && ~isequal(round(L, 3), round(Q{timey, 2}, 3)')) || (timey == t)
+                    for timey = start:t
+                        L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
+                        LL{2} = L;
+                        LL{1} = Q{timey, 1};
 
-                        for modality = 2:2
-                            a_learning = O(modality, timey)';
+                        if (timey > start && ~isequal(round(L, 3), round(Q{timey, 2}, 3)')) || (timey == t)
 
-                            for factor = 1:2
-                                a_learning = spm_cross(a_learning, LL{factor});
-                            end
+                            for modality = 2:2
+                                a_learning = O(modality, timey)';
 
-                            a_learning = a_learning .* (a{modality} > 0);
-                            proportion = 0.3;
-
-                            for i = 1:size(a_learning, 3)
-
-                                for j = 1:size(a_learning, 2)
-                                    max_value = max(a_learning(2:end, j, i));
-                                    amount_to_subtract = proportion * max_value;
-                                    a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                                for factor = 1:2
+                                    a_learning = spm_cross(a_learning, LL{factor});
                                 end
 
+                                a_learning = a_learning .* (a{modality} > 0);
+                                proportion = 0.3;
+
+                                for i = 1:size(a_learning, 3)
+
+                                    for j = 1:size(a_learning, 2)
+                                        max_value = max(a_learning(2:end, j, i));
+                                        amount_to_subtract = proportion * max_value;
+                                        a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                                    end
+
+                                end
+
+                                a{modality} = a{modality} + 0.7 * a_learning;
+                                a{modality}(a{modality} <= 0.05) = 0.05;
                             end
 
-                            a{modality} = a{modality} + 0.7 * a_learning;
-                            a{modality}(a{modality} <= 0.05) = 0.05;
                         end
 
                     end
+                else
+                    timey = t;
+                    LL{2} = Q{timey, 2}';
+                    LL{1} = Q{timey, 1};
 
+                    for modality = 2:2
+                        a_learning = O(modality, timey)';
+
+                        for factor = 1:2
+                            a_learning = spm_cross(a_learning, LL{factor});
+                        end
+
+                        a_learning = a_learning .* (a{modality} > 0);
+                        proportion = 0.3;
+
+                        for i = 1:size(a_learning, 3)
+
+                            for j = 1:size(a_learning, 2)
+                                max_value = max(a_learning(2:end, j, i));
+                                amount_to_subtract = proportion * max_value;
+                                a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                            end
+
+                        end
+
+                        a{modality} = a{modality} + 0.7 * a_learning;
+                        a{modality}(a{modality} <= 0.05) = 0.05;
+                    end
                 end
 
+                param_update_kl_sum = param_update_kl_sum + kldir(normalise(a{2}(:)), normalise(a_prior_step(:)));
             end
 
             if true_states{trial}(2, t) == 1
@@ -330,13 +421,13 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
             y{1} = A{1};
             y{3} = A{3};
             % displayGridWorld(true_states{trial}(1, t), food, water, sleep, hill_pos, 1)
-            horizon = min([9, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
+            horizon = min([max_horizon, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
             if horizon == 0, horizon = 1; end
 
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
-            [~, current_pos(t)] = max(P{t, 1});
+            current_pos(t) = select_from_posterior(P{t, 1}, run_options.state_selection);
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
                 short_term_memory(:, :, :, :) = 0;
@@ -351,7 +442,14 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
             end
 
             best_actions = [];
-            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL_noSmooth(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed);
+            [G, Q, short_term_memory, best_actions, memory_accessed, efe_components] = tree_search_frwd_SL_noSmooth(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, run_options.collect_efe_components, run_options.adaptive_likelihood_in_plan);
+            if ~isempty(efe_components)
+                efe_novelty_term_sum = efe_novelty_term_sum + efe_components.novelty_term;
+                efe_epistemic_term_sum = efe_epistemic_term_sum + efe_components.epistemic_term;
+                efe_extrinsic_term_sum = efe_extrinsic_term_sum + efe_components.extrinsic_term;
+                efe_future_term_sum = efe_future_term_sum + efe_components.future_term;
+                efe_components_steps = efe_components_steps + 1;
+            end
             chosen_action(t) = best_actions(1);
             t = t + 1;
             search_depth = search_depth + length(best_actions);
@@ -376,6 +474,28 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         fclose(fid);
 
         survived(trial) = t;
+        append_trial_metrics(metrics_file, run_meta, trial, t, param_update_kl_sum, a{2}, food_sources, water_sources, sleep_sources);
+        if ~isempty(run_options.progress_queue)
+            try
+                send(run_options.progress_queue, struct(...
+                    'algorithm', algorithm_label, ...
+                    'trial', trial, ...
+                    'survival', t, ...
+                    'param_update_kl', param_update_kl_sum, ...
+                    'efe_novelty_term_sum', efe_novelty_term_sum, ...
+                    'efe_epistemic_term_sum', efe_epistemic_term_sum, ...
+                    'efe_extrinsic_term_sum', efe_extrinsic_term_sum, ...
+                    'efe_future_term_sum', efe_future_term_sum, ...
+                    'efe_steps', efe_components_steps, ...
+                    'search_depth', search_depth, ...
+                    'memory_accessed', memory_accessed, ...
+                    'memory_resets', memory_resets(trial), ...
+                    'pe_memory_resets', pe_memory_resets(trial), ...
+                    'hill_memory_resets', hill_memory_resets(trial) ...
+                ));
+            catch
+            end
+        end
 
         endTime = datestr(now +1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
         totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));

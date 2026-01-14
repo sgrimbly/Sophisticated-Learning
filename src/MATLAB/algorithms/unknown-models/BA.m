@@ -1,7 +1,11 @@
-function [survived] = BA(seed)
+function [survived] = BA(seed, state_selection)
 
     rng(seed);
     rng
+
+    if nargin < 2 || isempty(state_selection)
+        state_selection = 'sample';
+    end
 
     hill_1 = 55;
     true_food_source_1 = 71;
@@ -368,7 +372,7 @@ function [survived] = BA(seed)
             temp_Q = Q;
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
-            [~, current_pos(t)] = max(P{t, 1});
+            current_pos(t) = select_from_posterior(P{t, 1}, state_selection);
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1)) %~all(a1 == a2)
                 short_term_memory(:, :, :, :, :) = 0;
@@ -385,7 +389,7 @@ function [survived] = BA(seed)
                         best_actions = [];
             % Start tree search from current time point
 
-            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, preference_inverse_precision, chosen_action, 0, time_since_food, time_since_water, time_since_sleep, best_actions, memory_accessed);
+            [G, Q, short_term_memory, best_actions, memory_accessed] = tree_search_frwd(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, preference_inverse_precision, chosen_action, 0, time_since_food, time_since_water, time_since_sleep, best_actions, memory_accessed, state_selection);
 
             chosen_action(t) = best_actions(1);
             t = t + 1;

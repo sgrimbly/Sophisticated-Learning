@@ -1,4 +1,4 @@
-function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, ucb_scale, results_file_override)
+function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id, ucb_scale, results_file_override, max_horizon, run_options)
     % Set default values if not provided
     if nargin < 2, grid_size = 10; end
     if nargin < 3, start_position = 51; end  % Default start position set to 51
@@ -12,6 +12,30 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     if nargin < 11, grid_id = ''; end
     if nargin < 12, ucb_scale = 5; end
     if nargin < 13, results_file_override = ''; end
+    if nargin < 14, max_horizon = 9; end
+    if nargin < 15, run_options = struct(); end
+
+    if ~isstruct(run_options)
+        error('run_options must be a struct.');
+    end
+    if ~isfield(run_options, 'state_selection')
+        run_options.state_selection = 'sample';
+    end
+    if ~isfield(run_options, 'preference_param')
+        run_options.preference_param = 'weight';
+    end
+    if ~isfield(run_options, 'real_smoothing')
+        run_options.real_smoothing = true;
+    end
+    if ~isfield(run_options, 'adaptive_likelihood_in_plan')
+        run_options.adaptive_likelihood_in_plan = false;
+    end
+    if ~isfield(run_options, 'baucb_variant')
+        run_options.baucb_variant = 'legacy';
+    end
+    if ~isfield(run_options, 'progress_queue')
+        run_options.progress_queue = [];
+    end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
     % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
@@ -41,10 +65,16 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         'water_sources', water_sources, ...
         'sleep_sources', sleep_sources, ...
         'weights', weights, ...
+        'state_selection', run_options.state_selection, ...
+        'preference_param', run_options.preference_param, ...
+        'real_smoothing', logical(run_options.real_smoothing), ...
+        'adaptive_likelihood_in_plan', logical(run_options.adaptive_likelihood_in_plan), ...
+        'baucb_variant', run_options.baucb_variant, ...
         'num_states', num_states, ...
         'num_trials', num_trials, ...
         'grid_id', grid_id, ...
-        'ucb_scale', ucb_scale ...
+        'ucb_scale', ucb_scale, ...
+        'max_horizon', max_horizon ...
     );
     config_id = config_hash(run_config);
     run_meta = struct('config_id', config_id, 'run_config', run_config);
@@ -69,12 +99,32 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         stateFile = fullfile(results_dir, sprintf('BAUCB_Seed_%d_GridID_%s_Cfg_%s.mat', seed, grid_id_safe, config_id));
     end
 
+    log_metrics = ~isempty(getenv('SL_LOG_METRICS')) && ~strcmp(getenv('SL_LOG_METRICS'), '0');
+    metrics_file = '';
+    if log_metrics
+        [metrics_dir, metrics_base, ~] = fileparts(result_file);
+        metrics_file = fullfile(metrics_dir, sprintf('%s_metrics.csv', metrics_base));
+    end
+
     [loadedState, isNew] = load_state(stateFile);
 
     t = 1;
     surety = 1;
     simulated_time = 0;
-    preference_inverse_precision = weights(4);
+    preference_value = weights(4);
+    switch run_options.preference_param
+        case 'inverse_precision'
+            preference_inverse_precision = preference_value;
+        case 'weight'
+            if preference_value == 0
+                preference_inverse_precision = Inf;
+            else
+                preference_inverse_precision = 1 / preference_value;
+            end
+        otherwise
+            error('Unknown run_options.preference_param "%s". Expected ''weight'' or ''inverse_precision''.', run_options.preference_param);
+    end
+    use_fixed_joint_counts = strcmp(run_options.baucb_variant, 'fixed_joint_counts');
 
     if ~isNew
         % Load variables from the saved state, using indices to access the cell array
@@ -111,8 +161,17 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
 
         if numel(loadedState) >= 21
             Nt = loadedState{21};
-        else
+        elseif use_fixed_joint_counts
             Nt = ones(num_states, num_contexts);
+        else
+            % Legacy mode: match original code (ones(400)) to preserve linear-indexing behaviour.
+            Nt = ones(num_joint_states);
+        end
+
+        if ~use_fixed_joint_counts && isvector(Nt) && numel(Nt) == num_joint_states
+            Nt_legacy = Nt(:);
+            Nt = ones(num_joint_states);
+            Nt(1:num_joint_states) = Nt_legacy;
         end
 
         if numel(loadedState) >= 22
@@ -128,7 +187,12 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
     
         a_history = cell(1, num_trials);
         b_history = cell(1, num_trials);
-        Nt = ones(num_states, num_contexts);
+        if use_fixed_joint_counts
+            Nt = ones(num_states, num_contexts);
+        else
+            % Legacy mode: match original code (ones(400)) to preserve linear-indexing behaviour.
+            Nt = ones(num_joint_states);
+        end
         chosen_action = zeros(1, T - 1);
         memory_resets = zeros(num_trials, 1);
         pe_memory_resets = zeros(num_trials, 1);
@@ -155,6 +219,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         short_term_memory = zeros(35, 35, 35, num_joint_states, 5);
         search_depth = 0;
         memory_accessed = 0;
+        param_update_kl_sum = 0;
 
         for factor = 1:2
             Q{1, factor} = D{factor}';
@@ -224,41 +289,68 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             true_t = t;
 
             if t > 1
-                start = t - 6;
-                if start <= 0, start = 1; end
-
                 bb{2} = normalise_matrix(b{2});
                 y{2} = normalise_matrix(a{2});
                 qs = spm_cross(Q{t, :});
                 predictive_observations_posterior{2, t} = normalise(y{2}(:, :) * qs(:))';
                 predictive_observations_posterior{3, t} = normalise(y{3}(:, :) * qs(:))';
                 predicted_posterior = calculate_posterior(Q, y, predictive_observations_posterior, t);
+                a_prior_step = a{2};
 
-                for timey = start:t
-                    L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
-                    LL{2} = L;
-                    LL{1} = Q{timey, 1};
+                if run_options.real_smoothing
+                    start = t - 6;
+                    if start <= 0, start = 1; end
 
-                    if (timey > start && ~isequal(round(L, 3), round(Q{timey, 2}, 3)')) || (timey == t)
-                        for modality = 2:2
-                            a_learning = O(modality, timey)';
-                            for factor = 1:2
-                                a_learning = spm_cross(a_learning, LL{factor});
-                            end
-                            a_learning = a_learning .* (a{modality} > 0);
-                            proportion = 0.3;
-                            for i = 1:size(a_learning, 3)
-                                for j = 1:size(a_learning, 2)
-                                    max_value = max(a_learning(2:end, j, i));
-                                    amount_to_subtract = proportion * max_value;
-                                    a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                    for timey = start:t
+                        L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
+                        LL{2} = L;
+                        LL{1} = Q{timey, 1};
+
+                        if (timey > start && ~isequal(round(L, 3), round(Q{timey, 2}, 3)')) || (timey == t)
+                            for modality = 2:2
+                                a_learning = O(modality, timey)';
+                                for factor = 1:2
+                                    a_learning = spm_cross(a_learning, LL{factor});
                                 end
+                                a_learning = a_learning .* (a{modality} > 0);
+                                proportion = 0.3;
+                                for i = 1:size(a_learning, 3)
+                                    for j = 1:size(a_learning, 2)
+                                        max_value = max(a_learning(2:end, j, i));
+                                        amount_to_subtract = proportion * max_value;
+                                        a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                                    end
+                                end
+                                a{modality} = a{modality} + 0.7 * a_learning;
+                                a{modality}(a{modality} <= 0.05) = 0.05;
                             end
-                            a{modality} = a{modality} + 0.7 * a_learning;
-                            a{modality}(a{modality} <= 0.05) = 0.05;
                         end
                     end
+                else
+                    timey = t;
+                    LL{2} = Q{timey, 2}';
+                    LL{1} = Q{timey, 1};
+
+                    for modality = 2:2
+                        a_learning = O(modality, timey)';
+                        for factor = 1:2
+                            a_learning = spm_cross(a_learning, LL{factor});
+                        end
+                        a_learning = a_learning .* (a{modality} > 0);
+                        proportion = 0.3;
+                        for i = 1:size(a_learning, 3)
+                            for j = 1:size(a_learning, 2)
+                                max_value = max(a_learning(2:end, j, i));
+                                amount_to_subtract = proportion * max_value;
+                                a_learning(a_learning(1, j, i) == 0, j, i) = a_learning(a_learning(1, j, i) == 0, j, i) - amount_to_subtract;
+                            end
+                        end
+                        a{modality} = a{modality} + 0.7 * a_learning;
+                        a{modality}(a{modality} <= 0.05) = 0.05;
+                    end
                 end
+
+                param_update_kl_sum = param_update_kl_sum + kldir(normalise(a{2}(:)), normalise(a_prior_step(:)));
             end
 
            if true_states{trial}(2, t) == 1
@@ -284,7 +376,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             y{3} = A{3};
             % prefs = determineObservationPreference(time_since_food, time_since_water, time_since_sleep);
             % time_since_resources = [time_since_food, time_since_water, time_since_sleep];
-            horizon = min([9, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
+            horizon = min([max_horizon, min([22 - time_since_food, 20 - time_since_water, 25 - time_since_sleep])]);
             if horizon == 0, horizon = 1; end
 
             temp_Q = Q;
@@ -293,9 +385,7 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             long_term_memory = 0;
             % trajectory = [];
             a_complexity = 0;
-            [~, current_pos(t)] = max(P{t, 1});
-            [~, current_context] = max(P{t, 2});
-            current_joint_state = sub2ind([num_states, num_contexts], current_pos(t), current_context);
+            current_pos(t) = select_from_posterior(P{t, 1}, run_options.state_selection);
             optimal_traj = [];
 
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
@@ -311,7 +401,15 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
             end
 
             best_actions = [];
-            [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_inverse_precision, ucb_scale);
+            if use_fixed_joint_counts
+                current_context = select_from_posterior(P{t, 2}, run_options.state_selection);
+                current_joint_state = sub2ind([num_states, num_contexts], current_pos(t), current_context);
+                [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, Nt, memory_accessed] = tree_search_frwd_UCB(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_joint_state, true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, preference_inverse_precision, ucb_scale);
+            else
+                cur_state_for_Nt = select_from_posterior(P{t, 1}, run_options.state_selection);
+                Nt(cur_state_for_Nt) = Nt(cur_state_for_Nt) + 1;
+                [G, Q, D, short_term_memory, long_term_memory, optimal_traj, best_actions, memory_accessed] = tree_search_frwd_UCB_legacy(long_term_memory, short_term_memory, O, Q, a, A, y, D, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, time_since_food, time_since_water, time_since_sleep, current_pos(t), true_t, chosen_action, a_complexity, surety, simulated_time, time_since_food, time_since_water, time_since_sleep, 0, optimal_traj, best_actions, Nt, memory_accessed, ucb_scale, run_options.state_selection);
+            end
 
             chosen_action(t) = best_actions(1);
             t = t + 1;
@@ -337,6 +435,28 @@ function [survived] = BAUCB_modular(seed, grid_size, start_position, hill_pos, f
         fclose(fid);
 
         survived(trial) = t;
+        append_trial_metrics(metrics_file, run_meta, trial, t, param_update_kl_sum, a{2}, food_sources, water_sources, sleep_sources);
+        if ~isempty(run_options.progress_queue)
+            try
+                send(run_options.progress_queue, struct(...
+                    'algorithm', 'BAUCB', ...
+                    'trial', trial, ...
+                    'survival', t, ...
+                    'param_update_kl', param_update_kl_sum, ...
+                    'efe_novelty_term_sum', 0, ...
+                    'efe_epistemic_term_sum', 0, ...
+                    'efe_extrinsic_term_sum', 0, ...
+                    'efe_future_term_sum', 0, ...
+                    'efe_steps', 0, ...
+                    'search_depth', search_depth, ...
+                    'memory_accessed', memory_accessed, ...
+                    'memory_resets', memory_resets(trial), ...
+                    'pe_memory_resets', pe_memory_resets(trial), ...
+                    'hill_memory_resets', hill_memory_resets(trial) ...
+                ));
+            catch
+            end
+        end
 
         endTime = datestr(now + 1/24/60/60, 'yyyy-mm-dd HH:MM:SS');
         totalRuntimeInSeconds = etime(datevec(endTime), datevec(startTime));

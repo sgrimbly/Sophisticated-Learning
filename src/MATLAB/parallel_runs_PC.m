@@ -18,7 +18,7 @@ addpath(fullSrcPath);
 % Define the algorithms
 % make global num seeds variable
 NUM_SEEDS = 100;
-algorithms = {'SI', 'SI_smooth', 'SL', 'SL_noSmooth'}; 
+algorithms = {'SI', 'SI_novelty', 'SI_smooth', 'SI_novelty_smooth', 'SL', 'SL_noNovelty', 'SL_noSmooth', 'SL_noNovelty_noSmooth'};
 
 % Set experiment parameters
 k_factor = 1.5;

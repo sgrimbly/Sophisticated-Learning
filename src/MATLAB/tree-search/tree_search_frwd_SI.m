@@ -1,6 +1,19 @@
-function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed)
+function [G, P, short_term_memory, best_actions, memory_accessed, efe_components] = tree_search_frwd_SI(short_term_memory, O, P, a, A, y, B, b, t, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, varargin)
 
     G = 0.02;
+    collect_efe_components = false;
+    if ~isempty(varargin)
+        collect_efe_components = logical(varargin{1});
+    end
+    efe_components = [];
+
+    efe_base_term = 0.02;
+    efe_novelty_raw = 0;
+    efe_novelty_term = 0;
+    efe_epistemic_raw = 0;
+    efe_epistemic_term = 0;
+    efe_extrinsic_term = 0;
+    efe_future_term = 0;
     P_prior = P;
     P = calculate_posterior(P, y, O, t);
     bb{2} = normalise_matrix(b{2});
@@ -12,44 +25,51 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
     if t > true_t
         novelty = 0;
+        if novelty_weight ~= 0
+            for timey = t:t
 
-        for timey = t:t
-
-            if timey ~= t
-                L = spm_backwards(O, P, A, bb, chosen_action, timey, t);
-            else
-                L = P{t, 2};
-            end
-
-            LL{2} = L;
-            LL{1} = P{timey, 1};
-            a_prior = a{2};
-
-            for modality = 2:2
-                a_learning = O(modality, timey)';
-
-                for factor = 1:num_factors
-                    a_learning = spm_cross(a_learning, LL{factor});
+                if timey ~= t
+                    L = spm_backwards(O, P, A, bb, chosen_action, timey, t);
+                else
+                    L = P{t, 2};
                 end
 
-                a_learning = a_learning .* (a{modality} > 0);
-                a_learning_weighted = a_learning;
-                a_learning_weighted(2:end, :) = learning_weight * a_learning(2:end, :);
-                a_learning_weighted(1, :) = a_learning(1, :);
-                a_temp = a_prior + a_learning_weighted;
-            end
+                LL{2} = L;
+                LL{1} = P{timey, 1};
+                a_prior = a{2};
 
-            w = kldir(normalise(a_temp(:)), normalise(a_prior(:)));
-            novelty = novelty + w;
+                for modality = 2:2
+                    a_learning = O(modality, timey)';
+
+                    for factor = 1:num_factors
+                        a_learning = spm_cross(a_learning, LL{factor});
+                    end
+
+                    a_learning = a_learning .* (a{modality} > 0);
+                    a_learning_weighted = a_learning;
+                    a_learning_weighted(2:end, :) = learning_weight * a_learning(2:end, :);
+                    a_learning_weighted(1, :) = a_learning(1, :);
+                    a_temp = a_prior + a_learning_weighted;
+                end
+
+                w = kldir(normalise(a_temp(:)), normalise(a_prior(:)));
+                novelty = novelty + w;
+            end
         end
 
         % Add epistemic term (see EFE equation)
-        epi = G_epistemic_value(y, P_prior(t, :)');
-        %save_epi = [save_epi, [epi; t; true_t; find(P{t, 1} > 0)]];
+        if epistemic_weight ~= 0
+            epi = G_epistemic_value(y, P_prior(t, :)');
+            G = G + epistemic_weight * epi;
+            efe_epistemic_raw = epi;
+            efe_epistemic_term = epistemic_weight * epi;
+        end
 
-        % Add novelty to term (see EFE equation)
-        G = G + novelty_weight * novelty;
-        G = G + epistemic_weight * epi;
+        if novelty_weight ~= 0
+            G = G + novelty_weight * novelty;
+            efe_novelty_raw = novelty;
+            efe_novelty_term = novelty_weight * novelty;
+        end
 
         for modality = 2:2
 
@@ -63,6 +83,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                 % add extrinsic term (see EFE equation)
                 extrinsic = O{2, t} * C{2}';
                 G = G + extrinsic;
+                efe_extrinsic_term = extrinsic;
                 % extrinsic
             end
 
@@ -138,5 +159,19 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
         [maxi, chosen_action] = max(efe);
         G = G + maxi;
+        efe_future_term = maxi;
         best_actions = [chosen_action best_actions];
+    end
+
+    if collect_efe_components
+        efe_components = struct(...
+            'base_term', efe_base_term, ...
+            'novelty_raw', efe_novelty_raw, ...
+            'novelty_term', efe_novelty_term, ...
+            'epistemic_raw', efe_epistemic_raw, ...
+            'epistemic_term', efe_epistemic_term, ...
+            'extrinsic_term', efe_extrinsic_term, ...
+            'future_term', efe_future_term, ...
+            'G_total', G ...
+        );
     end

@@ -1,4 +1,4 @@
-function likelihood_divergence_analysis(num_states, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, seed, algorithm, grid_id, directory_path)
+function likelihood_divergence_analysis(num_states, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, seed, algorithm, grid_id, directory_path, state_file_path)
     % Set default values if parameters are not provided
     if nargin < 1 || isempty(num_states)
         num_states = 100;
@@ -30,28 +30,61 @@ function likelihood_divergence_analysis(num_states, grid_size, start_position, h
     if nargin < 10 || isempty(grid_id)
         error('Grid ID is required');
     end
-    if nargin < 11 || isempty(directory_path)
-        directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
-    end
+	    if nargin < 11 || isempty(directory_path)
+	        directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
+	    end
+	    if nargin < 12
+	        state_file_path = '';
+	    end
 
-    disp(['num_states: ', num2str(num_states)]);
+	    disp(['num_states: ', num2str(num_states)]);
 
     % Initialize the environment matrices
     [A, ~, ~, ~, ~, ~, ~] = initialiseEnvironment(num_states, start_position, grid_size, hill_pos, food_sources, water_sources, sleep_sources);
 
-    % Create subdirectory for saving plots if it doesn't exist
-    save_dir = strcat(directory_path, '/', algorithm, '_GridID_', grid_id);
-    if ~exist(save_dir, 'dir')
-        mkdir(save_dir);
-    end
+	    % Resolve state file location (new naming includes _Cfg_*) and output directory
+	    algorithm_safe = sanitize_file_component(algorithm);
+	    grid_id_safe = sanitize_file_component(grid_id);
 
-    % Construct the filename based on the algorithm, seed, and grid ID
-    stateFile = strcat(directory_path, '/', algorithm, '_Seed_', num2str(seed), '_GridID_', grid_id, '.mat');
-    
-    % Check if the state file exists
-    if ~isfile(stateFile)
-        error('State file %s does not exist.', stateFile);
-    end
+	    if ~isempty(state_file_path)
+	        stateFile = state_file_path;
+	    else
+	        state_pattern = sprintf('%s_Seed_%d_GridID_%s_Cfg_*.mat', algorithm_safe, seed, grid_id_safe);
+	        matches = dir(fullfile(directory_path, '**', state_pattern));
+	        if isempty(matches)
+	            error('No state files found for algorithm=%s seed=%d grid_id=%s under %s', algorithm, seed, grid_id, directory_path);
+	        end
+
+	        if numel(matches) > 1
+	            [~, newest_idx] = max([matches.datenum]);
+	            warning('Multiple state files matched (%d). Using newest: %s', numel(matches), fullfile(matches(newest_idx).folder, matches(newest_idx).name));
+	        else
+	            newest_idx = 1;
+	        end
+	        stateFile = fullfile(matches(newest_idx).folder, matches(newest_idx).name);
+	    end
+
+	    cfg_id = '';
+	    tok = regexp(stateFile, '_Cfg_([^/\\\\]+)\\.mat$', 'tokens', 'once');
+	    if ~isempty(tok)
+	        cfg_id = tok{1};
+	    end
+
+	    output_root = fullfile(directory_path, 'averaged_results');
+	    if ~exist(output_root, 'dir')
+	        mkdir(output_root);
+	    end
+
+	    % Create subdirectory for saving plots if it doesn't exist
+	    save_dir = fullfile(output_root, sprintf('%s_GridID_%s%s', algorithm_safe, grid_id_safe, ternary(~isempty(cfg_id), ['_Cfg_' cfg_id], '')));
+	    if ~exist(save_dir, 'dir')
+	        mkdir(save_dir);
+	    end
+	    
+	    % Check if the state file exists
+	    if ~isfile(stateFile)
+	        error('State file %s does not exist.', stateFile);
+	    end
     
     % Load state file
     [loadedState, isNew] = load_state(stateFile);
@@ -119,6 +152,14 @@ function likelihood_divergence_analysis(num_states, grid_size, start_position, h
 
     % % Save final KL divergence plot
     % saveas(gcf, strcat(save_dir, '/Final_KL_Divergence_Seed_', num2str(seed), '.png'));
+end
+
+function out = ternary(condition, a, b)
+    if condition
+        out = a;
+    else
+        out = b;
+    end
 end
 
 function kl_over_time = calculate_kl_over_time(A, a_history, true_states)
