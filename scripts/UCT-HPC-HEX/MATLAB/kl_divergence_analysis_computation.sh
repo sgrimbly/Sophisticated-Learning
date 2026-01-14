@@ -15,11 +15,11 @@ mapfile -t GRID_CONFIGS < "$CONFIG_FILE"
 
 # Function to submit jobs
 submit_jobs() {
-    NUM_STATES=100
     for config in "${GRID_CONFIGS[@]}"; do
         # Extract grid-specific parameters
         GRID_ID=$(echo "$config" | grep -oP 'Grid ID: \K[^,]+')
         GRID_SIZE=$(echo "$config" | grep -oP 'Grid Size: \K\d+')
+        NUM_STATES=$((GRID_SIZE * GRID_SIZE))
         HORIZON=$(echo "$config" | grep -oP 'Horizon: \K\d+')
         HILL=$(echo "$config" | grep -oP 'Hill: \K\d+')
         START_POS=$(echo "$config" | grep -oP 'Start Position: \K\d+')
@@ -27,12 +27,12 @@ submit_jobs() {
         WATER=$(echo "$config" | grep -oP 'Water\(\K[^\)]+' | tr ',' ' ' | xargs | sed 's/^/[/' | sed 's/$/]/')
         SLEEP=$(echo "$config" | grep -oP 'Sleep\(\K[^\)]+' | tr ',' ' ' | xargs | sed 's/^/[/' | sed 's/$/]/')
 
-        for algorithm in SI SL; do
+        for algorithm in SI SI_novelty SI_smooth SI_novelty_smooth SL SL_noNovelty SL_noSmooth SL_noNovelty_noSmooth; do
             echo "Processing grid_id: $GRID_ID with algorithm: $algorithm"
             echo "Grid-specific parameters: Grid Size=$GRID_SIZE, Horizon=$HORIZON, Hill=$HILL, Start Position=$START_POS, Food=$FOOD, Water=$WATER, Sleep=$SLEEP"
 
             # Collect all files for the current algorithm and grid ID
-            files=$(find "$RESULTS_DIR" -name "${algorithm}_Seed_*_GridID_${GRID_ID}.mat" 2>/dev/null)
+            files=$(find "$RESULTS_DIR" -name "${algorithm}_Seed_*_GridID_${GRID_ID}_Cfg_*.mat" 2>/dev/null)
             
             # Skip if no files for this combination
             if [ -z "$files" ]; then
@@ -54,7 +54,7 @@ submit_jobs() {
 #SBATCH --error=${OUTPUT_DIR}/${algorithm}_${GRID_ID}_error.txt
 #SBATCH --ntasks=1
 
-module load software/matlab-R2022b
+module load software/matlab-R2024b
 
 # Print environment information for debugging
 echo "MATLAB Script Path: ${MATLAB_SCRIPT_PATH}"
@@ -63,7 +63,7 @@ echo "Output Directory: ${OUTPUT_DIR}"
 echo "Food: ${FOOD}, Water: ${WATER}, Sleep: ${SLEEP}, Seeds: ${seeds}"
 echo "Running MATLAB..."
 
-matlab -nodisplay -nosplash -nodesktop -r "addpath(genpath('${MATLAB_SCRIPT_PATH}')); \
+matlab -batch "addpath(genpath('${MATLAB_SCRIPT_PATH}')); \
     disp('Grid Size: ${GRID_SIZE}, Horizon: ${HORIZON}, Start Pos: ${START_POS}, Hill: ${HILL}'); \
     disp('Food: ${FOOD}, Water: ${WATER}, Sleep: ${SLEEP}'); \
     try, process_all_seeds_for_grid(${NUM_STATES}, ${GRID_SIZE}, ${START_POS}, ${HILL}, ${FOOD}, ${WATER}, ${SLEEP}, [${seeds}], '${algorithm}', '${GRID_ID}', '${RESULTS_DIR}'); \
