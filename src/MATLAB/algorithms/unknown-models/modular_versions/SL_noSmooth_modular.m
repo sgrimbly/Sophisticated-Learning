@@ -35,6 +35,12 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     if ~isfield(run_options, 'adaptive_likelihood_in_plan')
         run_options.adaptive_likelihood_in_plan = false;
     end
+    if ~isfield(run_options, 'learning_prune_threshold')
+        run_options.learning_prune_threshold = 0.2;
+    end
+    if ~isfield(run_options, 'compute_policy_sensitivity')
+        run_options.compute_policy_sensitivity = false;
+    end
     if ~isfield(run_options, 'progress_queue')
         run_options.progress_queue = [];
     end
@@ -66,6 +72,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         'preference_param', run_options.preference_param, ...
         'real_smoothing', logical(run_options.real_smoothing), ...
         'adaptive_likelihood_in_plan', logical(run_options.adaptive_likelihood_in_plan), ...
+        'learning_prune_threshold', run_options.learning_prune_threshold, ...
         'num_states', num_states, ...
         'num_trials', num_trials, ...
         'grid_id', grid_id, ...
@@ -206,6 +213,8 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
     % start/stops, e.g. on prioritised HPC or resuming from saved state.
     total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
 
+    compute_policy_sensitivity = logical(run_options.compute_policy_sensitivity);
+
     for trial = trial:num_trials
         startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
         fprintf('\n----------------------------------------\n');
@@ -223,6 +232,8 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         efe_extrinsic_term_sum = 0;
         efe_future_term_sum = 0;
         efe_components_steps = 0;
+        policy_sensitivity_steps = 0;
+        policy_sensitivity_changes = 0;
 
         for factor = 1:2
             Q{1, factor} = D{factor}';
@@ -442,7 +453,22 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
             end
 
             best_actions = [];
-            [G, Q, short_term_memory, best_actions, memory_accessed, efe_components] = tree_search_frwd_SL_noSmooth(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, run_options.collect_efe_components, run_options.adaptive_likelihood_in_plan);
+            if compute_policy_sensitivity && novelty_weight ~= 0
+                short_term_memory_base = short_term_memory;
+                Q_base = Q;
+                memory_accessed_base = memory_accessed;
+            end
+            [G, Q, short_term_memory, best_actions, memory_accessed, efe_components] = tree_search_frwd_SL_noSmooth(short_term_memory, O, Q, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, run_options.collect_efe_components, run_options.adaptive_likelihood_in_plan, run_options.learning_prune_threshold);
+            if compute_policy_sensitivity && novelty_weight ~= 0
+                best_actions_alt = [];
+                [~, ~, ~, best_actions_alt] = tree_search_frwd_SL_noSmooth(short_term_memory_base, O, Q_base, a, A, y, B, B, t, T, t + horizon, time_since_food, time_since_water, time_since_sleep, true_t, chosen_action, time_since_food, time_since_water, time_since_sleep, best_actions_alt, learning_weight, 0, epistemic_weight, preference_inverse_precision, memory_accessed_base, false, run_options.adaptive_likelihood_in_plan, run_options.learning_prune_threshold);
+                if ~isempty(best_actions_alt)
+                    policy_sensitivity_steps = policy_sensitivity_steps + 1;
+                    if best_actions_alt(1) ~= best_actions(1)
+                        policy_sensitivity_changes = policy_sensitivity_changes + 1;
+                    end
+                end
+            end
             if ~isempty(efe_components)
                 efe_novelty_term_sum = efe_novelty_term_sum + efe_components.novelty_term;
                 efe_epistemic_term_sum = efe_epistemic_term_sum + efe_components.epistemic_term;
@@ -477,6 +503,10 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         append_trial_metrics(metrics_file, run_meta, trial, t, param_update_kl_sum, a{2}, food_sources, water_sources, sleep_sources);
         if ~isempty(run_options.progress_queue)
             try
+                policy_sensitivity = NaN;
+                if policy_sensitivity_steps > 0
+                    policy_sensitivity = policy_sensitivity_changes / policy_sensitivity_steps;
+                end
                 send(run_options.progress_queue, struct(...
                     'algorithm', algorithm_label, ...
                     'trial', trial, ...
@@ -487,6 +517,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
                     'efe_extrinsic_term_sum', efe_extrinsic_term_sum, ...
                     'efe_future_term_sum', efe_future_term_sum, ...
                     'efe_steps', efe_components_steps, ...
+                    'policy_sensitivity', policy_sensitivity, ...
                     'search_depth', search_depth, ...
                     'memory_accessed', memory_accessed, ...
                     'memory_resets', memory_resets(trial), ...

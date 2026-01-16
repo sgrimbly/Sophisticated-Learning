@@ -3,11 +3,15 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
     G = 0.02;
     collect_efe_components = false;
     adaptive_likelihood_in_plan = false;
+    learning_prune_threshold = 0.2;
     if ~isempty(varargin)
         collect_efe_components = logical(varargin{1});
     end
     if numel(varargin) >= 2
         adaptive_likelihood_in_plan = logical(varargin{2});
+    end
+    if numel(varargin) >= 3
+        learning_prune_threshold = varargin{3};
     end
     efe_components = [];
 
@@ -41,7 +45,9 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
             end
 
             a_learning = a_learning .* (a{modality} > 0);
-            a_learning(a_learning <= 0.2) = 0;
+            if learning_prune_threshold > 0
+                a_learning(a_learning <= learning_prune_threshold) = 0;
+            end
             a_learning_weighted = a_learning;
             a_learning_weighted(2:end, :) = learning_weight * a_learning(2:end, :);
             a_learning_weighted(1, :) = a_learning(1, :);
@@ -136,7 +142,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
                     %state_history(end+1) = context;
                     % recursively move to the next node (likely state) of
                     % the tree
-                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL_noSmooth(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, false, adaptive_likelihood_in_plan);
+                    [expected_free_energy, P, short_term_memory, best_actions, memory_accessed] = tree_search_frwd_SL_noSmooth(short_term_memory, O, P, a, A, y, B, b, t + 1, T, N, t_food, t_water, t_sleep, true_t, chosen_action, true_t_food, true_t_water, true_t_sleep, best_actions, learning_weight, novelty_weight, epistemic_weight, preference_inverse_precision, memory_accessed, false, adaptive_likelihood_in_plan, learning_prune_threshold);
                     S = max(expected_free_energy);
                     K(state) = S;
                     short_term_memory(t_food_idx, t_water_idx, t_sleep_idx, state) = S;

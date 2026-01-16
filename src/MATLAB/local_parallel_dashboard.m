@@ -24,6 +24,7 @@ function local_parallel_dashboard(varargin)
 	    defaults.MaxHorizon = 9;
 	    defaults.RealSmoothing = true;
 	    defaults.AdaptiveLikelihoodInPlan = false;
+	    defaults.LearningPruneThreshold = 0.2;
 
     parser = inputParser();
     parser.addParameter('Algorithms', defaults.Algorithms, @(x) iscellstr(x) || (iscell(x) && all(cellfun(@ischar, x))));
@@ -32,6 +33,7 @@ function local_parallel_dashboard(varargin)
 	    parser.addParameter('MaxHorizon', defaults.MaxHorizon, @(x) isnumeric(x) && isscalar(x) && x == floor(x) && x > 0);
 	    parser.addParameter('RealSmoothing', defaults.RealSmoothing, @(x) islogical(x) || (isnumeric(x) && isscalar(x)));
 	    parser.addParameter('AdaptiveLikelihoodInPlan', defaults.AdaptiveLikelihoodInPlan, @(x) islogical(x) || (isnumeric(x) && isscalar(x)));
+	    parser.addParameter('LearningPruneThreshold', defaults.LearningPruneThreshold, @(x) isnumeric(x) && isscalar(x) && x >= 0);
 	    parser.parse(varargin{:});
 	    algorithms = parser.Results.Algorithms;
 	    seed = parser.Results.Seed;
@@ -39,6 +41,7 @@ function local_parallel_dashboard(varargin)
 	    max_horizon = parser.Results.MaxHorizon;
 	    real_smoothing = logical(parser.Results.RealSmoothing);
 	    adaptive_likelihood_in_plan = logical(parser.Results.AdaptiveLikelihoodInPlan);
+	    learning_prune_threshold = parser.Results.LearningPruneThreshold;
 
     thisFile = mfilename('fullpath');
     matlabDir = fileparts(thisFile);                 % .../src/MATLAB
@@ -63,18 +66,19 @@ function local_parallel_dashboard(varargin)
     cfg.num_states = cfg.grid_size ^ 2;
     cfg.num_trials = num_trials;
     cfg.max_horizon = max_horizon;
-	    cfg.weights = struct(...
-	        'novelty', 10, ...
-	        'learning', 40, ...
-	        'epistemic', 1, ...
+		    cfg.weights = struct(...
+		        'novelty', 10, ...
+		        'learning', 40, ...
+		        'epistemic', 1, ...
 	        'preference', 10, ...
 	        'ucb_scale', 5, ...
 	        'state_selection', 'sample', ...
 	        'preference_param', 'weight', ...
-	        'baucb_variant', 'legacy', ...
-	        'real_smoothing', real_smoothing, ...
-	        'adaptive_likelihood_in_plan', adaptive_likelihood_in_plan ...
-	    );
+		        'baucb_variant', 'legacy', ...
+		        'real_smoothing', real_smoothing, ...
+		        'adaptive_likelihood_in_plan', adaptive_likelihood_in_plan, ...
+		        'learning_prune_threshold', learning_prune_threshold ...
+		    );
 
     cluster = parcluster('local');
     requested_workers = min(numel(algorithms), cluster.NumWorkers);
@@ -92,36 +96,40 @@ function local_parallel_dashboard(varargin)
     param_update_kl = nan(n_alg, num_trials);
     novelty_term_mean = nan(n_alg, num_trials);
     epistemic_term_mean = nan(n_alg, num_trials);
-    extrinsic_term_mean = nan(n_alg, num_trials);
-    search_depth = nan(n_alg, num_trials);
+	    extrinsic_term_mean = nan(n_alg, num_trials);
+	    search_depth = nan(n_alg, num_trials);
+	    policy_sensitivity = nan(n_alg, num_trials);
 
-    fig = figure('Name', 'Local Parallel Dashboard', 'NumberTitle', 'off');
-    tiledlayout(fig, 3, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+	    fig = figure('Name', 'Local Parallel Dashboard', 'NumberTitle', 'off');
+	    tiledlayout(fig, 4, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
     ax_survival = nexttile; hold(ax_survival, 'on'); title(ax_survival, 'Survival'); xlabel(ax_survival, 'Trial'); ylabel(ax_survival, 'Steps');
     ax_kl = nexttile; hold(ax_kl, 'on'); title(ax_kl, 'Param Update KL'); xlabel(ax_kl, 'Trial'); ylabel(ax_kl, 'Sum KL');
     ax_novelty = nexttile; hold(ax_novelty, 'on'); title(ax_novelty, 'Novelty Term (Mean/Step)'); xlabel(ax_novelty, 'Trial'); ylabel(ax_novelty, 'Novelty');
-    ax_epi = nexttile; hold(ax_epi, 'on'); title(ax_epi, 'Epistemic Term (Mean/Step)'); xlabel(ax_epi, 'Trial'); ylabel(ax_epi, 'Epistemic');
-    ax_ext = nexttile; hold(ax_ext, 'on'); title(ax_ext, 'Extrinsic Term (Mean/Step)'); xlabel(ax_ext, 'Trial'); ylabel(ax_ext, 'Extrinsic');
-    ax_depth = nexttile; hold(ax_depth, 'on'); title(ax_depth, 'Search Depth'); xlabel(ax_depth, 'Trial'); ylabel(ax_depth, 'Depth');
+	    ax_epi = nexttile; hold(ax_epi, 'on'); title(ax_epi, 'Epistemic Term (Mean/Step)'); xlabel(ax_epi, 'Trial'); ylabel(ax_epi, 'Epistemic');
+	    ax_ext = nexttile; hold(ax_ext, 'on'); title(ax_ext, 'Extrinsic Term (Mean/Step)'); xlabel(ax_ext, 'Trial'); ylabel(ax_ext, 'Extrinsic');
+	    ax_depth = nexttile; hold(ax_depth, 'on'); title(ax_depth, 'Search Depth'); xlabel(ax_depth, 'Trial'); ylabel(ax_depth, 'Depth');
+	    ax_sens = nexttile; hold(ax_sens, 'on'); title(ax_sens, 'Novelty Policy Sensitivity'); xlabel(ax_sens, 'Trial'); ylabel(ax_sens, 'Frac. actions changed');
 
     colors = lines(n_alg);
     x = 1:num_trials;
     line_survival = gobjects(n_alg, 1);
     line_kl = gobjects(n_alg, 1);
     line_novelty = gobjects(n_alg, 1);
-    line_epi = gobjects(n_alg, 1);
-    line_ext = gobjects(n_alg, 1);
-    line_depth = gobjects(n_alg, 1);
+	    line_epi = gobjects(n_alg, 1);
+	    line_ext = gobjects(n_alg, 1);
+	    line_depth = gobjects(n_alg, 1);
+	    line_sens = gobjects(n_alg, 1);
 
     for i = 1:n_alg
         line_survival(i) = plot(ax_survival, x, survival(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
         line_kl(i) = plot(ax_kl, x, param_update_kl(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
         line_novelty(i) = plot(ax_novelty, x, novelty_term_mean(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
-        line_epi(i) = plot(ax_epi, x, epistemic_term_mean(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
-        line_ext(i) = plot(ax_ext, x, extrinsic_term_mean(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
-        line_depth(i) = plot(ax_depth, x, search_depth(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
-    end
+	        line_epi(i) = plot(ax_epi, x, epistemic_term_mean(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
+	        line_ext(i) = plot(ax_ext, x, extrinsic_term_mean(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
+	        line_depth(i) = plot(ax_depth, x, search_depth(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
+	        line_sens(i) = plot(ax_sens, x, policy_sensitivity(i, :), '-', 'Color', colors(i, :), 'DisplayName', algorithms{i});
+	    end
 
     legend(ax_survival, 'Location', 'eastoutside');
 
@@ -164,10 +172,16 @@ function local_parallel_dashboard(varargin)
         line_survival(i).YData = survival(i, :);
         line_kl(i).YData = param_update_kl(i, :);
         line_novelty(i).YData = novelty_term_mean(i, :);
-        line_epi(i).YData = epistemic_term_mean(i, :);
-        line_ext(i).YData = extrinsic_term_mean(i, :);
-        line_depth(i).YData = search_depth(i, :);
+	        line_epi(i).YData = epistemic_term_mean(i, :);
+	        line_ext(i).YData = extrinsic_term_mean(i, :);
+	        line_depth(i).YData = search_depth(i, :);
+	        if isfield(msg, 'policy_sensitivity')
+	            policy_sensitivity(i, t) = msg.policy_sensitivity;
+	        else
+	            policy_sensitivity(i, t) = NaN;
+	        end
+	        line_sens(i).YData = policy_sensitivity(i, :);
 
-        drawnow limitrate
-    end
+	        drawnow limitrate
+	    end
 end

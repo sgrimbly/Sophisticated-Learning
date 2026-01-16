@@ -5,6 +5,9 @@
 - Implemented the long-standing TODO in SL tree search as an opt-in: when `adaptive_likelihood_in_plan=true`, SL updates `y{2}=normalise_matrix(a{2})` after simulated learning updates so future simulated observations reflect the updated model.
 - Added a `real_smoothing=false` mode for modular runners (SI/SL/BA/BAUCB) that performs filtered-only parameter updates (no `spm_backwards` window) for clean “real smoothing” ablations.
 - Updated local dashboard + UCT-HPC-HEX MATLAB runners to pass the new flags.
+- Parameterised SL planning’s `a_learning` pruning threshold as `learning_prune_threshold` (default `0.2`), hashed/recorded, and exposed in HPC runners.
+- Added dashboard-only `compute_policy_sensitivity` instrumentation to estimate how often novelty changes the chosen action (computed via a second tree-search call on copies, without affecting behaviour).
+- Updated UCT-HPC-HEX runners to optionally skip provably redundant algorithm variants (e.g., `SI_smooth`), controlled by `SKIP_REDUNDANT`.
 
 ## 2025-12-10
 - Adopted per-(state, context) visit counts for BAUCB/BA_UCB, fixed the `cur_state` typo, moved count updates into the UCB tree search root, and threaded `Nt` through recursion alongside a tunable `ucb_scale` (default 5). Scripts/figures: not re-run yet.

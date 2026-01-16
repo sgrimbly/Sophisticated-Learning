@@ -37,8 +37,34 @@ export PREFERENCE_PARAM="weight"         # 'weight' or 'inverse_precision'
 export BAUCB_VARIANT="legacy"            # 'legacy' or 'fixed_joint_counts'
 export REAL_SMOOTHING="1"                # 1=backward smoothing on real trajectory, 0=filtered-only updates
 export ADAPTIVE_LIKELIHOOD_IN_PLAN="0"   # 1=update y from simulated a inside SL planning (TODO ablation)
+export LEARNING_PRUNE_THRESHOLD="0.2"    # 0 disables pruning; legacy default is 0.2
 
-RUN_LABEL="UCTHEX_modular_${STATE_SELECTION}_${PREFERENCE_PARAM}_pref${W_PREFERENCE}_nov${W_NOVELTY}_learn${W_LEARNING}_epi${W_EPISTEMIC}_ucb${UCB_SCALE}_baucb${BAUCB_VARIANT}_RS${REAL_SMOOTHING}_AP${ADAPTIVE_LIKELIHOOD_IN_PLAN}_T${NUM_TRIALS}"
+export SKIP_REDUNDANT="${SKIP_REDUNDANT:-1}"  # 1 skips provably redundant algorithm variants
+
+if [ "$SKIP_REDUNDANT" -ne 0 ]; then
+    is_zero() { awk -v x="$1" 'BEGIN{exit !(x+0==0)}'; }
+    filtered=()
+    for ALG in "${ALGORITHMS[@]}"; do
+        # main.m clamps novelty to 0 for SI and SI_smooth, and the only code-path difference is novelty-related.
+        if [ "$ALG" = "SI_smooth" ]; then
+            echo "Skipping redundant algorithm: SI_smooth"
+            continue
+        fi
+        # If novelty weight is globally 0, SI novelty variants and explicit *noNovelty* variants collapse to their bases.
+        if is_zero "$W_NOVELTY"; then
+            case "$ALG" in
+                SI_novelty*|*noNovelty*)
+                    echo "Skipping redundant algorithm (W_NOVELTY=0): $ALG"
+                    continue
+                    ;;
+            esac
+        fi
+        filtered+=("$ALG")
+    done
+    ALGORITHMS=("${filtered[@]}")
+fi
+
+RUN_LABEL="UCTHEX_modular_${STATE_SELECTION}_${PREFERENCE_PARAM}_pref${W_PREFERENCE}_nov${W_NOVELTY}_learn${W_LEARNING}_epi${W_EPISTEMIC}_lp${LEARNING_PRUNE_THRESHOLD}_ucb${UCB_SCALE}_baucb${BAUCB_VARIANT}_RS${REAL_SMOOTHING}_AP${ADAPTIVE_LIKELIHOOD_IN_PLAN}_T${NUM_TRIALS}"
 RUN_LABEL_SAFE=$(echo "$RUN_LABEL" | sed 's/[^a-zA-Z0-9_-]/_/g')
 export JOB_TRACKING_FILE="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB/grid_configs_job_submissions_${RUN_LABEL_SAFE}.txt"
 touch "$JOB_TRACKING_FILE"
@@ -100,7 +126,7 @@ submit_jobs() {
                 cp "${SCRIPT_DIR}/SLURM_Template.sh" "$SLURM_SCRIPT"
                 sed -i "s|\$JOB_NAME|$JOB_NAME|g; s|\$TIME_LIMIT|$TIME_LIMIT|g; s|\$SCRIPT_PATH|$SCRIPT_PATH|g" "$SLURM_SCRIPT"
 
-                MATLAB_WEIGHTS_STRUCT="struct('novelty', ${W_NOVELTY}, 'learning', ${W_LEARNING}, 'epistemic', ${W_EPISTEMIC}, 'preference', ${W_PREFERENCE}, 'ucb_scale', ${UCB_SCALE}, 'state_selection', '${STATE_SELECTION}', 'preference_param', '${PREFERENCE_PARAM}', 'baucb_variant', '${BAUCB_VARIANT}', 'real_smoothing', ${REAL_SMOOTHING}, 'adaptive_likelihood_in_plan', ${ADAPTIVE_LIKELIHOOD_IN_PLAN})"
+                MATLAB_WEIGHTS_STRUCT="struct('novelty', ${W_NOVELTY}, 'learning', ${W_LEARNING}, 'epistemic', ${W_EPISTEMIC}, 'preference', ${W_PREFERENCE}, 'ucb_scale', ${UCB_SCALE}, 'state_selection', '${STATE_SELECTION}', 'preference_param', '${PREFERENCE_PARAM}', 'baucb_variant', '${BAUCB_VARIANT}', 'real_smoothing', ${REAL_SMOOTHING}, 'adaptive_likelihood_in_plan', ${ADAPTIVE_LIKELIHOOD_IN_PLAN}, 'learning_prune_threshold', ${LEARNING_PRUNE_THRESHOLD})"
                 echo "matlab -batch \"addpath(genpath('${SCRIPT_PATH}')); main('${ALGORITHM}', ${SEED}, ${HORIZON}, ${K_FACTOR}, '${ROOT_FOLDER}', ${MCT}, ${NUM_MCT}, false, '', ${GRID_SIZE}, ${START_POS}, ${HILL}, [${FOOD}], [${WATER}], [${SLEEP}], ${MATLAB_WEIGHTS_STRUCT}, ${NUM_STATES}, ${NUM_TRIALS}, '${GRID_ID}'); exit;\"" >> "$SLURM_SCRIPT"
 
                 output_dir="${SL_RESULTS_ROOT}/slurm_logs/${RUN_LABEL_SAFE}/${ALGORITHM}/${GRID_ID}/${JOB_NAME}"
