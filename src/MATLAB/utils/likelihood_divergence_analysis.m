@@ -30,12 +30,26 @@ function likelihood_divergence_analysis(num_states, grid_size, start_position, h
     if nargin < 10 || isempty(grid_id)
         error('Grid ID is required');
     end
-	    if nargin < 11 || isempty(directory_path)
-	        directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
-	    end
-	    if nargin < 12
-	        state_file_path = '';
-	    end
+    if nargin < 11 || isempty(directory_path)
+        results_root = getenv('SL_RESULTS_ROOT');
+        if isempty(results_root)
+            thisFileDir = fileparts(mfilename('fullpath')); % .../src/MATLAB/utils
+            projectRoot = fullfile(thisFileDir, '..', '..', '..');
+            results_root = fullfile(projectRoot, 'results');
+        end
+
+        directory_path = fullfile(results_root, 'unknown_model', 'MATLAB', 'grid_config_experiments');
+    end
+    if nargin < 12
+        state_file_path = '';
+    end
+
+    if ~exist(directory_path, 'dir')
+        [ok, msg] = mkdir(directory_path);
+        if ~ok
+            error('Unable to create results directory: %s', msg);
+        end
+    end
 
 	    disp(['num_states: ', num2str(num_states)]);
 

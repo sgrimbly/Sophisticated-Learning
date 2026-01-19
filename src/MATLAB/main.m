@@ -11,7 +11,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         seed (1, 1) double {mustBeInteger} = 1;
         horizon (1, 1) double {mustBeInteger, mustBePositive} = 9;
         k_factor (1, 1) double = 1.5;
-        root_folder char = '/home/grmstj001';
+        root_folder char = '';
         mct (1, 1) double {mustBeInteger} = 0;
         num_mct (1, 1) double {mustBeInteger, mustBePositive} = 100;
         auto_rest (1, 1) logical = false; % Auto restore
@@ -61,6 +61,18 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 	    if ~isfield(weights, 'baucb_variant')
 	        weights.baucb_variant = 'legacy';
 	    end
+    if isempty(root_folder)
+        root_folder = getenv('SL_ROOT_FOLDER');
+        if isempty(root_folder)
+            root_folder = getenv('HOME');
+        end
+        if isempty(root_folder)
+            root_folder = getenv('USERPROFILE');
+        end
+        if isempty(root_folder)
+            root_folder = pwd;
+        end
+    end
 
 	    if ~isfield(weights, 'real_smoothing')
 	        weights.real_smoothing = true;

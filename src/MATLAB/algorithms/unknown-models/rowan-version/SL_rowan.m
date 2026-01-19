@@ -341,6 +341,9 @@ else
 end
 
 fid = fopen(file_name, 'a+');
+if fid < 0
+    error('Failed to open results file: %s', file_name);
+end
 fprintf(fid, '%f\n', t);
 fclose(fid);
 t = 1;

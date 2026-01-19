@@ -191,8 +191,20 @@ function [survived] = SL(seed, state_selection)
 
     % Convert seed to string
     seed_str = num2str(seed);
-    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/200trials_data_threefry';
-    file_name = strcat(directory_path, '/SL_Seed_', seed_str, '_', current_time, '.txt');
+
+    results_root = getenv('SL_RESULTS_ROOT');
+    if isempty(results_root)
+        thisFileDir = fileparts(mfilename('fullpath')); % .../src/MATLAB/algorithms/unknown-models
+        projectRoot = fullfile(thisFileDir, '..', '..', '..', '..');
+        results_root = fullfile(projectRoot, 'results');
+    end
+
+    directory_path = fullfile(results_root, 'unknown_model', 'MATLAB', '200trials_data_threefry');
+    if ~exist(directory_path, 'dir')
+        mkdir(directory_path);
+    end
+
+    file_name = fullfile(directory_path, sprintf('SL_Seed_%s_%s.txt', seed_str, current_time));
 
     t = 1;
     num_trials = 200;
@@ -419,8 +431,10 @@ function [survived] = SL(seed, state_selection)
         end
 
         fid = fopen(file_name, 'a+');
+        if fid < 0
+            error('Failed to open results file: %s', file_name);
+        end
         fprintf(fid, '%f\n', t);
-
         fclose(fid);
         survived(trial) = t;
 

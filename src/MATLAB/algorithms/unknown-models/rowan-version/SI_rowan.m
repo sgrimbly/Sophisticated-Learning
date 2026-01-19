@@ -289,6 +289,9 @@ while(t<100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep
 end
 
 fid = fopen(file_name, 'a+');
+if fid < 0
+    error('Failed to open results file: %s', file_name);
+end
 fprintf(fid, '%f\n', t);
 
 fclose(fid);
