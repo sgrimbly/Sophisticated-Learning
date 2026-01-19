@@ -13,8 +13,21 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     if nargin < 12, results_file_override = ''; end
 
     current_time = char(datetime('now', 'Format', 'HH-mm-ss-SSS'));  % This should be safe, ensure there are no colons
-    % directory_path = '/Users/stjohngrimbly/Documents/Sophisticated-Learning/src/MATLAB';
-    directory_path = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/grid_config_experiments';
+
+    results_root = getenv('SL_RESULTS_ROOT');
+    if isempty(results_root)
+        thisFileDir = fileparts(mfilename('fullpath')); % .../src/MATLAB/algorithms/unknown-models/modular_versions
+        projectRoot = fullfile(thisFileDir, '..', '..', '..', '..', '..');
+        results_root = fullfile(projectRoot, 'results');
+    end
+
+    directory_path = fullfile(results_root, 'unknown_model', 'MATLAB', 'grid_config_experiments');
+    if ~exist(directory_path, 'dir')
+        [ok, msg] = mkdir(directory_path);
+        if ~ok
+            error('Unable to create results directory: %s', msg);
+        end
+    end
     food_str = strjoin(arrayfun(@num2str, food_sources, 'UniformOutput', false), '-');
     water_str = strjoin(arrayfun(@num2str, water_sources, 'UniformOutput', false), '-');
     sleep_str = strjoin(arrayfun(@num2str, sleep_sources, 'UniformOutput', false), '-');
@@ -39,7 +52,7 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     config_id = config_hash(run_config);
     run_meta = struct('config_id', config_id, 'run_config', run_config);
 
-    result_file = strcat(directory_path, '/SI_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '_', current_time, '.txt');
+    result_file = fullfile(directory_path, sprintf('SI_Seed_%d_GridID_%s_Cfg_%s_%s.txt', seed, grid_id_safe, config_id, current_time));
 
     % file_name = strcat(directory_path, '/SI_Seed_', num2str(seed), ...
     %                    '_Grid', num2str(grid_size), ...
@@ -68,7 +81,7 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
     time_since_sleep = 0;
 
     % Organise state for experiment run
-    stateFile = strcat(directory_path, '/SI_Seed_', num2str(seed), '_GridID_', grid_id_safe, '_Cfg_', config_id, '.mat')
+    stateFile = fullfile(directory_path, sprintf('SI_Seed_%d_GridID_%s_Cfg_%s.mat', seed, grid_id_safe, config_id));
 
     if ~isempty(results_file_override)
         result_file = results_file_override;
@@ -369,6 +382,9 @@ function [survived] = SI_modular(seed, grid_size, start_position, hill_pos, food
         end
 
         fid = fopen(result_file, 'a+');
+        if fid < 0
+            error('Failed to open results file: %s', result_file);
+        end
         fprintf(fid, '%f\n', t);
         fclose(fid);
 
