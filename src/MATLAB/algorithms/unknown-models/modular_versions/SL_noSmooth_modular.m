@@ -244,7 +244,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
         efe_epistemic_term_sum = 0;
         efe_extrinsic_term_sum = 0;
         efe_future_term_sum = 0;
-        efe_components_steps = 0;
+        efe_components_node_count = 0;
         policy_sensitivity_steps = 0;
         policy_sensitivity_changes = 0;
 
@@ -483,11 +483,11 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
                 end
             end
             if ~isempty(efe_components)
-                efe_novelty_term_sum = efe_novelty_term_sum + efe_components.novelty_term;
-                efe_epistemic_term_sum = efe_epistemic_term_sum + efe_components.epistemic_term;
-                efe_extrinsic_term_sum = efe_extrinsic_term_sum + efe_components.extrinsic_term;
-                efe_future_term_sum = efe_future_term_sum + efe_components.future_term;
-                efe_components_steps = efe_components_steps + 1;
+                efe_novelty_term_sum = efe_novelty_term_sum + efe_components.novelty_term_sum;
+                efe_epistemic_term_sum = efe_epistemic_term_sum + efe_components.epistemic_term_sum;
+                efe_extrinsic_term_sum = efe_extrinsic_term_sum + efe_components.extrinsic_term_sum;
+                efe_future_term_sum = efe_future_term_sum + efe_components.future_term_sum;
+                efe_components_node_count = efe_components_node_count + efe_components.node_count;
             end
             chosen_action(t) = best_actions(1);
             t = t + 1;
@@ -532,7 +532,7 @@ function [survived] = SL_noSmooth_modular(seed, grid_size, start_position, hill_
                     'efe_epistemic_term_sum', efe_epistemic_term_sum, ...
                     'efe_extrinsic_term_sum', efe_extrinsic_term_sum, ...
                     'efe_future_term_sum', efe_future_term_sum, ...
-                    'efe_steps', efe_components_steps, ...
+                    'efe_node_count', efe_components_node_count, ...
                     'policy_sensitivity', policy_sensitivity, ...
                     'search_depth', search_depth, ...
                     'memory_accessed', memory_accessed, ...
