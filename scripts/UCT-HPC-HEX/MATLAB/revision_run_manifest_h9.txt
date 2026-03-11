@@ -1,0 +1,42 @@
+Revision H9 Reviewer-Facing Run Manifest
+Date: 2026-03-11
+
+Environment: default manuscript environment
+Planning horizon: 9
+Main trial count: 120
+Plateau extension trial count: 300
+
+Reviewer novelty set:
+- SI
+- SI_novelty
+- SI_novelty_smooth
+- SL_noSmooth
+- SL
+
+Reviewer plateau set:
+- BA
+- BAUCB
+- SI
+- SL
+
+Locked run settings:
+- state_selection = sample
+- real_smoothing = true
+- adaptive_likelihood_in_plan = false
+- learning_prune_threshold = 0.2
+- baucb_variant = legacy
+
+Reviewer-facing labels:
+- SI (no novelty)
+- SI + novelty
+- SI + novelty + smoothed novelty estimate
+- SL without planning-time backward smoothing
+- SL
+
+Prune-threshold provenance note:
+learning_prune_threshold = 0.2 is treated as a legacy SL tree-search default that was later parameterized.
+It is not directly exposed in the rowan-version top-level wrappers.
+
+Operational note:
+Before any rerun, delete both stale result .txt files and matching .mat resume/state files for the same config.
+Always pass algorithm names explicitly.
