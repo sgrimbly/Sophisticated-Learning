@@ -1,5 +1,5 @@
 function local_parallel_dashboard(varargin)
-%LOCAL_PARALLEL_DASHBOARD Run one seed per algorithm in parallel and plot progress.
+%LOCAL_PARALLEL_DASHBOARD Run one or more seeds per algorithm in parallel and plot mean progress.
 %
 % Requirements:
 %   - Parallel Computing Toolbox (parpool, parfeval, DataQueue)
@@ -11,6 +11,7 @@ function local_parallel_dashboard(varargin)
 %   'Algorithms'  : cellstr of algorithm names
 %   'Weights'     : struct overriding default weights/flags
 %   'Seed'        : scalar integer seed
+%   'Seeds'       : vector of integer seeds (overrides 'Seed')
 %   'NumTrials'   : number of trials per algorithm
 %   'MaxHorizon'  : planning horizon cap
 %   'DashboardTitle' : figure title
@@ -29,11 +30,13 @@ function local_parallel_dashboard(varargin)
 	    defaults.LearningPruneThreshold = 0.2;
 	    defaults.Weights = [];
 	    defaults.DashboardTitle = 'Local Parallel Dashboard';
+	    defaults.Seeds = [];
 
     parser = inputParser();
     parser.addParameter('Algorithms', defaults.Algorithms, @(x) iscellstr(x) || (iscell(x) && all(cellfun(@ischar, x))));
 	    parser.addParameter('Weights', defaults.Weights, @(x) isempty(x) || isstruct(x));
 	    parser.addParameter('Seed', defaults.Seed, @(x) isnumeric(x) && isscalar(x) && x == floor(x));
+	    parser.addParameter('Seeds', defaults.Seeds, @(x) isempty(x) || (isnumeric(x) && isvector(x) && all(x == floor(x))));
 	    parser.addParameter('NumTrials', defaults.NumTrials, @(x) isnumeric(x) && isscalar(x) && x == floor(x) && x > 0);
 	    parser.addParameter('MaxHorizon', defaults.MaxHorizon, @(x) isnumeric(x) && isscalar(x) && x == floor(x) && x > 0);
 	    parser.addParameter('RealSmoothing', defaults.RealSmoothing, @(x) islogical(x) || (isnumeric(x) && isscalar(x)));
@@ -44,6 +47,7 @@ function local_parallel_dashboard(varargin)
 	    algorithms = parser.Results.Algorithms;
 	    dashboard_title = char(parser.Results.DashboardTitle);
 	    seed = parser.Results.Seed;
+	    seeds = parser.Results.Seeds;
 	    num_trials = parser.Results.NumTrials;
 	    max_horizon = parser.Results.MaxHorizon;
 	    real_smoothing = logical(parser.Results.RealSmoothing);
@@ -51,6 +55,11 @@ function local_parallel_dashboard(varargin)
 	    learning_prune_threshold = parser.Results.LearningPruneThreshold;
 	    user_weights = parser.Results.Weights;
 	    using_defaults = parser.UsingDefaults;
+	    if isempty(seeds)
+	        seeds = seed;
+	    end
+	    seeds = unique(seeds(:)');
+	    n_seeds = numel(seeds);
 
     thisFile = mfilename('fullpath');
     matlabDir = fileparts(thisFile);                 % .../src/MATLAB
@@ -65,7 +74,6 @@ function local_parallel_dashboard(varargin)
     end
 
     cfg = struct();
-    cfg.seed = seed;
     cfg.grid_size = 10;
     cfg.start_position = 51;
     cfg.hill_pos = 55;
@@ -107,7 +115,7 @@ function local_parallel_dashboard(varargin)
 		    cfg.weights = weights;
 
     cluster = parcluster('local');
-    requested_workers = min(numel(algorithms), cluster.NumWorkers);
+    requested_workers = min(numel(algorithms) * n_seeds, cluster.NumWorkers);
     pool = gcp('nocreate');
     if isempty(pool)
         pool = parpool(cluster, requested_workers);
@@ -116,7 +124,21 @@ function local_parallel_dashboard(varargin)
     dq = parallel.pool.DataQueue();
 
     algoIndex = containers.Map(algorithms, 1:numel(algorithms));
+    seedIndex = containers.Map('KeyType', 'double', 'ValueType', 'double');
+    for si = 1:n_seeds
+        seedIndex(seeds(si)) = si;
+    end
     n_alg = numel(algorithms);
+
+    survival_raw = nan(n_alg, n_seeds, num_trials);
+    param_update_kl_raw = nan(n_alg, n_seeds, num_trials);
+    search_depth_raw = nan(n_alg, n_seeds, num_trials);
+    policy_sensitivity_raw = nan(n_alg, n_seeds, num_trials);
+
+    efe_novelty_sum_raw = nan(n_alg, n_seeds, num_trials);
+    efe_epistemic_sum_raw = nan(n_alg, n_seeds, num_trials);
+    efe_extrinsic_sum_raw = nan(n_alg, n_seeds, num_trials);
+    efe_node_count_raw = nan(n_alg, n_seeds, num_trials);
 
     survival = nan(n_alg, num_trials);
     param_update_kl = nan(n_alg, num_trials);
@@ -168,8 +190,13 @@ function local_parallel_dashboard(varargin)
 
 	    ax_info = nexttile;
 	    axis(ax_info, 'off');
+	    seed_label = sprintf('%d', seeds(1));
+	    if n_seeds > 1
+	        seed_label = strjoin(arrayfun(@num2str, seeds, 'UniformOutput', false), ', ');
+	    end
 	    info_lines = { ...
-	        sprintf('Seed: %d', seed), ...
+	        sprintf('Seeds (n=%d): %s', n_seeds, seed_label), ...
+	        sprintf('Plot: mean over seeds'), ...
 	        sprintf('Trials: %d', num_trials), ...
 	        sprintf('Max horizon: %d', max_horizon), ...
 	        sprintf('state_selection: %s', string(weights.state_selection)), ...
@@ -192,9 +219,15 @@ function local_parallel_dashboard(varargin)
 
     afterEach(dq, @onProgress);
 
-    futures = parallel.FevalFuture.empty(0, n_alg);
+    futures = parallel.FevalFuture.empty(0, n_alg * n_seeds);
+    fi = 0;
     for i = 1:n_alg
-        futures(i) = parfeval(pool, @dashboard_run_one, 0, algorithms{i}, cfg, dq, results_dir, grid_id);
+        for si = 1:n_seeds
+            cfg_run = cfg;
+            cfg_run.seed = seeds(si);
+            fi = fi + 1;
+            futures(fi) = parfeval(pool, @dashboard_run_one, 0, algorithms{i}, cfg_run, dq, results_dir, grid_id);
+        end
     end
 
     wait(futures);
@@ -212,9 +245,21 @@ function local_parallel_dashboard(varargin)
             return
         end
 
-        survival(i, t) = msg.survival;
-        param_update_kl(i, t) = msg.param_update_kl;
-        search_depth(i, t) = msg.search_depth;
+        s = 1;
+        if isfield(msg, 'seed')
+            seed_value = double(msg.seed);
+            if isKey(seedIndex, seed_value)
+                s = seedIndex(seed_value);
+            elseif n_seeds > 1
+                return
+            end
+        elseif n_seeds > 1
+            return
+        end
+
+        survival_raw(i, s, t) = msg.survival;
+        param_update_kl_raw(i, s, t) = msg.param_update_kl;
+        search_depth_raw(i, s, t) = msg.search_depth;
 
         node_count = NaN;
         if isfield(msg, 'efe_node_count')
@@ -223,14 +268,19 @@ function local_parallel_dashboard(varargin)
             node_count = msg.efe_steps;
         end
         if ~isnan(node_count) && node_count > 0
-            novelty_term_mean(i, t) = msg.efe_novelty_term_sum / node_count;
-            epistemic_term_mean(i, t) = msg.efe_epistemic_term_sum / node_count;
-            extrinsic_term_mean(i, t) = msg.efe_extrinsic_term_sum / node_count;
-        else
-            novelty_term_mean(i, t) = NaN;
-            epistemic_term_mean(i, t) = NaN;
-            extrinsic_term_mean(i, t) = NaN;
+            efe_node_count_raw(i, s, t) = node_count;
+            efe_novelty_sum_raw(i, s, t) = msg.efe_novelty_term_sum;
+            efe_epistemic_sum_raw(i, s, t) = msg.efe_epistemic_term_sum;
+            efe_extrinsic_sum_raw(i, s, t) = msg.efe_extrinsic_term_sum;
         end
+
+        survival(i, t) = mean_over_seeds(survival_raw(i, :, t));
+        param_update_kl(i, t) = mean_over_seeds(param_update_kl_raw(i, :, t));
+        search_depth(i, t) = mean_over_seeds(search_depth_raw(i, :, t));
+
+        novelty_term_mean(i, t) = weighted_mean_over_seeds(efe_novelty_sum_raw(i, :, t), efe_node_count_raw(i, :, t));
+        epistemic_term_mean(i, t) = weighted_mean_over_seeds(efe_epistemic_sum_raw(i, :, t), efe_node_count_raw(i, :, t));
+        extrinsic_term_mean(i, t) = weighted_mean_over_seeds(efe_extrinsic_sum_raw(i, :, t), efe_node_count_raw(i, :, t));
 
         line_survival(i).YData = survival(i, :);
         line_kl(i).YData = param_update_kl(i, :);
@@ -239,10 +289,11 @@ function local_parallel_dashboard(varargin)
 	        line_ext(i).YData = extrinsic_term_mean(i, :);
 	        line_depth(i).YData = search_depth(i, :);
 	        if isfield(msg, 'policy_sensitivity')
-	            policy_sensitivity(i, t) = msg.policy_sensitivity;
+	            policy_sensitivity_raw(i, s, t) = msg.policy_sensitivity;
 	        else
-	            policy_sensitivity(i, t) = NaN;
+	            policy_sensitivity_raw(i, s, t) = NaN;
 	        end
+	        policy_sensitivity(i, t) = mean_over_seeds(policy_sensitivity_raw(i, :, t));
 	        line_sens(i).YData = policy_sensitivity(i, :);
 
 	        update_axis_limits(ax_survival, survival, true);
@@ -254,6 +305,26 @@ function local_parallel_dashboard(varargin)
 	        update_axis_limits(ax_sens, policy_sensitivity, true);
 
 	        drawnow limitrate
+	    end
+
+	    function m = mean_over_seeds(values)
+	        values = values(isfinite(values));
+	        if isempty(values)
+	            m = NaN;
+	        else
+	            m = mean(values);
+	        end
+	    end
+
+	    function m = weighted_mean_over_seeds(term_sums, node_counts)
+	        node_counts = double(node_counts);
+	        term_sums = double(term_sums);
+	        valid = isfinite(term_sums) & isfinite(node_counts) & node_counts > 0;
+	        if any(valid)
+	            m = sum(term_sums(valid)) / sum(node_counts(valid));
+	        else
+	            m = NaN;
+	        end
 	    end
 
 	    function label = pretty_algorithm_label(alg, weights_for_label)
@@ -268,8 +339,16 @@ function local_parallel_dashboard(varargin)
 	                label = 'SI + novelty + smooth';
 	            case 'SL'
 	                label = 'SL';
+	            case 'SL_adaptivePlan'
+	                label = 'SL (adaptive plan)';
+	            case 'SL_noAdaptivePlan'
+	                label = 'SL (no adaptive plan)';
 	            case 'SL_noSmooth'
 	                label = 'SL (no smooth plan)';
+	            case 'SL_noSmooth_adaptivePlan'
+	                label = 'SL (no smooth plan, adaptive)';
+	            case 'SL_noSmooth_noAdaptivePlan'
+	                label = 'SL (no smooth plan, no adaptive)';
 	            case 'SL_noNovelty'
 	                label = 'SL (no novelty)';
 	            case 'SL_noNovelty_noSmooth'

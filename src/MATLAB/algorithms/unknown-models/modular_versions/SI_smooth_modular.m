@@ -154,9 +154,11 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
 
     log_metrics = ~isempty(getenv('SL_LOG_METRICS')) && ~strcmp(getenv('SL_LOG_METRICS'), '0');
     metrics_file = '';
+    step_metrics_file = '';
     if log_metrics
         [metrics_dir, metrics_base, ~] = fileparts(result_file);
         metrics_file = fullfile(metrics_dir, sprintf('%s_metrics.csv', metrics_base));
+        step_metrics_file = fullfile(metrics_dir, sprintf('%s_step_metrics.csv', metrics_base));
     end
 
     [loadedState, isNew] = load_state(stateFile);
@@ -255,6 +257,7 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
             true_states{trial}(2, t) = find(cumsum(D{2}) >= rand, 1);
         end
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
+            param_update_kl_step = NaN;
             bb{2} = normalise_matrix(b{2});
 
             if t ~= 1
@@ -417,7 +420,8 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
                     end
                 end
 
-                param_update_kl_sum = param_update_kl_sum + kldir(normalise(a{2}(:)), normalise(a_prior_step(:)));
+                param_update_kl_step = kldir(normalise(a{2}(:)), normalise(a_prior_step(:)));
+                param_update_kl_sum = param_update_kl_sum + param_update_kl_step;
             end
 
             if true_states{trial}(2, t) == 1
@@ -486,9 +490,11 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
                 efe_future_term_sum = efe_future_term_sum + efe_components.future_term_sum;
                 efe_components_node_count = efe_components_node_count + efe_components.node_count;
             end
+            step_search_depth = search_depth + length(best_actions);
+            append_step_metrics(step_metrics_file, run_meta, algorithm_label, seed, trial, t, best_actions(1), efe_components, param_update_kl_step, step_search_depth);
             chosen_action(t) = best_actions(1);
             t = t + 1;
-            search_depth = search_depth + length(best_actions);
+            search_depth = step_search_depth;
         end
 
         total_search_depth = total_search_depth + search_depth;
@@ -522,6 +528,7 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
                 end
                 send(run_options.progress_queue, struct(...
                     'algorithm', algorithm_label, ...
+                    'seed', seed, ...
                     'trial', trial, ...
                     'survival', t, ...
                     'param_update_kl', param_update_kl_sum, ...
