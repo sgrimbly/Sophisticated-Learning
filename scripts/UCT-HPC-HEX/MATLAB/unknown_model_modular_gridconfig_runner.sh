@@ -7,8 +7,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 module load software/matlab-R2024b
 
 # Define the parameter ranges
-declare -a ALGORITHMS=("BA" "BAUCB") # "SI" "SL")
-declare -a SEEDS=({0..200})
+declare -a ALGORITHMS=("SI") # "SL" "BA" "BAUCB")
+declare -a SEEDS=({0..159})
+# declare -a SEEDS=({0..200})
 
 # Parameters
 export K_FACTOR="0.7"
@@ -66,12 +67,14 @@ export JOB_TRACKING_FILE="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning
 touch "$JOB_TRACKING_FILE"
 
 # Read grid configurations from a file
-mapfile -t GRID_CONFIGS < "${SCRIPT_PATH}/grid_configs.txt"
+# mapfile -t GRID_CONFIGS < "${SCRIPT_PATH}/grid_configs.txt"
+# mapfile -t GRID_CONFIGS < "${SCRIPT_PATH}/grid_configs_horizon3only.txt"
+mapfile -t GRID_CONFIGS < "${SCRIPT_PATH}/grid_configs_horizon3only_missingdata.txt"
 
 # Function to check available slots and return the count
 check_available_slots() {
     NUM_JOBS=$(squeue -u grmstj001 | grep -E "R|PD" | tail -n +2 | wc -l)
-    AVAILABLE_SLOTS=$((120 - NUM_JOBS))
+    AVAILABLE_SLOTS=$((240 - NUM_JOBS))
     echo "$AVAILABLE_SLOTS"
 }
 

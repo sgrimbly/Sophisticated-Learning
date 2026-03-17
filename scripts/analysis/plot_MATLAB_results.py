@@ -2,7 +2,7 @@
 Statistical Analysis Script for Algorithm Performance
 
 This script is designed to analyze, compare, and visualize algorithm performance data using statistical techniques and various types of plots.
-It uses command-line arguments to control which sections of the code are executed, making it easier to run specific parts of the analysis without 
+It uses command-line arguments to control which sections of the code are executed, making it easier to run specific parts of the analysis without
 manually commenting and uncommenting sections of the code.
 
 Usage:
@@ -14,6 +14,7 @@ Options:
     --plot_regression    Plot the regression curves for all algorithms, both full and after convergence.
     --plot_log           Plot polynomial fits on log-transformed data.
     --make_gif           Create a GIF of the moving averages for the performance of each algorithm across different window sizes.
+    --plot_ks            Plot the Kolmogorov-Smirnov test (with bootstrap confidence intervals) for all algorithm pairs.
 
 Examples:
     1. To perform a standard statistical comparison:
@@ -30,11 +31,11 @@ Examples:
 
     5. To create a GIF showing moving averages:
        python plot_MATLAB_results.py --make_gif
-       
+
     6. To plot the Kolmogorov-Smirnov test:
        python plot_MATLAB_results.py --plot_ks
-       
-    7. To run all options
+
+    7. To run all options:
        python plot_MATLAB_results.py --stat_compare --poly_compare --plot_regression --plot_log --make_gif --plot_ks
 
 Notes:
@@ -58,11 +59,11 @@ from scipy.optimize import curve_fit
 import logging
 import imageio
 
-
 # Specify the output folder and regex pattern
 SAVE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/results/'
 BASE_PATH = '/home/grmstj001/MATLAB-experiments/Sophisticated-Learning/'
-SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/200trials_data_threefry'
+SURVIVAL_FOLDER = BASE_PATH + 'results/unknown_model/MATLAB/120trials_data_threefry'
+NUM_TRIALS = 120
 
 # Setup basic configuration for logging
 LOGFILE_PATH = SAVE_PATH + 'algorithm_comparison_2.log'
@@ -78,23 +79,17 @@ def logistic(x, L, k, x0):
 def load_data(file_path, num_lines):
     with open(file_path, 'r') as file:
         data = np.array([float(line.strip()) for line in file.readlines()])
-    if len(data) == num_lines: # NOTE: Should be 300 for 300 trial data
+    if len(data) == num_lines:
         return data
     else:
-        # print(f"File {file_path} does not have {num_lines} lines.")
-        return None  # Return None for files that do not have 300 lines
+        return None
 
 def get_files(directory):
-    # print(f"Reading directory: {directory}")
     for file_name in os.listdir(directory):
-        # print(f"File found: {file_name}")
-        file_name = file_name.strip()  # Remove any leading/trailing whitespace
+        file_name = file_name.strip()
         match = file_pattern.match(file_name)
         if match:
             yield os.path.join(directory, file_name), match.groups()
-        # else:
-            # print(f"Did not match: {file_name}")
-            # print(f"Expected pattern: {file_pattern.pattern}")
 
 def perform_statistical_comparison(results):
     algorithms = list(results.keys())
@@ -129,7 +124,7 @@ def perform_statistical_comparison_polynomial(results, x_values):
         model = make_pipeline(PolynomialFeatures(2), LinearRegression())
         model.fit(x_values[:, np.newaxis], results[algorithm])
         predictions[algorithm] = model.predict(x_values[:, np.newaxis])
-    
+
     for i in range(len(algorithms)):
         for j in range(i + 1, len(algorithms)):
             algo1, algo2 = algorithms[i], algorithms[j]
@@ -149,36 +144,24 @@ def perform_statistical_comparison_polynomial(results, x_values):
 def moving_average_standard(data, window_size=10):
     if window_size <= 0:
         raise ValueError("Window size must be positive")
-    
-    # Apply the moving average (valid mode ensures no artificial difference at the start)
     mov_avg = np.convolve(data, np.ones(window_size) / window_size, mode='valid')
-    
-    # Padding the beginning to maintain the same length as the input
-    padding = np.full(window_size-1, np.nan)  # Fill with NaNs or zeros if preferred
+    padding = np.full(window_size-1, np.nan)
     result = np.concatenate((padding, mov_avg))
-    
     return result
 
 def moving_average_with_cumulative_start(data, window_size=10):
     if window_size <= 0:
         raise ValueError("Window size must be positive")
-
-    # Initialize the result array
     result = np.empty(len(data))
-    
     # Cumulative averaging for the initial part
     for i in range(window_size):
         result[i] = np.mean(data[:i+1])
-    
-    # Moving average for the rest
+    # Standard moving average for the rest
     moving_avg = np.convolve(data, np.ones(window_size)/window_size, mode='valid')
-    # Adjust the index where the moving average is assigned
     result[window_size-1:] = moving_avg
-    
     return result
 
 def find_convergence_point(data, window_size=20, threshold=0.005):
-    # mov_avg = moving_average(data, window_size)
     mov_avg = moving_average_with_cumulative_start(data, window_size)
     for i in range(len(mov_avg) - window_size):
         if np.max(np.abs(mov_avg[i:i+window_size] - mov_avg[i+window_size])) < threshold:
@@ -186,11 +169,9 @@ def find_convergence_point(data, window_size=20, threshold=0.005):
     return len(data) - 1
 
 def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color, trim_range=None):
-    # Convert input data to numpy arrays for processing
     x_data_array = np.array(x_data)
     y_data_array = np.array(y_data)
-    
-    # Trim data to focus analysis on a specific range if provided
+
     if trim_range and len(trim_range) == 2:
         indices = (x_data_array >= trim_range[0]) & (x_data_array <= trim_range[1])
         x_data_array = x_data_array[indices]
@@ -222,25 +203,32 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color, trim_
     # Logistic regression fitting and confidence interval calculation
     initial_guess = [max(y_data_array), 1, np.median(x_data_array)]
     try:
-        popt, pcov = curve_fit(logistic, x_data_array, y_data_array, p0=initial_guess, maxfev=10000)
-        x_model = np.linspace(min(x_data_array), max(x_data_array), 120)
+        popt, pcov = curve_fit(logistic, x_data_array, y_data_array,
+                               p0=initial_guess, maxfev=10000)
+        x_model = np.linspace(min(x_data_array), max(x_data_array), NUM_TRIALS)
         y_model = logistic(x_model, *popt)
-        
-        # Calculate the Jacobian matrix for variance of logistic model predictions
+
+        # Calculate confidence intervals for logistic
         J = np.zeros((len(x_model), 3))
-        J[:, 0] = 1 / (1 + np.exp(-popt[1] * (x_model - popt[2])))  # Partial derivative with respect to L
-        J[:, 1] = popt[0] * (x_model - popt[2]) * np.exp(-popt[1] * (x_model - popt[2])) / (1 + np.exp(-popt[1] * (x_model - popt[2])))**2  # Partial derivative with respect to k
-        J[:, 2] = popt[0] * popt[1] * np.exp(-popt[1] * (x_model - popt[2])) / (1 + np.exp(-popt[1] * (x_model - popt[2])))**2  # Partial derivative with respect to x0
-        
-        # Calculate prediction variance and standard errors
+        J[:, 0] = 1 / (1 + np.exp(-popt[1] * (x_model - popt[2])))
+        J[:, 1] = popt[0] * (x_model - popt[2]) * np.exp(-popt[1] * (x_model - popt[2])) / \
+                  (1 + np.exp(-popt[1] * (x_model - popt[2])))**2
+        J[:, 2] = popt[0] * popt[1] * np.exp(-popt[1] * (x_model - popt[2])) / \
+                  (1 + np.exp(-popt[1] * (x_model - popt[2])))**2
+
         y_var = np.dot(J, np.dot(pcov, J.T)).diagonal()
         y_std = np.sqrt(y_var)
-        ci_lower = y_model - t.ppf(0.975, df=len(y_data_array)-len(popt)) * y_std
-        ci_upper = y_model + t.ppf(0.975, df=len(y_data_array)-len(popt)) * y_std
-        
-        # Plot logistic model predictions and confidence intervals
-        ax.plot(x_model, y_model, color=line_color, linestyle=':', label=f'{algorithm} Logistic Fit [20,120]')
-        ax.fill_between(x_model, ci_lower, ci_upper, color=line_color, alpha=0.2, label=f'{algorithm} 95% CI')
+        df = len(y_data_array) - len(popt)
+        if df < 1:
+            df = 1  # avoid negative df if data is short
+        t_val = t.ppf(0.975, df=df)
+        ci_lower = y_model - t_val * y_std
+        ci_upper = y_model + t_val * y_std
+
+        ax.plot(x_model, y_model, color=line_color, linestyle=':',
+                label=f'{algorithm} Logistic Fit [20,NUM_TRIALS]')
+        ax.fill_between(x_model, ci_lower, ci_upper, color=line_color, alpha=0.2,
+                        label=f'{algorithm} 95% CI')
     except Exception as e:
         print(f"Error in fitting logistic model for {algorithm}: {e}")
 
@@ -251,36 +239,41 @@ def plot_regression(ax, x_data, y_data, algorithm, data_color, line_color, trim_
     ax.legend()
 
 def plot_trimmed_regression(ax, x_data, y_data, algorithm, data_color, line_color):
-    # Find convergence point
     conv_point = find_convergence_point(y_data, window_size=40, threshold=2)
     trimmed_x = x_data[conv_point:]
     trimmed_y = y_data[conv_point:]
 
-    # Linear Regression
     lin_model = LinearRegression()
     lin_model.fit(trimmed_x[:, np.newaxis], trimmed_y)
     y_lin_pred = lin_model.predict(trimmed_x[:, np.newaxis])
     residuals = trimmed_y - y_lin_pred
     std_residuals = np.std(residuals)
 
-    # Confidence intervals for linear regression
     n = len(trimmed_y)
-    t_value_lin = t.ppf(0.975, df=n-2)
-    ci_lin = t_value_lin * std_residuals * np.sqrt(1/n + (trimmed_x - np.mean(trimmed_x))**2 / np.sum((trimmed_x - np.mean(trimmed_x))**2))
-    ax.fill_between(trimmed_x, y_lin_pred - ci_lin, y_lin_pred + ci_lin, color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
+    if n <= 2:
+        # Not enough points to compute a confidence interval properly
+        t_value_lin = 0
+    else:
+        t_value_lin = t.ppf(0.975, df=n-2)
+
+    ci_lin = t_value_lin * std_residuals * np.sqrt(
+        1/n + (trimmed_x - np.mean(trimmed_x))**2 / np.sum((trimmed_x - np.mean(trimmed_x))**2)
+    )
+
+    ax.fill_between(trimmed_x, y_lin_pred - ci_lin, y_lin_pred + ci_lin,
+                    color=line_color, alpha=0.2,
+                    label=f'{algorithm} Linear 95% CI')
     ax.plot(trimmed_x, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
 
-    # Scatter original data points
     ax.scatter(trimmed_x, trimmed_y, color=data_color, s=10, label=f'{algorithm} Data')
     ax.set_xlabel('Trial (after convergence)')
     ax.set_ylabel('Average Survival Time')
     ax.legend()
 
 def plot_moving_average(ax, x_data, y_data, algorithm, color, window_size):
-    # mov_avg = moving_average_with_cumulative_start(y_data, window_size)
     mov_avg = moving_average_standard(y_data, window_size)
-    
-    ax.plot(x_data[:len(mov_avg)], mov_avg, label=f'{algorithm} Moving Average (window={window_size})', color=color)
+    ax.plot(x_data[:len(mov_avg)], mov_avg,
+            label=f'{algorithm} Moving Average (window={window_size})', color=color)
     ax.set_xlabel('Trial')
     ax.set_ylabel('Average Survival Time')
     ax.legend()
@@ -289,37 +282,47 @@ def plot_log_transformed(ax, x_data, y_data, algorithm, data_color, line_color):
     x_data = np.array(x_data)
     y_data = np.log(np.array(y_data))
     n = len(y_data)
-    
-    # Linear Regression
+
     lin_model = LinearRegression()
     lin_model.fit(x_data[:, np.newaxis], y_data)
     y_lin_pred = lin_model.predict(x_data[:, np.newaxis])
     residuals = y_data - y_lin_pred
     std_residuals = np.std(residuals)
-    
-    # Confidence intervals for linear regression
-    t_value_lin = t.ppf(0.975, df=n-2)
-    ci_lin = t_value_lin * std_residuals * np.sqrt(1/n + (x_data - np.mean(x_data))**2 / np.sum((x_data - np.mean(x_data))**2))
-    ax.fill_between(x_data, y_lin_pred - ci_lin, y_lin_pred + ci_lin, color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
+
+    if n <= 2:
+        t_value_lin = 0
+    else:
+        t_value_lin = t.ppf(0.975, df=n-2)
+
+    ci_lin = t_value_lin * std_residuals * np.sqrt(
+        1/n + (x_data - np.mean(x_data))**2 / np.sum((x_data - np.mean(x_data))**2)
+    )
+
+    ax.fill_between(x_data, y_lin_pred - ci_lin, y_lin_pred + ci_lin,
+                    color=line_color, alpha=0.2, label=f'{algorithm} Linear 95% CI')
     ax.plot(x_data, y_lin_pred, label=f'{algorithm} Linear', color=line_color)
-    
-    # Polynomial Regression
+
     degree = 2
     poly_model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
     poly_model.fit(x_data[:, np.newaxis], y_data)
     y_poly_pred = poly_model.predict(x_data[:, np.newaxis])
     residuals_poly = y_data - y_poly_pred
     std_residuals_poly = np.std(residuals_poly)
-    
-    # Confidence intervals for polynomial regression
-    t_value_poly = t.ppf(0.975, df=n-(degree+1))
+
+    df_poly = n - (degree + 1)
+    if df_poly < 1:
+        df_poly = 1
+    t_value_poly = t.ppf(0.975, df=df_poly)
+
     X_poly = PolynomialFeatures(degree).fit_transform(x_data[:, np.newaxis])
     leverage = np.sum(X_poly * np.linalg.pinv(X_poly).T, axis=1)
     ci_poly = t_value_poly * std_residuals_poly * np.sqrt(1/n + leverage)
-    ax.fill_between(x_data, y_poly_pred - ci_poly, y_poly_pred + ci_poly, color=line_color, alpha=0.1, label=f'{algorithm} Polynomial 95% CI')
-    ax.plot(x_data, y_poly_pred, label=f'{algorithm} Polynomial', color=line_color, linestyle='dashed')
-    
-    # Scatter original data points
+
+    ax.fill_between(x_data, y_poly_pred - ci_poly, y_poly_pred + ci_poly,
+                    color=line_color, alpha=0.1, label=f'{algorithm} Polynomial 95% CI')
+    ax.plot(x_data, y_poly_pred, label=f'{algorithm} Polynomial',
+            color=line_color, linestyle='dashed')
+
     ax.scatter(x_data, y_data, color=data_color, s=10, label=f'{algorithm} Data')
     ax.set_xlabel('Trial')
     ax.set_ylabel('Log(Average Survival Time)')
@@ -329,40 +332,40 @@ def plot_ks_test_with_confidence(ax, data1, data2, algo1, algo2, alpha=0.05):
     # Sort the data for ECDF
     data1_sorted = np.sort(data1)
     data2_sorted = np.sort(data2)
-    
+
     # Calculate ECDF
     ecdf1 = np.arange(1, len(data1_sorted)+1) / len(data1_sorted)
     ecdf2 = np.arange(1, len(data2_sorted)+1) / len(data2_sorted)
-    
+
     # Perform KS test
     ks_stat, p_value = ks_2samp(data1, data2)
-    
+
     # Plot ECDFs
     ax.step(data1_sorted, ecdf1, label=f'{algo1} ECDF', color='blue', where='post')
     ax.step(data2_sorted, ecdf2, label=f'{algo2} ECDF', color='orange', where='post')
-    
+
     # Find the point where the maximum difference occurs
     idx1 = np.searchsorted(data1_sorted, np.median(data1_sorted))
     idx2 = np.searchsorted(data2_sorted, np.median(data2_sorted))
     max_diff = np.abs(ecdf1[idx1] - ecdf2[idx2])
-    
+
     # Highlight the KS statistic
     ax.vlines(x=data1_sorted[idx1], ymin=ecdf1[idx1], ymax=ecdf2[idx2], colors='red', linestyles='dashed', label=f'KS Statistic = {ks_stat:.3f}')
-    
+
     # Add Confidence Bands using DKW inequality
     n1 = len(data1_sorted)
     n2 = len(data2_sorted)
-    
+
     # Calculate epsilon for the DKW confidence bands
     epsilon1 = np.sqrt(np.log(2 / alpha) / (2 * n1))
     epsilon2 = np.sqrt(np.log(2 / alpha) / (2 * n2))
-    
+
     # Plot confidence bands for data1
-    ax.fill_between(data1_sorted, np.maximum(0, ecdf1 - epsilon1), np.minimum(1, ecdf1 + epsilon1), 
+    ax.fill_between(data1_sorted, np.maximum(0, ecdf1 - epsilon1), np.minimum(1, ecdf1 + epsilon1),
                     color='blue', alpha=0.2, label=f'{algo1} 95% Confidence Band')
-    
+
     # Plot confidence bands for data2
-    ax.fill_between(data2_sorted, np.maximum(0, ecdf2 - epsilon2), np.minimum(1, ecdf2 + epsilon2), 
+    ax.fill_between(data2_sorted, np.maximum(0, ecdf2 - epsilon2), np.minimum(1, ecdf2 + epsilon2),
                     color='orange', alpha=0.2, label=f'{algo2} 95% Confidence Band')
 
     # Add labels and legend
@@ -387,48 +390,48 @@ def plot_ks_test_with_bootstrap_confidence(ax, data1, data2, algo1, algo2, num_b
     # Sort the data for ECDF
     data1_sorted = np.sort(data1)
     data2_sorted = np.sort(data2)
-    
+
     # Calculate ECDF
     ecdf1 = np.arange(1, len(data1_sorted)+1) / len(data1_sorted)
     ecdf2 = np.arange(1, len(data2_sorted)+1) / len(data2_sorted)
-    
+
     # Perform KS test
     ks_stat, p_value = ks_2samp(data1, data2)
-    
+
     # Plot ECDFs
     ax.step(data1_sorted, ecdf1, label=f'{algo1} ECDF', color='blue', where='post')
     ax.step(data2_sorted, ecdf2, label=f'{algo2} ECDF', color='orange', where='post')
-    
+
     # Generate bootstrap ECDFs
     ecdf_bootstrap1 = bootstrap_ecdf(data1, num_bootstrap)
     ecdf_bootstrap2 = bootstrap_ecdf(data2, num_bootstrap)
-    
+
     # Define a common set of points for interpolation
     common_points = np.linspace(min(data1.min(), data2.min()), max(data1.max(), data2.max()), 1000)
-    
+
     # Interpolate bootstrap ECDFs
     boot_ecdf1 = [np.interp(common_points, sorted(sample[0]), sample[1]) for sample in ecdf_bootstrap1]
     boot_ecdf2 = [np.interp(common_points, sorted(sample[0]), sample[1]) for sample in ecdf_bootstrap2]
-    
+
     # Convert to numpy arrays for percentile calculation
     boot_ecdf1 = np.array(boot_ecdf1)
     boot_ecdf2 = np.array(boot_ecdf2)
-    
+
     # Calculate percentiles
     lower_percentile1 = np.percentile(boot_ecdf1, 100 * (alpha / 2), axis=0)
     upper_percentile1 = np.percentile(boot_ecdf1, 100 * (1 - alpha / 2), axis=0)
     lower_percentile2 = np.percentile(boot_ecdf2, 100 * (alpha / 2), axis=0)
     upper_percentile2 = np.percentile(boot_ecdf2, 100 * (1 - alpha / 2), axis=0)
-    
+
     # Plot confidence bands
     ax.fill_between(common_points, lower_percentile1, upper_percentile1, color='blue', alpha=0.2, label=f'{algo1} 95% Bootstrap CI')
     ax.fill_between(common_points, lower_percentile2, upper_percentile2, color='orange', alpha=0.2, label=f'{algo2} 95% Bootstrap CI')
-    
+
     # Highlight KS statistic
-    ax.vlines(x=data1_sorted[np.argmax(np.abs(ecdf1 - ecdf2))], ymin=min(ecdf1[np.argmax(np.abs(ecdf1 - ecdf2))], ecdf2[np.argmax(np.abs(ecdf1 - ecdf2))]), 
+    ax.vlines(x=data1_sorted[np.argmax(np.abs(ecdf1 - ecdf2))], ymin=min(ecdf1[np.argmax(np.abs(ecdf1 - ecdf2))], ecdf2[np.argmax(np.abs(ecdf1 - ecdf2))]),
               ymax=max(ecdf1[np.argmax(np.abs(ecdf1 - ecdf2))], ecdf2[np.argmax(np.abs(ecdf1 - ecdf2))]),
               colors='red', linestyles='dashed', label=f'KS Statistic = {ks_stat:.3f}')
-    
+
     # Add labels and legend
     ax.set_title(f'Kolmogorov-Smirnov Test: {algo1} vs {algo2}')
     ax.set_xlabel('Data Value')
@@ -443,7 +446,7 @@ def bootstrap_ks_stat(data1, data2, num_bootstrap=1000):
         resample2 = np.random.choice(data2, size=len(data2), replace=True)
         ks_stat, _ = ks_2samp(resample1, resample2)
         ks_stats.append(ks_stat)
-    
+
     # Calculate 2.5th and 97.5th percentiles for 95% confidence interval
     lower_bound = np.percentile(ks_stats, 2.5)
     upper_bound = np.percentile(ks_stats, 97.5)
@@ -451,172 +454,171 @@ def bootstrap_ks_stat(data1, data2, num_bootstrap=1000):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Statistical analysis script for algorithms.")
-    
+
     # Add arguments to enable or disable different features
     parser.add_argument('--stat_compare', action='store_true', help="Perform statistical comparison.")
     parser.add_argument('--poly_compare', action='store_true', help="Perform polynomial comparison.")
     parser.add_argument('--plot_regression', action='store_true', help="Plot regression curves.")
     parser.add_argument('--plot_log', action='store_true', help="Plot log-transformed data.")
     parser.add_argument('--make_gif', action='store_true', help="Create GIF of moving average.")
-    parser.add_argument('--plot_ks', action='store_true', help="Plot Kolmogorov-Smirnov test results between algorithms.")  # New KS test option
+    parser.add_argument('--plot_ks', action='store_true', help="Plot Kolmogorov-Smirnov test results between algorithms.")
 
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
 
-    # Load and process the data
+    # Load data
     data_dict = {}
     for file_path, (algorithm, seed, _) in get_files(SURVIVAL_FOLDER):
-        data = load_data(file_path, num_lines=200)
+        data = load_data(file_path, num_lines=NUM_TRIALS)
         if data is not None:
             if algorithm not in data_dict:
                 data_dict[algorithm] = []
             data_dict[algorithm].append(data)
+
     if data_dict:
         print("Data loaded.")
-
-    if not data_dict:
+    else:
         raise ValueError("No matching files found for any algorithm.")
 
+    # results[algo] is the mean across all seeds for that algo
     results = {alg: np.mean(np.array(data), axis=0) for alg, data in data_dict.items()}
-    
-    x_data = np.linspace(0, 200, 200)
+    x_data = np.linspace(0, NUM_TRIALS, NUM_TRIALS)
 
-    # Perform statistical comparison
+    # If your full set is SI, SL, BA, BAUCB, ensure they're in data_dict:
+    # for name in ["SI", "SL", "BA", "BAUCB"]:
+    #     if name not in data_dict:
+    #         print(f"Warning: no data found for algorithm '{name}'")
+
     if args.stat_compare:
         perform_statistical_comparison(results)
 
-    # Perform polynomial comparison
     if args.poly_compare:
         perform_statistical_comparison_polynomial(results, x_data)
 
-    # Plot regressions
+    # Colours for all algorithms, so each is distinct in the plots
+    colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
+
     if args.plot_regression:
         fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 16))
-        colors = {'BA': 'red', 'BAUCB': 'blue', 'SI': 'green', 'SL': 'orange'}
-        
         for algorithm, performance in results.items():
             iterations = np.arange(len(performance))
             plot_regression(
-                axes[0], 
-                iterations, 
-                performance, 
-                algorithm, 
-                colors[algorithm], 
-                colors[algorithm], 
-                trim_range=[20,200])
-            plot_trimmed_regression(axes[1], iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+                axes[0],
+                iterations,
+                performance,
+                algorithm,
+                colors.get(algorithm, 'black'),
+                colors.get(algorithm, 'black'),
+                trim_range=[20, NUM_TRIALS]
+            )
+            plot_trimmed_regression(
+                axes[1],
+                iterations,
+                performance,
+                algorithm,
+                colors.get(algorithm, 'black'),
+                colors.get(algorithm, 'black')
+            )
 
-        # Set titles, labels, and legends as requested
         axes[0].set_title('Comparison of Algorithm Performance Over Trials')
         axes[1].set_title('Data Comparison of Algorithm Performance After Convergence')
-        axes[0].set_xlabel('Trial')
-        axes[0].set_ylabel('Average Survival Time')
-        axes[1].set_xlabel('Trial (after convergence)')
-        axes[1].set_ylabel('Average Survival Time')
         axes[0].legend(title='Algorithm', loc='upper left')
         axes[1].legend(title='Algorithm', loc='upper left')
         plt.tight_layout()
         plt.savefig(SAVE_PATH + 'regression_comparison_all_algorithms.png')
+        plt.close(fig)
 
-    # Plot log-transformed data
     if args.plot_log:
         fig, ax = plt.subplots(figsize=(12, 8))
         for algorithm, performance in results.items():
             iterations = np.arange(len(performance))
-            plot_log_transformed(ax, iterations, performance, algorithm, colors[algorithm], colors[algorithm])
+            plot_log_transformed(ax, iterations, performance, algorithm,
+                                 colors.get(algorithm, 'black'),
+                                 colors.get(algorithm, 'black'))
 
-        # Set titles, labels, and legends as requested
         ax.set_title('Polynomial Fits on Log-Transformed Data with Normal Axes')
-        ax.set_xlabel('Trial')
-        ax.set_ylabel('Log(Average Survival Time)')
         ax.legend(title='Algorithm', loc='upper left')
         plt.tight_layout()
         plt.savefig(SAVE_PATH + 'log_transformed_polynomial_fits_all_algorithms.png')
+        plt.close(fig)
 
-    # Generate GIF of moving averages
     if args.make_gif:
         gif_frames = []
+        # Adjust the window range as needed
         for window_size in range(1, 51):
             fig, ax = plt.subplots(figsize=(12, 8))
             for algorithm, performance in results.items():
                 iterations = np.arange(len(performance))
-                plot_moving_average(ax, iterations, performance, algorithm, colors[algorithm], window_size)
-
-            # Set titles, labels, and legends as requested
+                plot_moving_average(ax, iterations, performance, algorithm,
+                                    colors.get(algorithm, 'black'), window_size)
             ax.set_title(f'Moving Average of Algorithm Performance (Window Size={window_size})')
-            ax.set_xlabel('Trial')
-            ax.set_ylabel('Average Survival Time')
             ax.legend(title='Algorithm', loc='upper left')
             plt.tight_layout()
 
-            # Save frame as PNG file
             frame_path = f'/tmp/frame_{window_size}.png'
             plt.savefig(frame_path)
             plt.close(fig)
 
-            # Append frame to list
             gif_frames.append(imageio.imread(frame_path))
 
-        # Save frames as GIF
         gif_path = SAVE_PATH + 'moving_average_all_algorithms.gif'
-
         imageio.mimsave(gif_path, gif_frames, duration=0.2)
         print(f"GIF saved to {gif_path}")
 
-    # Plot Kolmogorov-Smirnov test results
+    # Plot the KS test for all pairwise comparisons among existing algorithms
     if args.plot_ks:
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 16))
+        algorithms = list(results.keys())
+        for i in range(len(algorithms)):
+            for j in range(i + 1, len(algorithms)):
+                algo1, algo2 = algorithms[i], algorithms[j]
 
-        # Plot DKW Confidence Bands
-        algo1 = 'SI'
-        algo2 = 'SL'
+                # Compute bootstrap KS confidence interval
+                lower_bound, upper_bound = bootstrap_ks_stat(results[algo1], results[algo2])
+                print(f'Bootstrap KS CI for {algo1} vs. {algo2}: [{lower_bound:.3f}, {upper_bound:.3f}]')
 
-        if algo1 in results and algo2 in results:
-            lower_bound, upper_bound = bootstrap_ks_stat(results[algo1], results[algo2])
-            print(f'Bootstrap Confidence Interval for KS Statistic between {algo1} and {algo2}: [{lower_bound}, {upper_bound}]')
+                # Plot the ECDFs and indicate KS statistic
+                data1_sorted = np.sort(results[algo1])
+                data2_sorted = np.sort(results[algo2])
+                ecdf1 = np.arange(1, len(data1_sorted) + 1) / len(data1_sorted)
+                ecdf2 = np.arange(1, len(data2_sorted) + 1) / len(data2_sorted)
+                ks_stat, p_value = ks_2samp(results[algo1], results[algo2])
 
-            # Now visualize this on the ECDF plot
-            fig, ax = plt.subplots(figsize=(12, 8))
+                # Create a new figure for each pair
+                fig, ax = plt.subplots(figsize=(12, 8))
+                ax.step(data1_sorted, ecdf1, label=f'{algo1} ECDF',
+                        color='blue', where='post')
+                ax.step(data2_sorted, ecdf2, label=f'{algo2} ECDF',
+                        color='orange', where='post')
 
-            # Get ECDFs for both datasets
-            data1_sorted = np.sort(results[algo1])
-            data2_sorted = np.sort(results[algo2])
-            
-            # Calculate ECDFs
-            ecdf1 = np.arange(1, len(data1_sorted)+1) / len(data1_sorted)
-            ecdf2 = np.arange(1, len(data2_sorted)+1) / len(data2_sorted)
+                # Identify location of maximum difference
+                # We'll align by whichever dataset is shorter at that difference:
+                # Argmax on the absolute difference of the *overlapped* range
+                min_len = min(len(ecdf1), len(ecdf2))
+                abs_diff = np.abs(ecdf1[:min_len] - ecdf2[:min_len])
+                max_diff_idx = np.argmax(abs_diff)
+                if max_diff_idx >= len(data1_sorted):
+                    max_diff_idx = len(data1_sorted) - 1
 
-            # Perform KS test
-            ks_stat, p_value = ks_2samp(results[algo1], results[algo2])
+                max_diff_x = data1_sorted[max_diff_idx]
+                ax.vlines(max_diff_x,
+                          ymin=min(ecdf1[max_diff_idx], ecdf2[max_diff_idx]),
+                          ymax=max(ecdf1[max_diff_idx], ecdf2[max_diff_idx]),
+                          colors='red', linestyles='dashed',
+                          label=f'KS = {ks_stat:.3f}')
 
-            # Plot ECDFs
-            ax.step(data1_sorted, ecdf1, label=f'{algo1} ECDF', color='blue', where='post')
-            ax.step(data2_sorted, ecdf2, label=f'{algo2} ECDF', color='orange', where='post')
+                # Show the bootstrap KS CI as text or lines – we do a simple text annotation here
+                text_str = f'Bootstrap KS CI: [{lower_bound:.3f}, {upper_bound:.3f}]'
+                ax.text(0.05, 0.05, text_str, transform=ax.transAxes, fontsize=12,
+                        bbox=dict(facecolor='white', alpha=0.8, edgecolor='black'))
 
-            # Highlight the KS statistic as a vertical dashed line
-            max_diff_idx = np.argmax(np.abs(ecdf1 - ecdf2))
-            max_diff_x = data1_sorted[max_diff_idx]  # The point of max difference
-            ax.vlines(max_diff_x, ymin=min(ecdf1[max_diff_idx], ecdf2[max_diff_idx]),
-                    ymax=max(ecdf1[max_diff_idx], ecdf2[max_diff_idx]),
-                    colors='red', linestyles='dashed', label=f'KS Statistic = {ks_stat:.3f}')
+                ax.set_title(f'Kolmogorov-Smirnov Test: {algo1} vs {algo2}')
+                ax.set_xlabel('Data Value')
+                ax.set_ylabel('ECDF')
+                ax.legend()
+                ax.grid(True)
 
-            # Plot the bootstrap confidence interval for the KS statistic
-            # Draw the confidence interval as horizontal lines at the KS statistic's max_diff_x
-            ax.hlines(y=[min(ecdf1[max_diff_idx] - upper_bound, 1), 
-                        min(ecdf1[max_diff_idx] - lower_bound, 1)], 
-                    xmin=max_diff_x - 0.5, xmax=max_diff_x + 0.5, 
-                    colors='gray', linestyles='solid', label=f'Bootstrap CI for KS: [{lower_bound:.2f}, {upper_bound:.2f}]')
-            
-            # Add labels, legend, and title
-            ax.set_title(f'Kolmogorov-Smirnov Test: {algo1} vs {algo2} with Bootstrap CI')
-            ax.set_xlabel('Data Value')
-            ax.set_ylabel('ECDF')
-            ax.legend()
-            ax.grid(True)
-
-            # Save the plot
-            plt.tight_layout()
-            plt.savefig(SAVE_PATH + f'ks_statistic_{algo1}_vs_{algo2}_dkw_confidence.png')
-            # plt.show()
+                plt.tight_layout()
+                plt.savefig(SAVE_PATH + f'ks_statistic_{algo1}_vs_{algo2}_dkw_confidence.png')
+                plt.close(fig)
