@@ -238,6 +238,16 @@ def run_trial(
         P_pos_history.append(P_pos.copy())
         P_ctx_history.append(P_ctx.copy())
 
+        # MATLAB invariant: after the planner runs, Q{t, factor} is overwritten
+        # to the posterior at step t (tree_search_frwd_SI returns the modified
+        # cell). update_environment_states at step t+1 then propagates from
+        # this posterior, so the agent's predictive belief at every later step
+        # encodes the cumulative observational information (most importantly,
+        # hill-cue context concentration). Without this overwrite, Q stays at
+        # the predictive (uniform) and posterior info is lost between steps.
+        Q_pos_history[t] = P_pos.copy()
+        Q_ctx_history[t] = P_ctx.copy()
+
         # ----- 7. memory reset on context-PE or hill visit -----------
         if t > 0 and predicted_P_ctx_for_t is not None:
             if not np.array_equal(np.round(predicted_P_ctx_for_t, 1), np.round(P_ctx, 1)):
