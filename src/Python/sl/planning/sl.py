@@ -308,6 +308,15 @@ def _node(stm, hist, rec, t, N, t_food, t_water, t_sleep):
         K = np.zeros(S * C_, dtype=np.float64)
         efe = np.zeros(inp.B_pos.shape[2], dtype=np.float64)
 
+        # MATLAB's tree_search_frwd_SL passes ``a`` and ``y`` by value (COW),
+        # so each recursive child works on its own copy and the parent's ``a``
+        # is unchanged by sibling explorations. Python's rec is shared mutable
+        # state; without snapshot/restore, child branches accumulate imagined
+        # learning on top of each other and the second child sees the first
+        # child's a-updates baked in.
+        a_imag_at_entry = rec.a_resource_imag.copy()
+        y_resource_at_entry = rec.y_resource.copy()
+
         for action in range(inp.B_pos.shape[2]):
             Q_pos_a = inp.B_pos[:, :, action] @ P_pos
             Q_ctx_a = inp.bb_ctx[:, :, 0] @ P_ctx
@@ -334,6 +343,12 @@ def _node(stm, hist, rec, t, N, t_food, t_water, t_sleep):
                     K[state] = G_child
                     stm[t_food_idx, t_water_idx, t_sleep_idx, state] = G_child
                     rec.memory_misses += 1
+
+                    # Restore per-branch a/y so subsequent likely-states (and
+                    # subsequent actions) start from the same imagined state
+                    # as the parent saw before any child modified it.
+                    rec.a_resource_imag = a_imag_at_entry.copy()
+                    rec.y_resource = y_resource_at_entry.copy()
 
             efe[action] += 0.7 * float(K[likely] @ qs[likely])
 
