@@ -79,7 +79,7 @@ function [survived] = SI(seed, state_selection)
     D{2} = [0.25, 0.25, 0.25, 0.25]';
     D{1}(51) = 1; % starting position
     D{1} = normalise(D{1});
-    T = 27; % TODO #7 Is this used anywhere useful? What is it meant to be?
+    T = 27; % TODO(#4) #7 Is this used anywhere useful? What is it meant to be?
     num_modalities = 3;
 
     short_term_memory(:, :, :, :) = zeros(35, 35, 35, 400);
@@ -102,7 +102,7 @@ function [survived] = SI(seed, state_selection)
                             0.25, 0.25, 0.25 0.25];
     end
 
-    b = B; % TODO #6 Doesn't this just erase any distinction set above? i.e. Not uniform distribution?
+    b = B; % TODO(#4) #6 Doesn't this just erase any distinction set above? i.e. Not uniform distribution?
 
     for i = 1:num_states
 
@@ -193,7 +193,7 @@ function [survived] = SI(seed, state_selection)
         memory_accessed = 0;
 
         while (t < 100 && time_since_food < 22 && time_since_water < 20 && time_since_sleep < 25)
-            % TODO #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
+            % TODO(#4) #1 What is the difference between b, bb, and B? It seems like they're all equivalent in this formulation.
             bb{2} = normalise_matrix(b{2});
 
             for factor = 1:2
@@ -248,7 +248,7 @@ function [survived] = SI(seed, state_selection)
             % sample the next observation. Same technique as sampling states
 
             for modality = 1:num_modalities
-                % TODO #3 Is this 'ob' variable used for anything?
+                % TODO(#4) #3 Is this 'ob' variable used for anything?
                 ob = A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t));
                 observations(modality, t) = find(cumsum(A{modality}(:, true_states{trial}(1, t), true_states{trial}(2, t))) >= rand, 1);
 
@@ -263,7 +263,7 @@ function [survived] = SI(seed, state_selection)
             true_t = t;
 
             if t > 1
-                % TODO Is 6 chosen here simply as 6 timesteps to backward smooth over? Is this a hyperparameter?
+                % TODO(#4): Is 6 chosen here simply as 6 timesteps to backward smooth over? Is this a hyperparameter?
                 start = t - 6;
 
                 if start <= 0
@@ -280,7 +280,7 @@ function [survived] = SI(seed, state_selection)
 
                 for timey = start:t
                     %          if timey ~= t
-                    % TODO #4 Why is this backward smoothing useful?
+                    % TODO(#4) #4 Why is this backward smoothing useful?
                     L = spm_backwards(O, Q, A, bb, chosen_action, timey, t);
                     LL{2} = L;
                     LL{1} = Q{timey, 1};
@@ -292,7 +292,7 @@ function [survived] = SI(seed, state_selection)
                             a_learning = O(modality, timey)';
 
                             for factor = 1:2
-                                % TODO #5 What is the meaning of this outer product in the context of this algorithm?
+                                % TODO(#4) #5 What is the meaning of this outer product in the context of this algorithm?
                                 a_learning = spm_cross(a_learning, LL{factor});
                             end
 
@@ -356,7 +356,7 @@ function [survived] = SI(seed, state_selection)
             temp_Q{t, 2} = temp_Q{t, 2}';
             P = calculate_posterior(temp_Q, y, O, t);
             current_pos(t) = select_from_posterior(P{t, 1}, state_selection);
-            % TODO Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search.
+            % TODO(#4): Why is this if statement (which checks state-prediction error) here if is only relevant for the tree search? Surely we could just calculate the relevant posteriors (which are done in the tree search anyway) in the tree search.
             if t > 1 && ~isequal(round(predicted_posterior{t, 2}, 1), round(P{t, 2}, 1))
                 % if there is a relatively large state-prediction error, reset
                 % memory as it's probably innacurate.

@@ -69,7 +69,7 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
     weights_str = strjoin(arrayfun(@num2str, weights, 'UniformOutput', false), '-');
 
     % Define file path for state and results
-    % TODO: Label these with more detail as this won't distinguish files for the grid experiments, for example.
+    % TODO(#6): Label these with more detail as this won't distinguish files for the grid experiments, for example.
     grid_id_safe = sanitize_file_component(grid_id);
     run_config = struct(...
         'algorithm', algorithm_label, ...
@@ -224,7 +224,7 @@ function [survived] = SL_modular(seed, grid_size, start_position, hill_pos, food
         t_at_100 = 0;
     end
 
-    % TODO: This time tracking doesn't work properly when experiment
+    % TODO(#5): This time tracking doesn't work properly when experiment
     % start/stops, e.g. on prioritised HPC or resuming from saved state.
     total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
 

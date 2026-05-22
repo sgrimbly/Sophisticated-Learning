@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# TODO (St John): Fix potential threading and halting behaviour of rendering Matplotlib during code execution. #visualisation #bug
+# TODO(#8) (St John): Fix potential threading and halting behaviour of rendering Matplotlib during code execution. #visualisation #bug
 
 def index_to_position(index, size=10):
     return (index // size, index % size)

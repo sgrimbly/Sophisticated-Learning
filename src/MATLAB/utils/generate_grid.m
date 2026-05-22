@@ -7,7 +7,7 @@ CONFIGS_FILE = fullfile(configsDir, 'grid_configs_horizon3only.txt');  % Repo-re
 GRID_SIZE = 10;  % Set this to your grid size
 defaultConfigStr = 'Grid Size: 10, Horizon: 5, Hill: 55, Start Position: 51, Food(71,43,57,78), Water(73,33,48,67), Sleep(64,44,49,59)';
 
-% TODO: Ensure the following config is always first, which is the config Rowan used (and therefore I did too) for extensive experimentation
+% TODO(#7): Ensure the following config is always first, which is the config Rowan used (and therefore I did too) for extensive experimentation
 % Grid Size: 10, Horizon: 5, Hill: 55, Start Position: 51, Food(71,43,57,78), Water(73,33,48,67), Sleep(64,44,49,59)
 
 % Call the function to generate configurations

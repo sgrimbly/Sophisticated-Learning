@@ -224,7 +224,7 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
         t_at_100 = 0;
     end
 
-    % TODO: This time tracking doesn't work properly when experiment
+    % TODO(#5): This time tracking doesn't work properly when experiment
     % start/stops, e.g. on prioritised HPC or resuming from saved state.
     total_startTime = datestr(now, 'yyyy-mm-dd HH:MM:SS');
 
