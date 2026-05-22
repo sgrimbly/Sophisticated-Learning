@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-FILE_PATTERN = re.compile(r"^(BAUCB|BA|SI|SL)_Seed_?(\d+)(?:_.*)?\.txt$")
+FILE_PATTERN = re.compile(r"^([A-Za-z][A-Za-z_]*?)_Seed_?(\d+)(?:_.*)?\.txt$")
 DEFAULT_ALGORITHMS = ["BA", "BAUCB", "SI", "SL"]
 DISPLAY_LABELS = {
     "BA": "BARL",
