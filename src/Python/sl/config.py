@@ -167,6 +167,7 @@ ALGORITHM_VARIANTS = {
     "SL_noSmooth":      dict(family="SL", novelty=True,  smoothing=False, adaptive_plan=False),
     "SL_noNovelty_noSmooth": dict(family="SL", novelty=False, smoothing=False, adaptive_plan=False),
     "SL_adaptivePlan":  dict(family="SL", novelty=True,  smoothing=True,  adaptive_plan=True),
+    "SL_noNovelty_adaptivePlan":  dict(family="SL", novelty=False, smoothing=True,  adaptive_plan=True),
     # Baselines
     "BA":               dict(family="BA"),
     "BAUCB":            dict(family="BAUCB"),
