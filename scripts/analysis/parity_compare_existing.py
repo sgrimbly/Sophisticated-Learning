@@ -55,19 +55,51 @@ def load_python_results(out_dir: Path) -> dict[str, dict[int, list[int]]]:
 
 
 def load_matlab_results(ref_dir: Path, algorithm: str) -> dict[int, list[int]]:
-    """Return {seed: [t_terminal, ...]} for one algorithm. Decrements by 1."""
+    """Return {seed: [t_terminal, ...]} for one algorithm. Decrements by 1.
+
+    Supports two layouts:
+      (a) per-trial .txt files (diagnosis batch style):
+          {algorithm}_Seed{N}.txt with one t_terminal per line
+      (b) metrics.csv files (paper_si_sl_repro style):
+          {algorithm}_Seed{N}_metrics.csv with header + per-trial rows;
+          the per-trial t_terminal lives in the ``survival`` column.
+
+    Both conventions store MATLAB's (steps_executed + 1); we subtract 1
+    to align with Python's t_terminal = steps_executed.
+    """
     out: dict[int, list[int]] = {}
     alg_dir = ref_dir / algorithm
     if not alg_dir.is_dir():
         return out
-    pat = re.compile(rf"^{re.escape(algorithm)}_Seed_?(\d+)(?:_.*)?\.txt$")
+
+    txt_pat = re.compile(rf"^{re.escape(algorithm)}_Seed_?(\d+)(?:_.*)?\.txt$")
+    csv_pat = re.compile(rf"^{re.escape(algorithm)}_Seed_?(\d+)_metrics\.csv$")
+
     for f in sorted(alg_dir.glob("*.txt")):
-        m = pat.match(f.name)
+        m = txt_pat.match(f.name)
         if not m:
             continue
         seed = int(m.group(1))
         try:
             vals = [int(float(line.strip())) - 1 for line in open(f) if line.strip()]
+        except (ValueError, OSError):
+            continue
+        if vals:
+            out[seed] = vals
+
+    for f in sorted(alg_dir.glob("*_metrics.csv")):
+        m = csv_pat.match(f.name)
+        if not m:
+            continue
+        seed = int(m.group(1))
+        if seed in out:
+            continue  # txt takes precedence if both exist
+        try:
+            with open(f) as fh:
+                reader = csv.DictReader(fh)
+                if "survival" not in reader.fieldnames:
+                    continue
+                vals = [int(float(row["survival"])) - 1 for row in reader if row.get("survival")]
         except (ValueError, OSError):
             continue
         if vals:
