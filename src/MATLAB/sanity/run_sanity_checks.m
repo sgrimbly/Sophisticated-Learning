@@ -14,9 +14,24 @@ function run_sanity_checks()
     sanity_config_hash_changes_with_config();
     sanity_state_roundtrip();
     sanity_time_since_update_convention();
+    sanity_perf_golden_trace();
 
     fprintf('All sanity checks passed.\n');
 
+end
+
+function sanity_perf_golden_trace()
+    % Re-runs the canonical SI/SL configs and asserts step-metrics CSV plus
+    % survived array match the saved golden trace under sanity/golden/.
+    % Skipped (with a notice) if no golden files exist yet — the user must
+    % run perf_capture_golden_trace once on the baseline commit to seed them.
+    sanity_dir = fileparts(mfilename('fullpath'));
+    golden_dir = fullfile(sanity_dir, 'golden');
+    if ~exist(golden_dir, 'dir') || isempty(dir(fullfile(golden_dir, 'golden_*.mat')))
+        fprintf('  perf_golden_trace: SKIPPED (no golden files in %s; run perf_capture_golden_trace).\n', golden_dir);
+        return;
+    end
+    perf_check_golden_trace('exact');
 end
 
 function sanity_preference_scaling()

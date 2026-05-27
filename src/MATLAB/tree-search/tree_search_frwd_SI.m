@@ -27,7 +27,11 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
     efe_future_term = 0;
     P_prior = P;
     P = calculate_posterior(P, y, O, t);
-    bb{2} = normalise_matrix(b{2});
+    % bb is just an alias for b: callers must pass b such that b{2} is already
+    % column-stochastic (true for all in-tree callers — b{2} is sourced from
+    % initialiseEnvironment.m's row-sum-1 transition matrix). Removed a
+    % redundant per-recursive-call normalise_matrix(b{2}) that was a no-op.
+    bb = b;
     t_food_idx = min(max(round(t_food) + 1, 1), 35);
     t_water_idx = min(max(round(t_water) + 1, 1), 35);
     t_sleep_idx = min(max(round(t_sleep) + 1, 1), 35);
@@ -122,8 +126,10 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
 
         for action = actions
 
-            Q{1, action} = (B{1}(:, :, action) * P{t, 1}')';
-            Q{2, action} = (bb{2}(:, :, 1) * P{t, 2}');
+            Q1_a = (B{1}(:, :, action) * P{t, 1}')';
+            Q2_a = (bb{2}(:, :, 1) * P{t, 2}');
+            Q{1, action} = Q1_a;
+            Q{2, action} = Q2_a;
             s = Q(:, action);
             qs = spm_cross(s);
             qs = qs(:);
@@ -145,13 +151,18 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
                 else
 
                     for modal = 1:numel(A)
-                        O{modal, t + 1} = normalise(y{modal}(:, state)');
+                        % Inlined `normalise(...)`: y{modal} columns are already
+                        % stochastic (y{1}=A{1} identity, y{2}=normalise_matrix(a{2}),
+                        % y{3}=A{3}), so the NaN-fallback in normalise.m never fires.
+                        % Bit-exact to v / sum(v).
+                        v = y{modal}(:, state);
+                        O{modal, t + 1} = v' / sum(v);
                     end
 
                     % prior over next states given transition function
-                    % (calculated earlier)
-                    P{t + 1, 1} = Q{1, action};
-                    P{t + 1, 2} = Q{2, action};
+                    % (calculated earlier; Q1_a/Q2_a hoist avoids per-state cell deref)
+                    P{t + 1, 1} = Q1_a;
+                    P{t + 1, 2} = Q2_a;
                     chosen_action(t) = action;
 
                     % recursively move to the next node (likely state) of

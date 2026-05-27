@@ -6,20 +6,17 @@ module load software/matlab-R2024b
 
 declare -a ALGORITHMS=(
     "SI"
-    "SI_novelty"
-    "SI_novelty_smooth"
-    "SL_noSmooth"
     "SL"
 )
-declare -a SEEDS=({1..1500})
+declare -a SEEDS=({1..200})
 
 export ROOT_FOLDER="/home/grmstj001"
 export SCRIPT_PATH="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
-export RESULTS_ROOT="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/revision_novelty_default_env"
+export RESULTS_ROOT="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/results/unknown_model/MATLAB/paper_si_sl_repro_default_env"
 export TIME_LIMIT="72:00:00"
 export MAX_SLOTS=200
 
-export GRID_ID="default_env_revision_novelty_hor9"
+export GRID_ID="default_env_paper_si_sl_repro_hor9"
 export GRID_SIZE=10
 export START_POS=51
 export HILL=55
@@ -34,19 +31,38 @@ export W_NOVELTY=10
 export W_LEARNING=40
 export W_EPISTEMIC=1
 export W_PREFERENCE=10
-export UCB_SCALE=5
+export RNG_ALGORITHM="threefry"
 export STATE_SELECTION="sample"
-export PREFERENCE_PARAM="weight"
+export PREFERENCE_PARAM="inverse_precision"
 export BAUCB_VARIANT="legacy"
 export REAL_SMOOTHING=1
 export ADAPTIVE_LIKELIHOOD_IN_PLAN=0
 export LEARNING_PRUNE_THRESHOLD=0.2
 export SL_LOG_METRICS=1
 
-RUN_LABEL="revision_novelty_defaultenv_h${HORIZON}_t${NUM_TRIALS}_s1-50"
+RUN_LABEL="paper_si_sl_repro_defaultenv_h${HORIZON}_t${NUM_TRIALS}_s1-200"
 RUN_LABEL_SAFE=$(echo "$RUN_LABEL" | sed 's/[^a-zA-Z0-9_-]/_/g')
 export JOB_TRACKING_FILE="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB/job_submissions_${RUN_LABEL_SAFE}.txt"
 touch "$JOB_TRACKING_FILE"
+
+is_result_complete() {
+    local algorithm=$1
+    local seed=$2
+    local result_file="${RESULTS_ROOT}/${algorithm}/${algorithm}_Seed${seed}.txt"
+
+    if [ ! -f "$result_file" ]; then
+        return 1
+    fi
+
+    local line_count
+    line_count=$(awk 'NF {count++} END {print count+0}' "$result_file")
+    [ "$line_count" -ge "$NUM_TRIALS" ]
+}
+
+is_job_active() {
+    local job_prefix=$1
+    squeue -h -u grmstj001 -o '%j' | grep -Eq "^${job_prefix}_"
+}
 
 check_available_slots() {
     local num_jobs
@@ -73,8 +89,14 @@ submit_jobs() {
             fi
 
             JOB_ID="${RUN_LABEL_SAFE}_${ALGORITHM}_Seed${SEED}"
-            if grep -q "$JOB_ID" "$JOB_TRACKING_FILE"; then
-                echo "Skipping already submitted job: $JOB_ID"
+
+            if is_result_complete "$ALGORITHM" "$SEED"; then
+                echo "Skipping completed result: $JOB_ID"
+                continue
+            fi
+
+            if is_job_active "$JOB_ID"; then
+                echo "Skipping active job: $JOB_ID"
                 continue
             fi
 
@@ -95,7 +117,7 @@ submit_jobs() {
                 echo "rm -f \"${RUN_RESULTS_DIR}/${ALGORITHM}_Seed${SEED}_metrics.csv\""
                 echo "rm -f \"${RUN_RESULTS_DIR}/${ALGORITHM}_Seed${SEED}_step_metrics.csv\""
                 echo "rm -f \"${RUN_RESULTS_DIR}/${ALGORITHM}_Seed_${SEED}_GridID_${GRID_ID}_Cfg_\"*.mat"
-                echo "matlab -batch \"setenv('SL_LOG_METRICS','1'); addpath(genpath('${SCRIPT_PATH}')); weights = struct('novelty', ${W_NOVELTY}, 'learning', ${W_LEARNING}, 'epistemic', ${W_EPISTEMIC}, 'preference', ${W_PREFERENCE}, 'ucb_scale', ${UCB_SCALE}, 'state_selection', '${STATE_SELECTION}', 'preference_param', '${PREFERENCE_PARAM}', 'baucb_variant', '${BAUCB_VARIANT}', 'real_smoothing', logical(${REAL_SMOOTHING}), 'adaptive_likelihood_in_plan', logical(${ADAPTIVE_LIKELIHOOD_IN_PLAN}), 'learning_prune_threshold', ${LEARNING_PRUNE_THRESHOLD}); cfg = struct('seed', ${SEED}, 'grid_size', ${GRID_SIZE}, 'start_position', ${START_POS}, 'hill_pos', ${HILL}, 'food_sources', [${FOOD}], 'water_sources', [${WATER}], 'sleep_sources', [${SLEEP}], 'num_states', ${NUM_STATES}, 'num_trials', ${NUM_TRIALS}, 'max_horizon', ${HORIZON}, 'weights', weights); dashboard_run_one('${ALGORITHM}', cfg, [], '${RUN_RESULTS_DIR}', '${GRID_ID}');\""
+                echo "matlab -batch \"setenv('SL_LOG_METRICS','1'); addpath(genpath('${SCRIPT_PATH}')); weights = struct('novelty', ${W_NOVELTY}, 'learning', ${W_LEARNING}, 'epistemic', ${W_EPISTEMIC}, 'preference', ${W_PREFERENCE}, 'rng_algorithm', '${RNG_ALGORITHM}', 'state_selection', '${STATE_SELECTION}', 'preference_param', '${PREFERENCE_PARAM}', 'baucb_variant', '${BAUCB_VARIANT}', 'real_smoothing', logical(${REAL_SMOOTHING}), 'adaptive_likelihood_in_plan', logical(${ADAPTIVE_LIKELIHOOD_IN_PLAN}), 'learning_prune_threshold', ${LEARNING_PRUNE_THRESHOLD}); cfg = struct('seed', ${SEED}, 'grid_size', ${GRID_SIZE}, 'start_position', ${START_POS}, 'hill_pos', ${HILL}, 'food_sources', [${FOOD}], 'water_sources', [${WATER}], 'sleep_sources', [${SLEEP}], 'num_states', ${NUM_STATES}, 'num_trials', ${NUM_TRIALS}, 'max_horizon', ${HORIZON}, 'weights', weights); dashboard_run_one('${ALGORITHM}', cfg, [], '${RUN_RESULTS_DIR}', '${GRID_ID}');\""
             } >> "$SLURM_SCRIPT"
 
             output_dir="${RESULTS_ROOT}/slurm_logs/${RUN_LABEL_SAFE}/${ALGORITHM}/${JOB_NAME}"

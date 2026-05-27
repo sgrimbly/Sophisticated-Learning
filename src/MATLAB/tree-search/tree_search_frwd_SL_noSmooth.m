@@ -35,7 +35,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
     efe_future_term = 0;
     P_prior = P;
     P = calculate_posterior(P, y, O, t);
-    bb{2} = normalise_matrix(b{2});
+    bb = b;  % see tree_search_frwd_SI.m for rationale
     t_food_idx = min(max(round(t_food) + 1, 1), 35);
     t_water_idx = min(max(round(t_water) + 1, 1), 35);
     t_sleep_idx = min(max(round(t_sleep) + 1, 1), 35);
@@ -118,8 +118,10 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
 
         for action = actions
 
-            Q{1, action} = (B{1}(:, :, action) * P{t, 1}')';
-            Q{2, action} = (bb{2}(:, :, 1) * P{t, 2}');
+            Q1_a = (B{1}(:, :, action) * P{t, 1}')';
+            Q2_a = (bb{2}(:, :, 1) * P{t, 2}');
+            Q{1, action} = Q1_a;
+            Q{2, action} = Q2_a;
             s = Q(:, action);
             qs = spm_cross(s);
             qs = qs(:);
@@ -141,13 +143,14 @@ function [G, P, short_term_memory, best_actions, memory_accessed, efe_components
                 else
 
                     for modal = 1:numel(A)
-                        O{modal, t + 1} = normalise(y{modal}(:, state)');
+                        v = y{modal}(:, state);
+                        O{modal, t + 1} = v' / sum(v);  % see tree_search_frwd_SI.m
                     end
 
                     % prior over next states given transition function
                     % (calculated earlier)
-                    P{t + 1, 1} = Q{1, action};
-                    P{t + 1, 2} = Q{2, action};
+                    P{t + 1, 1} = Q1_a;
+                    P{t + 1, 2} = Q2_a;
                     chosen_action(t) = action;
 
                     %state_history(end+1) = context;

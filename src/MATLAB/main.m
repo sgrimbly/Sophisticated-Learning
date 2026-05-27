@@ -1,11 +1,12 @@
 function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest, results_file_name, ...
     grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weights, num_states, num_trials, grid_id)
     % Check the number of arguments and set default values if necessary
-	    arguments
+	        arguments
 	        algorithm char {mustBeMember(algorithm, { ...
 	            'model_mixed_RL', 'model_free_RL', ...
-	            'SL', 'SL_noSmooth', 'SL_noNovelty', 'SL_noNovelty_noSmooth', ...
-	            'SI', 'SI_smooth', 'SI_novelty', 'SI_novelty_smooth', ...
+	            'SL', 'SL_noNovelty', 'SL_adaptivePlan', 'SL_noNovelty_adaptivePlan', 'SL_noAdaptivePlan', ...
+	            'SL_noSmooth', 'SL_noNovelty_noSmooth', 'SL_noSmooth_adaptivePlan', 'SL_noNovelty_noSmooth_adaptivePlan', 'SL_noSmooth_noAdaptivePlan', ...
+	            'SI', 'SI_noNovelty', 'SI_novelty', 'SI_smooth', 'SI_smooth_noNovelty', 'SI_novelty_smooth', ...
 	            'BA', 'BAUCB', 'known_large_MCT' ...
 	        })} = 'SL_noNovelty_noSmooth';
         seed (1, 1) double {mustBeInteger} = 1;
@@ -28,6 +29,7 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 	            'epistemic', 1, ...
 	            'preference', 10, ...
 	            'ucb_scale', 5, ...
+	            'rng_algorithm', 'twister', ...
 	            'state_selection', 'sample', ...
 	            'preference_param', 'weight', ...
 	            'baucb_variant', 'legacy', ...
@@ -49,6 +51,10 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 	    if ~isfield(weights, 'ucb_scale')
 	        weights.ucb_scale = 5;
 	    end
+
+    if ~isfield(weights, 'rng_algorithm')
+        weights.rng_algorithm = 'twister';
+    end
 
     if ~isfield(weights, 'state_selection')
         weights.state_selection = 'sample';
@@ -86,10 +92,19 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 	        weights.learning_prune_threshold = 0.2;
 	    end
 
-		    novelty_for_run = weights.novelty;
-			    if ismember(algorithm, {'SI', 'SI_smooth', 'SL_noNovelty', 'SL_noNovelty_noSmooth'})
-			        novelty_for_run = 0;
-			    end
+    algorithm_spec = resolve_algorithm_spec(algorithm);
+
+    novelty_for_run = weights.novelty;
+    if ~algorithm_spec.novelty_on
+        novelty_for_run = 0;
+    end
+
+    real_smoothing_for_run = logical(weights.real_smoothing);
+    adaptive_for_run = logical(weights.adaptive_likelihood_in_plan);
+    if algorithm_spec.is_unknown_model
+        real_smoothing_for_run = algorithm_spec.smoothing_on;
+        adaptive_for_run = algorithm_spec.adaptive_plan_on;
+    end
 
     % Preference parameterisation:
     %   - preference_param='weight' : larger values strengthen the extrinsic term
@@ -111,15 +126,15 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 			    if isempty(results_file_name)
 			        weight_info = sprintf('novelty_%g-learning_%g-epistemic_%g-preference_%g-prefParam_%s-stateSel_%s-realSmooth_%d-adaptPlan_%d-lpThr_%g', ...
 			            novelty_for_run, weights.learning, weights.epistemic, preference_value, weights.preference_param, weights.state_selection, ...
-			            double(logical(weights.real_smoothing)), double(logical(weights.adaptive_likelihood_in_plan)), weights.learning_prune_threshold);
-			        if strcmp(algorithm, 'BAUCB')
+			            double(logical(real_smoothing_for_run)), double(logical(adaptive_for_run)), weights.learning_prune_threshold);
+			        if strcmp(algorithm_spec.implementation, 'BAUCB')
 			            weight_info = sprintf('%s-baucbVar_%s-ucb_%g', weight_info, weights.baucb_variant, weights.ucb_scale);
 			        end
-		        is_unknown_model = ismember(algorithm, {'SI','SI_smooth','SI_novelty','SI_novelty_smooth','SL','SL_noSmooth','SL_noNovelty','SL_noNovelty_noSmooth','BA','BAUCB'});
+		        is_unknown_model = algorithm_spec.is_unknown_model;
 	        if is_unknown_model
 	            grid_id_safe = sanitize_file_component(grid_id);
 	            run_config = struct(...
-	                'algorithm', algorithm, ...
+	                'algorithm', algorithm_spec.label, ...
 	                'seed', seed, ...
 	                'grid_size', grid_size, ...
 	                'start_position', start_position, ...
@@ -127,18 +142,19 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 	                'food_sources', food_sources, ...
 	                'water_sources', water_sources, ...
 	                'sleep_sources', sleep_sources, ...
-		                'weights', weight_vector, ...
+			                'weights', weight_vector, ...
+			                'rng_algorithm', weights.rng_algorithm, ...
 			                'state_selection', weights.state_selection, ...
 			                'preference_param', weights.preference_param, ...
-			                'real_smoothing', logical(weights.real_smoothing), ...
-			                'adaptive_likelihood_in_plan', logical(weights.adaptive_likelihood_in_plan), ...
+			                'real_smoothing', logical(real_smoothing_for_run), ...
+			                'adaptive_likelihood_in_plan', logical(adaptive_for_run), ...
 			                'learning_prune_threshold', weights.learning_prune_threshold, ...
 			                'num_states', num_states, ...
 			                'num_trials', num_trials, ...
 			                'grid_id', grid_id, ...
 			                'max_horizon', horizon ...
 			            );
-	            if strcmp(algorithm, 'BAUCB')
+	            if strcmp(algorithm_spec.implementation, 'BAUCB')
 	                run_config.baucb_variant = weights.baucb_variant;
 	                run_config.ucb_scale = weights.ucb_scale;
 	            end
@@ -166,29 +182,8 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
         end
         
 	        % Map algorithm -> subfolder + filename prefix
-		        switch algorithm
-		            case {'model_free_RL','model_mixed_RL'}
-		                run_folder = 'RL-runs';
-		                file_prefix = ['results_' algorithm];
-	            case {'SI','SI_smooth','SI_novelty','SI_novelty_smooth'}
-	                run_folder = 'SI-runs';
-	                file_prefix = ['results_' algorithm];
-	            case {'SL','SL_noSmooth','SL_noNovelty','SL_noNovelty_noSmooth'}
-	                run_folder = 'SL-runs';
-	                file_prefix = ['results_' algorithm];
-            case 'BA'
-                run_folder = 'BA-runs';
-                file_prefix = 'results_BA';
-            case 'BAUCB'
-                run_folder = 'BAUCB-runs';
-                file_prefix = 'results_BAUCB';
-            case 'known_large_MCT'
-                run_folder = 'MCT-runs';
-                file_prefix = 'results_known_large_MCT';
-            otherwise
-                run_folder = 'misc-runs';
-                file_prefix = ['results_' algorithm];
-        end
+		        run_folder = algorithm_spec.run_folder;
+		        file_prefix = algorithm_spec.file_prefix;
         
         results_dir = fullfile(results_root, run_folder);
         if ~exist(results_dir, 'dir')
@@ -223,44 +218,33 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
 		    % Execute based on the selected algorithm
 		    survived = 0;
 				    run_options = struct(...
+				        'rng_algorithm', weights.rng_algorithm, ...
 				        'state_selection', weights.state_selection, ...
 				        'preference_param', weights.preference_param, ...
 				        'baucb_variant', weights.baucb_variant, ...
-				        'real_smoothing', logical(weights.real_smoothing), ...
-				        'adaptive_likelihood_in_plan', logical(weights.adaptive_likelihood_in_plan), ...
+				        'real_smoothing', logical(real_smoothing_for_run), ...
+				        'adaptive_likelihood_in_plan', logical(adaptive_for_run), ...
 				        'learning_prune_threshold', weights.learning_prune_threshold, ...
-			        'algorithm_label', algorithm ...
+			        'algorithm_label', algorithm_spec.label ...
 			    );
 
-    switch algorithm
+    switch algorithm_spec.implementation
 	        case 'SI'
-	            disp('Starting SI.');
+	            disp(['Starting ' algorithm_spec.label '.']);
 	            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            % survived = SI(seed);
-	            % SI_rowan(seed);
-	            disp('SI run complete');
-	        case 'SI_novelty'
-	            disp('Starting SI_novelty.');
-	            survived = SI_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SI_novelty run complete');
+	            disp([algorithm_spec.label ' run complete']);
+	        case 'SI_smooth'
+	            disp(['Starting ' algorithm_spec.label '.']);
+	            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
+	            disp([algorithm_spec.label ' run complete']);
 	        case 'SL'
-	            disp('Starting SL.');
+	            disp(['Starting ' algorithm_spec.label '.']);
 	            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            % survived = SL(seed);
-	            % SL_rowan(seed);
-	            disp('SL run complete');
-	        case 'SL_noNovelty'
-	            disp('Starting SL_noNovelty.');
-	            survived = SL_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources,  weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SL_noNovelty run complete');
+	            disp([algorithm_spec.label ' run complete']);
 	        case 'SL_noSmooth'
-	            disp('Starting SL_noSmooth.');
+	            disp(['Starting ' algorithm_spec.label '.']);
 	            survived = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SL_noSmooth run complete');
-	        case 'SL_noNovelty_noSmooth'
-	            disp('Starting SL_noNovelty_noSmooth.');
-	            survived = SL_noSmooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SL_noNovelty_noSmooth run complete');
+	            disp([algorithm_spec.label ' run complete']);
 	        case 'BA'
 	            disp('Starting BA.');
 	            survived = BA_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
@@ -269,14 +253,6 @@ function [survived] = main(algorithm, seed, horizon, k_factor, root_folder, mct,
             disp('Starting BAUCB.');
             survived = BAUCB_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, weights.ucb_scale, results_file_name, horizon, run_options);
             disp('BA_UCB run complete');
-	        case 'SI_smooth'
-	            disp('Starting SI_smooth.');
-	            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SI_smooth run complete');
-	        case 'SI_novelty_smooth'
-	            disp('Starting SI_novelty_smooth.');
-	            survived = SI_smooth_modular(seed, grid_size, start_position, hill_pos, food_sources, water_sources, sleep_sources, weight_vector, num_states, num_trials, grid_id, results_file_name, horizon, run_options);
-	            disp('SI_novelty_smooth run complete');
         case 'known_large_MCT'
             disp('Starting known_large_MCT.');
             known_large_MCT(seed, horizon, k_factor, root_folder, mct, num_mct, auto_rest);

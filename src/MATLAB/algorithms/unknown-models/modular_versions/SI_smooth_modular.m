@@ -26,6 +26,9 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
     if ~isfield(run_options, 'preference_param')
         run_options.preference_param = 'weight';
     end
+    if ~isfield(run_options, 'rng_algorithm')
+        run_options.rng_algorithm = 'twister';
+    end
     if ~isfield(run_options, 'real_smoothing')
         run_options.real_smoothing = true;
     end
@@ -82,6 +85,7 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
         'weights', weights, ...
         'state_selection', run_options.state_selection, ...
         'preference_param', run_options.preference_param, ...
+        'rng_algorithm', run_options.rng_algorithm, ...
         'real_smoothing', logical(run_options.real_smoothing), ...
         'adaptive_likelihood_in_plan', logical(run_options.adaptive_likelihood_in_plan), ...
         'learning_prune_threshold', run_options.learning_prune_threshold, ...
@@ -205,7 +209,7 @@ function [survived] = SI_smooth_modular(seed, grid_size, start_position, hill_po
         end
     else
         % Initialization of variables for a new simulation
-        rng(seed, 'twister') % Set the initial random state
+        rng(seed, run_options.rng_algorithm) % Set the initial random state
         trial = 1;
 
         a_history = cell(1, num_trials);

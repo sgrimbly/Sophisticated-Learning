@@ -10,7 +10,7 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
 
     G = 0.02;
     P = calculate_posterior(P, y, O, t);
-    bb{2} = normalise_matrix(b{2});
+    bb = b;  % see tree_search_frwd_SI.m for rationale
 
     if t_food > 35
         t_food = 35;
@@ -63,8 +63,10 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                 efe_future(action) = sh;
                 memory_accessed = memory_accessed + 1;
             else
-                Q{1, action} = (B{1}(:, :, action) * P{t, 1}')';
-                Q{2, action} = (bb{2}(:, :, 1) * P{t, 2}');
+                Q1_a = (B{1}(:, :, action) * P{t, 1}')';
+                Q2_a = (bb{2}(:, :, 1) * P{t, 2}');
+                Q{1, action} = Q1_a;
+                Q{2, action} = Q2_a;
                 s = Q(:, action);
                 qs = spm_cross(s);
                 qs = qs(:);
@@ -82,13 +84,14 @@ function [G, P, short_term_memory, best_actions, memory_accessed] = tree_search_
                     % get distribution over possible observations given
                     % state
                     for modal = 1:numel(A)
-                        O{modal, t + 1} = normalise(y{modal}(:, state)');
+                        v = y{modal}(:, state);
+                        O{modal, t + 1} = v' / sum(v);  % see tree_search_frwd_SI.m
                     end
 
                     % prior over next states given transition function
                     % (calculated earlier)
-                    P{t + 1, 1} = Q{1, action};
-                    P{t + 1, 2} = Q{2, action};
+                    P{t + 1, 1} = Q1_a;
+                    P{t + 1, 2} = Q2_a;
                     chosen_action(t) = action;
                     % recursively move to the next node (likely state) of
                     % the tree

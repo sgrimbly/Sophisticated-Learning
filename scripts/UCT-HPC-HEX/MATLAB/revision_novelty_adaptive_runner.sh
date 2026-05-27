@@ -5,13 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 module load software/matlab-R2024b
 
 declare -a ALGORITHMS=(
-    "SI"
-    "SI_novelty"
-    "SI_novelty_smooth"
-    "SL_noSmooth"
-    "SL"
+    "SL_noSmooth_adaptivePlan"
 )
-declare -a SEEDS=({1..1500})
+declare -a SEEDS=({1..200})
 
 export ROOT_FOLDER="/home/grmstj001"
 export SCRIPT_PATH="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/src/MATLAB"
@@ -39,11 +35,11 @@ export STATE_SELECTION="sample"
 export PREFERENCE_PARAM="weight"
 export BAUCB_VARIANT="legacy"
 export REAL_SMOOTHING=1
-export ADAPTIVE_LIKELIHOOD_IN_PLAN=0
+export ADAPTIVE_LIKELIHOOD_IN_PLAN=1
 export LEARNING_PRUNE_THRESHOLD=0.2
 export SL_LOG_METRICS=1
 
-RUN_LABEL="revision_novelty_defaultenv_h${HORIZON}_t${NUM_TRIALS}_s1-50"
+RUN_LABEL="revision_novelty_defaultenv_SL_noSmooth_adaptivePlan_h${HORIZON}_t${NUM_TRIALS}_s1-200"
 RUN_LABEL_SAFE=$(echo "$RUN_LABEL" | sed 's/[^a-zA-Z0-9_-]/_/g')
 export JOB_TRACKING_FILE="$ROOT_FOLDER/MATLAB-experiments/Sophisticated-Learning/scripts/UCT-HPC-HEX/MATLAB/job_submissions_${RUN_LABEL_SAFE}.txt"
 touch "$JOB_TRACKING_FILE"
