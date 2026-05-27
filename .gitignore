@@ -14,3 +14,13 @@ results-backup.zip
 missing_grid_data.zip
 zip_results_*.out
 zip_results_*.err
+
+# Run artefacts (Slurm logs, sweeps, profiling, generated job lists)
+logs/
+*.out
+*.err
+src/Python/sl_sweeps/
+src/MATLAB/sanity/profile_*/
+scripts/UCT-HPC-HEX/MATLAB/job_submissions*.txt
+scripts/UCT-HPC-HEX/MATLAB/grid_configs_job_submissions*.txt
+*.bak-*
