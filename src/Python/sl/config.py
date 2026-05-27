@@ -154,12 +154,17 @@ class RunOptions:
         return h
 
 
-# Algorithm name -> variant flag map (matches resolve_algorithm_spec.m)
+# Algorithm name -> variant flag map. Labels and (novelty, smoothing,
+# adaptive_plan) semantics mirror MATLAB ``resolve_algorithm_spec.m`` 1:1 so
+# the two implementations can be paired by name. ``SI_smooth`` is
+# novelty-OFF (identical to ``SI_smooth_noNovelty``), matching the MATLAB
+# definition; use ``SI_novelty_smooth`` for the novelty-ON smoothing variant.
 ALGORITHM_VARIANTS = {
     # SI family
     "SI":               dict(family="SI", novelty=True,  smoothing=False, adaptive_plan=False),
     "SI_noNovelty":     dict(family="SI", novelty=False, smoothing=False, adaptive_plan=False),
-    "SI_smooth":        dict(family="SI", novelty=True,  smoothing=True,  adaptive_plan=False),
+    "SI_smooth":        dict(family="SI", novelty=False, smoothing=True,  adaptive_plan=False),
+    "SI_novelty_smooth": dict(family="SI", novelty=True, smoothing=True,  adaptive_plan=False),
     "SI_smooth_noNovelty": dict(family="SI", novelty=False, smoothing=True, adaptive_plan=False),
     # SL family
     "SL":               dict(family="SL", novelty=True,  smoothing=True,  adaptive_plan=False),
@@ -168,6 +173,8 @@ ALGORITHM_VARIANTS = {
     "SL_noNovelty_noSmooth": dict(family="SL", novelty=False, smoothing=False, adaptive_plan=False),
     "SL_adaptivePlan":  dict(family="SL", novelty=True,  smoothing=True,  adaptive_plan=True),
     "SL_noNovelty_adaptivePlan":  dict(family="SL", novelty=False, smoothing=True,  adaptive_plan=True),
+    "SL_noSmooth_adaptivePlan":   dict(family="SL", novelty=True,  smoothing=False, adaptive_plan=True),
+    "SL_noNovelty_noSmooth_adaptivePlan": dict(family="SL", novelty=False, smoothing=False, adaptive_plan=True),
     # Baselines
     "BA":               dict(family="BA"),
     "BAUCB":            dict(family="BAUCB"),
