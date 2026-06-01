@@ -103,10 +103,20 @@ if _HAS_NUMBA:
         y_resource_local = y_resource
 
         if t > true_t:
-            if novelty_on and w_novelty != 0.0:
+            # MATLAB tree_search_frwd_SL{,_noSmooth}.m run the imagined a-update
+            # and the adaptive_likelihood y-refresh UNCONDITIONALLY when
+            # t>true_t; only the novelty CONTRIBUTION to G is scaled by
+            # novelty_weight. Gating the whole block on novelty skipped the
+            # adaptive y-refresh for novelty-off / w_novelty=0 adaptivePlan
+            # variants, diverging from MATLAB (worst under the smoothing
+            # window's 7-step a-accumulation). The refresh below covers BOTH
+            # the smoothing and single-step paths (MATLAB refreshes y{2} for
+            # SL and SL_noSmooth alike), and the epistemic term uses the
+            # refreshed likelihood whenever adaptive_likelihood is set.
+            novelty_total = 0.0
+            if (novelty_on and w_novelty != 0.0) or adaptive_likelihood:
                 if smoothing_on:
                     start = max(0, t - 6)
-                    novelty_total = 0.0
                     for timey in range(start, t + 1):
                         if timey != t:
                             L_ctx = _spm_backwards(
@@ -125,23 +135,6 @@ if _HAS_NUMBA:
                         )
                         a_temp = a_prior + a_weighted
                         novelty_total += _kldir_normalised_flat(a_temp, a_prior)
-                    if adaptive_likelihood:
-                        # y_resource = normalise_matrix_columns(a_imag_local)
-                        n_o = a_imag_local.shape[0]
-                        n_s = a_imag_local.shape[1]
-                        n_c = a_imag_local.shape[2]
-                        y_resource_local = np.empty_like(a_imag_local)
-                        for s in range(n_s):
-                            for c in range(n_c):
-                                colsum = 0.0
-                                for o in range(n_o):
-                                    colsum += a_imag_local[o, s, c]
-                                if colsum > 0.0:
-                                    for o in range(n_o):
-                                        y_resource_local[o, s, c] = a_imag_local[o, s, c] / colsum
-                                else:
-                                    for o in range(n_o):
-                                        y_resource_local[o, s, c] = 0.0
                 else:
                     # SL_noSmooth: single-step novelty using current node only
                     a_prior = a_imag_local.copy()
@@ -152,14 +145,44 @@ if _HAS_NUMBA:
                     a_temp = a_prior + a_weighted
                     novelty_total = _kldir_normalised_flat(a_temp, a_prior)
 
+                if adaptive_likelihood:
+                    # y_resource = normalise_matrix_columns(a_imag_local)
+                    n_o = a_imag_local.shape[0]
+                    n_s = a_imag_local.shape[1]
+                    n_c = a_imag_local.shape[2]
+                    y_resource_local = np.empty_like(a_imag_local)
+                    for s in range(n_s):
+                        for c in range(n_c):
+                            colsum = 0.0
+                            for o in range(n_o):
+                                colsum += a_imag_local[o, s, c]
+                            if colsum > 0.0:
+                                for o in range(n_o):
+                                    y_resource_local[o, s, c] = a_imag_local[o, s, c] / colsum
+                            else:
+                                for o in range(n_o):
+                                    y_resource_local[o, s, c] = 0.0
+
+            if novelty_on and w_novelty != 0.0:
                 G += w_novelty * novelty_total
 
             if epistemic_on and w_epistemic != 0.0:
-                # Use the (possibly updated) y_resource_local — flatten on the fly
-                if adaptive_likelihood and smoothing_on:
-                    A_res_flat_local = np.ascontiguousarray(
-                        y_resource_local.reshape(y_resource_local.shape[0], -1).copy()
-                    )
+                # Use the (possibly updated) y_resource_local. Flatten in
+                # Fortran order to match A_res_flat (built with
+                # reshape(order="F")) and the joint-state index used for qs
+                # (position fastest, then context): joint = s + c*n_s. Numba's
+                # reshape can't take order="F", so flatten by hand -- a plain
+                # C-order reshape here permutes the joint states and silently
+                # misaligns the refreshed likelihood with _G_epistemic.
+                if adaptive_likelihood:
+                    n_o = y_resource_local.shape[0]
+                    n_s = y_resource_local.shape[1]
+                    n_c = y_resource_local.shape[2]
+                    A_res_flat_local = np.empty((n_o, n_s * n_c), dtype=np.float64)
+                    for o in range(n_o):
+                        for s in range(n_s):
+                            for c in range(n_c):
+                                A_res_flat_local[o, s + c * n_s] = y_resource_local[o, s, c]
                     epi = _G_epistemic(A_pos_flat, A_res_flat_local, A_hill_flat,
                                         P_pos_prior, P_ctx_prior)
                 else:

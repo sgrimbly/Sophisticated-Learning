@@ -175,5 +175,91 @@ class TestSISmoothJITParity(unittest.TestCase):
         self.assertNotAlmostEqual(r_smooth.G, r_single.G, places=6)
 
 
+@unittest.skipUnless(HAS_NUMBA, "numba not installed")
+class TestSLAdaptiveNoveltyOffParity(unittest.TestCase):
+    """Guards the SL adaptive-likelihood refresh under novelty-OFF.
+
+    MATLAB ``tree_search_frwd_SL{,_noSmooth}.m`` perform the imagined
+    a-update and the ``adaptive_likelihood`` y-refresh whenever
+    ``t > true_t`` -- they are NOT gated by ``novelty_weight``. A prior bug
+    nested both inside the novelty guard, so novelty-off / weight-0
+    ``*_adaptivePlan`` variants skipped the refresh that MATLAB still does,
+    producing a Python<->MATLAB divergence (KS 0.40 for
+    ``SL_noNovelty_adaptivePlan``). These tests lock the fix in.
+    """
+
+    def _sl_smooth_setup(self):
+        grid, inputs, Op, Or, Oh, Pp, Pc = _setup(max_horizon=3)
+        S = grid.num_states
+        P_pos0 = np.zeros(S); P_pos0[grid.start_position] = 1.0
+        P_ctx0 = np.array([0.4, 0.3, 0.2, 0.1])
+        O_res0 = np.array([0.0, 1.0, 0.0, 0.0])      # food at step 0
+        O_hill0 = np.array([0.0, 0.0, 0.0, 0.0, 1.0])
+        hist = dict(
+            history_O_resource=[O_res0, Or],
+            history_O_hill=[O_hill0, Oh],
+            history_P_pos=[P_pos0, Pp],
+            history_P_ctx=[P_ctx0, Pc],
+        )
+        return grid, inputs, Op, Or, Oh, Pp, Pc, hist
+
+    def test_sl_novelty_off_adaptive_jit_matches_numpy(self):
+        """JIT and NumPy must agree for novelty-off + adaptive + smoothing,
+        i.e. the refresh and a-update run identically on both paths."""
+        from sl.planning.sl import tree_search_sl
+        from sl.planning.sl_jit import tree_search_sl_jit_run
+
+        grid, inputs, Op, Or, Oh, Pp, Pc, hist = self._sl_smooth_setup()
+        # prune_threshold=0 so the imagined a-update is unambiguous and the two
+        # planners agree to ~1e-8 (at the default 0.2 the fabricated history
+        # sits on the prune edge, where SL's ~0.1% fused-summation drift shows).
+        # This isolates the F-order likelihood-flatten alignment: a regression
+        # to a C-order flatten misaligns the refreshed likelihood and reopens a
+        # ~1.8e-3 JIT/NumPy gap, which the tight tolerance below would catch.
+        kw = dict(t=1, N=3, t_food=5, t_water=3, t_sleep=4, true_t=1,
+                  novelty_on=False, epistemic_on=True, smoothing_on=True,
+                  adaptive_likelihood_in_plan=True,
+                  learning_prune_threshold=0.0, **hist)
+        stm_np = np.zeros((35, 35, 35, grid.num_joint_states))
+        stm_jit = np.zeros((35, 35, 35, grid.num_joint_states))
+
+        r_np = tree_search_sl(stm_np, Op, Or, Oh, Pp, Pc, inputs, **kw)
+        r_jit = tree_search_sl_jit_run(stm_jit, Op, Or, Oh, Pp, Pc, inputs, **kw)
+        np.testing.assert_allclose(r_np.G, r_jit.G, rtol=1e-3, atol=1e-3)
+
+    def test_sl_novelty_off_adaptive_refresh_fires(self):
+        """With novelty OFF, toggling adaptive_likelihood must STILL change G
+        (the imagined y-refresh feeds the epistemic term + imagined obs).
+
+        Pre-fix this asserted-equal because the whole block was skipped when
+        novelty was off; post-fix the refresh runs and the two must differ.
+        Checked on both the NumPy and JIT planners.
+        """
+        from sl.planning.sl import tree_search_sl
+        from sl.planning.sl_jit import tree_search_sl_jit_run
+
+        for runner in (tree_search_sl, tree_search_sl_jit_run):
+            grid, inputs, Op, Or, Oh, Pp, Pc, hist = self._sl_smooth_setup()
+            # prune_threshold=0 so the imagined a-update is unambiguously
+            # non-zero: with the default 0.2 the fabricated history sits on the
+            # prune edge, where the ~0.1% JIT/NumPy summation drift can zero out
+            # the (tiny) refresh effect and mask the regression.
+            base = dict(t=1, N=3, t_food=5, t_water=3, t_sleep=4, true_t=1,
+                        novelty_on=False, epistemic_on=True, smoothing_on=True,
+                        learning_prune_threshold=0.0)
+            stm_on = np.zeros((35, 35, 35, grid.num_joint_states))
+            stm_off = np.zeros((35, 35, 35, grid.num_joint_states))
+            r_on = runner(stm_on, Op, Or, Oh, Pp, Pc, inputs,
+                          adaptive_likelihood_in_plan=True, **base, **hist)
+            r_off = runner(stm_off, Op, Or, Oh, Pp, Pc, inputs,
+                           adaptive_likelihood_in_plan=False, **base, **hist)
+            rel = abs(r_on.G - r_off.G) / max(abs(r_off.G), 1e-9)
+            self.assertGreater(
+                rel, 1e-4,
+                f"{runner.__name__}: adaptive refresh did not affect G "
+                f"under novelty-off (G_on={r_on.G}, G_off={r_off.G})",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

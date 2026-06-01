@@ -249,10 +249,15 @@ def _node(stm, hist, rec, t, N, t_food, t_water, t_sleep):
     t_sleep_idx = index_clip(int(round(t_sleep)) + 1)
 
     if t > rec.true_t:
-        # Novelty (with imagined learning across smoothing window)
+        # MATLAB tree_search_frwd_SL{,_noSmooth}.m run the imagined a-update and
+        # the adaptive_likelihood y-refresh UNCONDITIONALLY when t>true_t; only
+        # the novelty CONTRIBUTION to G is scaled by novelty_weight. Gating the
+        # whole block on novelty (the prior behaviour) skipped the adaptive
+        # y-refresh for novelty-off / novelty_weight=0 adaptivePlan variants,
+        # diverging from MATLAB (worst under the smoothing window's 7-step
+        # a-accumulation -- see the SL_noNovelty_adaptivePlan parity failure).
         novelty_val = 0.0
-        a_imag_pre = rec.a_resource_imag
-        if rec.novelty_on and inp.weights.novelty != 0:
+        if (rec.novelty_on and inp.weights.novelty != 0) or rec.adaptive:
             if rec.smoothing_on:
                 novelty_val, rec.a_resource_imag, rec.y_resource = _novelty_sl(
                     rec.a_resource_imag, hist,
@@ -280,6 +285,7 @@ def _node(stm, hist, rec, t, N, t_food, t_water, t_sleep):
                 if rec.adaptive:
                     rec.y_resource = normalise_matrix_columns(rec.a_resource_imag)
 
+        if rec.novelty_on and inp.weights.novelty != 0:
             G += inp.weights.novelty * novelty_val
 
         if rec.epistemic_on and inp.weights.epistemic != 0:
