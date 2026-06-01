@@ -265,6 +265,21 @@ But joint states are actually `num_states * num_context_states`.
 
 This works only because both happen to be 4 in the default environment, but it is semantically wrong and will break as soon as those differ.
 
+#### 3.8.6 SL imagined learning + adaptive y-refresh were gated behind novelty (RESOLVED, commit 75abce4c)
+
+In MATLAB `tree_search_frwd_SL.m` / `tree_search_frwd_SL_noSmooth.m`, when `t > true_t`:
+
+- the imagined `a{2}` update **and** the `adaptive_likelihood_in_plan` refresh `y{2} = normalise_matrix(a{2})` run unconditionally; only the *contribution* `G = G + novelty_weight * novelty` is scaled by `novelty_weight`.
+
+The Python ports (`sl.py` and `sl_jit.py`) nested the whole learning + refresh block inside `if novelty_on and weight != 0`. Because every `*_adaptivePlan` variant runs with `adaptive_likelihood_in_plan=True` (mapped from the `adaptive_plan` spec flag in `agent.py`), novelty-off / `novelty_weight=0` adaptivePlan variants skipped the `y`-refresh that MATLAB still applies. With a stale `y` the epistemic term and imagined observations diverged — worst under the smoothing window's 7-step `a`-accumulation: `SL_noNovelty_adaptivePlan` scored KS 0.40 vs the MATLAB diagnosis batch (vs ~0.13 for its single-step `noSmooth` sibling). Note this also affects the `novelty_weight=0` column of any novelty-weight sweep on the adaptivePlan family.
+
+Two further JIT-only discrepancies surfaced (both latent — the adaptive refresh effect is ~0 for the novelty-ON path that previously exercised the branch):
+
+- `sl_jit.py` `noSmooth` branch never refreshed `y`, and its epistemic term was gated on `adaptive_likelihood AND smoothing_on`. The NumPy `sl.py` path was already correct; MATLAB `SL_noSmooth.m` refreshes `y` too.
+- The refreshed likelihood was flattened with a default C-order `reshape`, but the canonical `A_res_flat` is built `reshape(order="F")` and the `qs` joint-state index is `s + c*n_s` (position fastest, then context). **Numba's `reshape` does not accept `order="F"`**, so the C-order flatten silently permuted joint states and misaligned the refreshed likelihood with `G_epistemic` (the refresh propagated but landed in the wrong slots and nearly cancelled).
+
+**Fix:** hoist the learning + refresh out of the novelty guard in both planners; add the `noSmooth` refresh and broaden the epistemic gate in the JIT path; flatten the refreshed likelihood in Fortran order by hand inside the njit. After the fix the full 8-variant Python↔MATLAB table passes (`SL_noNovelty_adaptivePlan` KS 0.40 → 0.10; `SL_adaptivePlan` KS 0.06). Guarded by `TestSLAdaptiveNoveltyOffParity` in `test_jit_parity.py`. (The analogous SI windowed-novelty port gap is commit 2d5ca22a; see §4.8.)
+
 ### 3.9 Missing algorithms / variants in Python
 
 Python has no equivalents for:
