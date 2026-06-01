@@ -16,18 +16,41 @@ import numpy as np
 
 
 FILE_PATTERN = re.compile(r"^([A-Za-z][A-Za-z_]*?)_Seed_?(\d+)(?:_.*)?\.txt$")
+# Revision diagnosis batch stores per-seed survival as {algo}_Seed{N}_metrics.csv
+# (a `survival` column, one row per trial) rather than a flat .txt. Match those
+# too -- and only the plain *_metrics.csv, not *_step_metrics.csv.
+CSV_PATTERN = re.compile(r"^([A-Za-z][A-Za-z_]*?)_Seed_?(\d+)_metrics\.csv$")
 DEFAULT_ALGORITHMS = ["BA", "BAUCB", "SI", "SL"]
+# Headline algorithm: drawn thicker and on top in the learning-curve figure.
+HEADLINE_ALGO = "SL_adaptivePlan"
 DISPLAY_LABELS = {
     "BA": "BARL",
     "BAUCB": "BARL-UCB",
     "SI": "SI",
     "SL": "SL",
+    # Revision 8-condition ablation set (novelty x smoothing x adaptive).
+    "SL_adaptivePlan": "SL adaptive",
+    "SL_noNovelty_adaptivePlan": "SL adaptive, no novelty",
+    "SL_noSmooth_adaptivePlan": "SL adaptive, no smoothing",
+    "SL_noNovelty_noSmooth_adaptivePlan": "SL adaptive, no nov/smooth",
+    "SI_noNovelty": "SI, no novelty",
+    "SI_novelty_smooth": "SI, novelty+smooth",
+    "SI_smooth_noNovelty": "SI smooth, no novelty",
 }
 COLORS = {
     "BA": "#457b9d",
     "BAUCB": "#2a9d8f",
     "SI": "#6c757d",
     "SL": "#d62828",
+    # Headline in bold red; other SL-adaptive ablations in warm tones, SI
+    # family in cool tones.
+    "SL_adaptivePlan": "#d62828",
+    "SL_noNovelty_adaptivePlan": "#f08080",
+    "SL_noSmooth_adaptivePlan": "#e07a5f",
+    "SL_noNovelty_noSmooth_adaptivePlan": "#9c6644",
+    "SI_noNovelty": "#a8dadc",
+    "SI_novelty_smooth": "#2a9d8f",
+    "SI_smooth_noNovelty": "#8ecae6",
 }
 
 
@@ -81,12 +104,39 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _read_survival_values(path: Path) -> np.ndarray | None:
+    """Per-trial survival series from a flat .txt or a diagnosis *_metrics.csv.
+
+    The .txt format is one survival value per line. The metrics.csv format has
+    a `survival` column (one row per trial); rows are ordered by `trial`.
+    Returns ``None`` if a CSV lacks a usable `survival` column.
+    """
+    if path.suffix == ".txt":
+        values = np.loadtxt(path, dtype=float)
+        return np.atleast_1d(values)
+    rows: list[tuple[int, float]] = []
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames or "survival" not in reader.fieldnames:
+            return None
+        for r in reader:
+            if r.get("survival") in (None, ""):
+                continue
+            rows.append((int(float(r["trial"])), float(r["survival"])))
+    rows.sort(key=lambda rt: rt[0])
+    return np.array([v for _, v in rows], dtype=float)
+
+
 def load_runs(input_dir: Path, algorithms: list[str], num_trials: int) -> tuple[list[LoadedRun], list[dict[str, object]]]:
     candidates: dict[tuple[str, int], LoadedRun] = {}
     duplicate_rows: list[dict[str, object]] = []
 
-    for path in sorted(input_dir.rglob("*.txt")):
-        match = FILE_PATTERN.match(path.name)
+    txt_paths = ((p, FILE_PATTERN) for p in input_dir.rglob("*.txt"))
+    csv_paths = ((p, CSV_PATTERN) for p in input_dir.rglob("*_metrics.csv"))
+    for path, pattern in sorted(
+        [*txt_paths, *csv_paths], key=lambda pp: str(pp[0])
+    ):
+        match = pattern.match(path.name)
         if not match:
             continue
 
@@ -94,7 +144,9 @@ def load_runs(input_dir: Path, algorithms: list[str], num_trials: int) -> tuple[
         if algorithm not in algorithms:
             continue
 
-        values = np.loadtxt(path, dtype=float)
+        values = _read_survival_values(path)
+        if values is None:
+            continue
         if values.ndim == 0:
             values = np.array([float(values)])
         if len(values) != num_trials:
@@ -231,8 +283,16 @@ def plot_learning_curves(summary_rows: list[dict[str, object]], algorithms: list
         y = np.array([float(row["mean"]) for row in algo_rows], dtype=float)
         ci = np.array([float(row["ci95"]) for row in algo_rows], dtype=float)
         color = COLORS.get(algorithm, None)
-        ax.plot(x, y, label=DISPLAY_LABELS.get(algorithm, algorithm), linewidth=2, color=color)
-        ax.fill_between(x, y - ci, y + ci, alpha=0.18, color=color)
+        is_headline = algorithm == HEADLINE_ALGO
+        ax.plot(
+            x, y, label=DISPLAY_LABELS.get(algorithm, algorithm),
+            linewidth=3.2 if is_headline else 1.8, color=color,
+            zorder=5 if is_headline else 2,
+        )
+        ax.fill_between(
+            x, y - ci, y + ci, alpha=0.18 if is_headline else 0.10,
+            color=color, zorder=4 if is_headline else 1,
+        )
 
     ax.set_xlabel("Trial")
     ax.set_ylabel("Average Survival Steps")
@@ -247,7 +307,7 @@ def plot_learning_curves(summary_rows: list[dict[str, object]], algorithms: list
 
 def plot_final_window_summary(plateau_rows: list[dict[str, object]], output_path: Path) -> None:
     sorted_rows = sorted(plateau_rows, key=lambda row: float(row["final_window_mean"]), reverse=True)
-    fig, ax = plt.subplots(figsize=(8, 4.5))
+    fig, ax = plt.subplots(figsize=(max(8.0, 1.15 * len(sorted_rows)), 5.0))
     x = np.arange(len(sorted_rows))
     heights = np.array([float(row["final_window_mean"]) for row in sorted_rows], dtype=float)
     yerr = np.array([1.96 * float(row["final_window_sem"]) for row in sorted_rows], dtype=float)
@@ -255,7 +315,8 @@ def plot_final_window_summary(plateau_rows: list[dict[str, object]], output_path
     labels = [str(row["display_label"]) for row in sorted_rows]
 
     ax.bar(x, heights, yerr=yerr, color=colors, alpha=0.9, capsize=4)
-    ax.set_xticks(x, labels)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.set_ylabel("Mean Survival, Last 20 Trials")
     ax.set_title("Final-window summary")
     ax.spines["top"].set_visible(False)
