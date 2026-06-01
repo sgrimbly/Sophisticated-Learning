@@ -36,6 +36,16 @@ VENV=/scratch/grmstj001/virtual-envs/act-inf-numba
 REPO=/home/grmstj001/MATLAB-experiments/Sophisticated-Learning
 OUT=${REPLICATION_OUT:-/scratch/grmstj001/replication_$(date +%Y%m%d)/python_sweep}
 
+# Optional weight + grid-id overrides for parameter sweeps (e.g. the
+# novelty x learning grid). Defaults reproduce the canonical replication
+# (Weights novelty=10, learning=40; grid_id=default10), so the per-variant
+# submissions above are unaffected. GRID_ID flows into the output filename
+# ({algo}_seed{seed}_{grid_id}.json), so vary it per grid cell to avoid
+# collisions when novelty/learning change but algo+seed do not.
+W_NOVELTY=${W_NOVELTY:-10}
+W_LEARNING=${W_LEARNING:-40}
+GRID_ID=${GRID_ID:-default10}
+
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_NUM_THREADS=1
 # Per-task, node-local JIT cache: a SHARED NFS cache dir races across the
 # array (OSError: Stale file handle on the cache index). One dir per task
@@ -44,13 +54,14 @@ export NUMBA_CACHE_DIR="${TMPDIR:-/tmp}/numba_cache_${SLURM_JOB_ID:-x}_${SLURM_A
 mkdir -p "$NUMBA_CACHE_DIR" "$OUT"
 
 cd "$REPO/src/Python"
-echo "[replication] algo=$ALGO seed=$SEED out=$OUT node=$(hostname)"
+echo "[replication] algo=$ALGO seed=$SEED out=$OUT grid=$GRID_ID w_nov=$W_NOVELTY w_lrn=$W_LEARNING node=$(hostname)"
 
 "$VENV/bin/python" -m sl.sweep \
     --algorithms "$ALGO" \
     --seeds "${SEED}-${SEED}" \
     --num-trials 120 --max-horizon 9 \
     --use-jit-planner --workers 1 \
-    --grid-id default10 \
+    --grid-id "$GRID_ID" \
+    --w-novelty "$W_NOVELTY" --w-learning "$W_LEARNING" \
     --output-dir "$OUT" \
     --skip-existing
