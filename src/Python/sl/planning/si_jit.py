@@ -261,6 +261,129 @@ if _HAS_NUMBA:
         return out
 
     # =========================================================================
+    # Smoothing-window primitives.
+    #
+    # These are shared with the SL JIT planner (sl_jit imports them from here).
+    # They live in si_jit — the "lower" module in the import graph — so the
+    # SI-smooth recursion below and sl_jit's recursion both reuse one compiled
+    # copy without an import cycle (sl_jit -> si_jit only).
+    # =========================================================================
+
+    @_nb.njit(cache=True, fastmath=True)
+    def _spm_backwards(L_init, hist_O_hill, hist_P_pos, A_hill, B_ctx_step,
+                        timey, t):
+        """Hill-only backward smoothing for the JIT recursions."""
+        n_o, n_s, n_c = A_hill.shape
+        L = L_init.copy()
+        p = np.eye(n_c, dtype=np.float64)
+        new_p = np.empty((n_c, n_c), dtype=np.float64)
+
+        for timestep in range(timey + 1, t + 1):
+            # p = B_ctx_step @ p
+            for i in range(n_c):
+                for j in range(n_c):
+                    v = 0.0
+                    for k in range(n_c):
+                        v += B_ctx_step[i, k] * p[k, j]
+                    new_p[i, j] = v
+            for i in range(n_c):
+                for j in range(n_c):
+                    p[i, j] = new_p[i, j]
+
+            # temp_c[c] = sum_s P_pos[s] * sum_o O_hill[o] * A_hill[o, s, c]
+            temp_c = np.zeros(n_c, dtype=np.float64)
+            for c in range(n_c):
+                v = 0.0
+                for s in range(n_s):
+                    lm = 0.0
+                    for o in range(n_o):
+                        lm += hist_O_hill[timestep, o] * A_hill[o, s, c]
+                    v += hist_P_pos[timestep, s] * lm
+                temp_c[c] = v
+
+            # aaa = temp_c @ p
+            for c in range(n_c):
+                v = 0.0
+                for cc in range(n_c):
+                    v += temp_c[cc] * p[cc, c]
+                L[c] = L[c] * v
+
+        # spm_norm
+        s = 0.0
+        for i in range(n_c):
+            v = L[i]
+            if v != v or v == np.inf or v == -np.inf:
+                v = 0.0
+            L[i] = v
+            s += v
+        if s <= 0.0:
+            for i in range(n_c):
+                L[i] = 1.0 / n_c
+        else:
+            for i in range(n_c):
+                L[i] = L[i] / s
+        return L
+
+    @_nb.njit(cache=True, fastmath=True)
+    def _planning_dirichlet_update(a_imag, O_res_t, P_pos_t, P_ctx_smoothed,
+                                    learning_weight, prune_threshold):
+        """In-line port of learning.planning_dirichlet_update for the JIT loops.
+
+        Returns (a_new, a_weighted).  a_learning is folded in.  Pass
+        ``prune_threshold = 0.0`` to disable pruning (SI smoothing uses the
+        ``a > 0`` mask only, no magnitude prune).
+        """
+        n_o, n_s, n_c = a_imag.shape
+        a_new = a_imag.copy()
+        a_weighted = np.zeros((n_o, n_s, n_c), dtype=np.float64)
+
+        for o in range(n_o):
+            ov = O_res_t[o]
+            for s in range(n_s):
+                pv = ov * P_pos_t[s]
+                for c in range(n_c):
+                    if a_imag[o, s, c] <= 0.0:
+                        continue
+                    al = pv * P_ctx_smoothed[c]
+                    if prune_threshold > 0.0 and al <= prune_threshold:
+                        al = 0.0
+                    a_new[o, s, c] = a_imag[o, s, c] + al
+                    if o == 0:
+                        a_weighted[o, s, c] = al
+                    else:
+                        a_weighted[o, s, c] = learning_weight * al
+        return a_new, a_weighted
+
+    @_nb.njit(cache=True, fastmath=True)
+    def _kldir_normalised_flat(a_temp, a_prior):
+        """KL(normalise(a_temp.flat), normalise(a_prior.flat)) — fused."""
+        n_o, n_s, n_c = a_temp.shape
+        sum_t = 0.0; sum_p = 0.0
+        for o in range(n_o):
+            for s in range(n_s):
+                for c in range(n_c):
+                    if a_temp[o, s, c] > 0.0:
+                        sum_t += a_temp[o, s, c]
+                    if a_prior[o, s, c] > 0.0:
+                        sum_p += a_prior[o, s, c]
+        if sum_t <= 0.0 or sum_p <= 0.0:
+            return 0.0
+        kl = 0.0
+        for o in range(n_o):
+            for s in range(n_s):
+                for c in range(n_c):
+                    p_t = a_temp[o, s, c] / sum_t
+                    p_p = a_prior[o, s, c] / sum_p
+                    if p_t <= 0.0:
+                        continue
+                    if p_p <= 0.0:
+                        return _REALMAX
+                    kl += p_t * np.log(p_t / p_p)
+        if kl != kl or kl == np.inf or kl == -np.inf:
+            return _REALMAX
+        return kl
+
+    # =========================================================================
     # Tree search recursion (SI)
     # =========================================================================
 
@@ -390,6 +513,174 @@ if _HAS_NUMBA:
 
         return G, best_action
 
+    # =========================================================================
+    # Tree search recursion (SI smooth — windowed novelty)
+    # =========================================================================
+
+    @_nb.njit(cache=True)
+    def _si_smooth_recurse(
+        stm,
+        hist_O_res, hist_O_hill, hist_P_pos, hist_P_ctx,
+        a_resource,                       # CONSTANT real a (never mutated)
+        A_pos_flat, A_res_flat, A_hill_flat, A_hill,
+        y_pos, y_resource, y_hill,
+        B_pos, bb_ctx,
+        w_novelty, w_learning, w_epistemic, pref_iprec,
+        t, N, t_food, t_water, t_sleep, true_t,
+        novelty_on, epistemic_on,
+        node_count, memory_hits, memory_misses,
+    ):
+        """JIT port of tree_search_frwd_SI_smooth.m.
+
+        Same shape as :func:`_si_recurse`, but the novelty term is summed over
+        a backward-smoothed t-6..t window. ``a_resource`` is held constant
+        (SI does not imaginarily learn), so it is passed unchanged to every
+        child — there is no a/y threading as in the SL JIT recursion.
+        """
+        node_count[0] += 1
+        G = 0.02
+
+        P_pos_prior = hist_P_pos[t].copy()
+        P_ctx_prior = hist_P_ctx[t].copy()
+
+        P_pos, P_ctx = _calculate_posterior(
+            P_pos_prior, P_ctx_prior,
+            y_resource, y_hill,
+            hist_O_res[t], hist_O_hill[t],
+        )
+
+        # Posterior writeback (MATLAB line 29): deeper recursions' spm_backwards
+        # reads P{timey, ...} for timey < t and must see the posterior.
+        for s_ in range(P_pos.shape[0]):
+            hist_P_pos[t, s_] = P_pos[s_]
+        for c_ in range(P_ctx.shape[0]):
+            hist_P_ctx[t, c_] = P_ctx[c_]
+
+        t_food_idx = _index_clip(int(round(float(t_food))) + 1)
+        t_water_idx = _index_clip(int(round(float(t_water))) + 1)
+        t_sleep_idx = _index_clip(int(round(float(t_sleep))) + 1)
+
+        if t > true_t:
+            if novelty_on and w_novelty != 0.0:
+                start = max(0, t - 6)
+                novelty_total = 0.0
+                for timey in range(start, t + 1):
+                    if timey != t:
+                        L_ctx = _spm_backwards(
+                            hist_P_ctx[timey].copy(),
+                            hist_O_hill, hist_P_pos,
+                            A_hill, bb_ctx[:, :, 0], timey, t,
+                        )
+                    else:
+                        L_ctx = P_ctx.copy()
+                    P_pos_t = hist_P_pos[timey]
+                    O_res_t = hist_O_res[timey]
+                    # Reuse the single-step novelty term: a_prior is the
+                    # constant real a_resource each window step (SI does not
+                    # imaginarily learn), and _novelty_si masks by a>0 with no
+                    # prune. Same algebra as the NumPy _novelty_si_smooth, so
+                    # the two paths agree to FP precision.
+                    novelty_total += _novelty_si(
+                        a_resource, O_res_t, P_pos_t, L_ctx, w_learning,
+                    )
+                G += w_novelty * novelty_total
+
+            if epistemic_on and w_epistemic != 0.0:
+                epi = _G_epistemic(A_pos_flat, A_res_flat, A_hill_flat,
+                                    P_pos_prior, P_ctx_prior)
+                G += w_epistemic * epi
+
+            C = _determine_observation_preference(t_food, t_water, t_sleep, pref_iprec)
+            extrinsic = (hist_O_res[t, 0] * C[0] + hist_O_res[t, 1] * C[1]
+                         + hist_O_res[t, 2] * C[2] + hist_O_res[t, 3] * C[3])
+            G += extrinsic
+
+            t_food = int(round((t_food + 1) * (1.0 - hist_O_res[t, 1])))
+            t_water = int(round((t_water + 1) * (1.0 - hist_O_res[t, 2])))
+            t_sleep = int(round((t_sleep + 1) * (1.0 - hist_O_res[t, 3])))
+            t_food_idx = _index_clip(t_food + 1)
+            t_water_idx = _index_clip(t_water + 1)
+            t_sleep_idx = _index_clip(t_sleep + 1)
+
+        best_action = -1
+        if t < N:
+            n_states = A_pos_flat.shape[0]
+            n_ctx = bb_ctx.shape[0]
+            n_joint = n_states * n_ctx
+            n_actions = B_pos.shape[2]
+            efe = np.zeros(n_actions, dtype=np.float64)
+
+            for action in range(n_actions):
+                Q_pos_a = np.dot(B_pos[:, :, action], P_pos)
+                Q_ctx_a = np.dot(bb_ctx[:, :, 0], P_ctx)
+
+                qs = np.empty(n_joint, dtype=np.float64)
+                idx = 0
+                for c in range(n_ctx):
+                    pcv = Q_ctx_a[c]
+                    for p_ in range(n_states):
+                        qs[idx] = Q_pos_a[p_] * pcv
+                        idx += 1
+
+                threshold = 1.0 / 8.0
+                count_likely = 0
+                for k in range(n_joint):
+                    if qs[k] > threshold:
+                        count_likely += 1
+                if count_likely == 0:
+                    eps = 1.0 / (n_joint * n_joint)
+                    threshold = 1.0 / n_joint - eps
+
+                K = np.zeros(n_joint, dtype=np.float64)
+                action_fe = 0.0
+                for state in range(n_joint):
+                    if qs[state] <= threshold:
+                        continue
+                    cache = stm[t_food_idx, t_water_idx, t_sleep_idx, state]
+                    if cache != 0.0:
+                        K[state] = cache
+                        memory_hits[0] += 1
+                    else:
+                        O_res_n = _imagined_obs_modality(y_resource, state, n_states)
+                        O_hill_n = _imagined_obs_modality(y_hill, state, n_states)
+                        for o in range(hist_O_res.shape[1]):
+                            hist_O_res[t + 1, o] = O_res_n[o]
+                        for o in range(hist_O_hill.shape[1]):
+                            hist_O_hill[t + 1, o] = O_hill_n[o]
+                        for s_ in range(n_states):
+                            hist_P_pos[t + 1, s_] = Q_pos_a[s_]
+                        for c_ in range(n_ctx):
+                            hist_P_ctx[t + 1, c_] = Q_ctx_a[c_]
+
+                        G_child, _ = _si_smooth_recurse(
+                            stm,
+                            hist_O_res, hist_O_hill, hist_P_pos, hist_P_ctx,
+                            a_resource,
+                            A_pos_flat, A_res_flat, A_hill_flat, A_hill,
+                            y_pos, y_resource, y_hill,
+                            B_pos, bb_ctx,
+                            w_novelty, w_learning, w_epistemic, pref_iprec,
+                            t + 1, N, t_food, t_water, t_sleep, true_t,
+                            novelty_on, epistemic_on,
+                            node_count, memory_hits, memory_misses,
+                        )
+                        K[state] = G_child
+                        stm[t_food_idx, t_water_idx, t_sleep_idx, state] = G_child
+                        memory_misses[0] += 1
+                    action_fe += K[state] * qs[state]
+
+                efe[action] = 0.7 * action_fe
+
+            best_action = 0
+            best_val = efe[0]
+            for k in range(1, n_actions):
+                if efe[k] > best_val:
+                    best_val = efe[k]
+                    best_action = k
+            G += best_val
+
+        return G, best_action
+
 
 def tree_search_si_jit_run(
     short_term_memory: np.ndarray,
@@ -400,17 +691,31 @@ def tree_search_si_jit_run(
     t_food: int, t_water: int, t_sleep: int,
     true_t: int,
     novelty_on: bool = True, epistemic_on: bool = True,
+    smoothing_on: bool = False,
+    history_O_resource: Optional[list] = None,
+    history_O_hill: Optional[list] = None,
+    history_P_pos: Optional[list] = None,
+    history_P_ctx: Optional[list] = None,
 ) -> PlanResult:
     """JIT entry point with the same return type as :func:`tree_search_si`.
 
-    Falls back to the NumPy planner if numba is unavailable.
+    Falls back to the NumPy planner if numba is unavailable. When
+    ``smoothing_on`` and novelty are both active, dispatches to the windowed
+    -novelty recursion (``tree_search_frwd_SI_smooth.m``); otherwise the
+    single-step recursion (the smooth/non-smooth trees are identical when
+    novelty is off).
     """
     if not _HAS_NUMBA:
         from .si import tree_search_si as _np_si
         return _np_si(short_term_memory, O_pos_root, O_res_root, O_hill_root,
                       P_pos_root, P_ctx_root, inputs,
                       t, N, t_food, t_water, t_sleep, true_t,
-                      novelty_on=novelty_on, epistemic_on=epistemic_on)
+                      novelty_on=novelty_on, epistemic_on=epistemic_on,
+                      smoothing_on=smoothing_on,
+                      history_O_resource=history_O_resource,
+                      history_O_hill=history_O_hill,
+                      history_P_pos=history_P_pos,
+                      history_P_ctx=history_P_ctx)
 
     # Pre-flatten A modalities to F-order linear index for the JIT epistemic.
     A_pos_flat = np.ascontiguousarray(
@@ -426,6 +731,71 @@ def tree_search_si_jit_run(
     node_count = np.zeros(1, dtype=np.int64)
     memory_hits = np.zeros(1, dtype=np.int64)
     memory_misses = np.zeros(1, dtype=np.int64)
+
+    if smoothing_on and novelty_on and inputs.weights.novelty != 0:
+        n_states = inputs.A_pos.shape[0]
+        n_ctx = inputs.A_resource.shape[2]
+        T_max = N + 2  # safe upper bound for imagined trajectory writes
+        hist_O_res = np.zeros((T_max, 4), dtype=np.float64)
+        hist_O_hill = np.zeros((T_max, 5), dtype=np.float64)
+        hist_P_pos = np.zeros((T_max, n_states), dtype=np.float64)
+        hist_P_ctx = np.zeros((T_max, n_ctx), dtype=np.float64)
+
+        # Populate the real-trial history portion (indices 0..t-1; the root
+        # slot t is overwritten just below).
+        if history_O_resource is not None:
+            for k in range(min(t + 1, len(history_O_resource))):
+                v = history_O_resource[k]
+                if v is not None:
+                    hist_O_res[k, :len(v)] = v
+        if history_O_hill is not None:
+            for k in range(min(t + 1, len(history_O_hill))):
+                v = history_O_hill[k]
+                if v is not None:
+                    hist_O_hill[k, :len(v)] = v
+        if history_P_pos is not None:
+            for k in range(min(t + 1, len(history_P_pos))):
+                v = history_P_pos[k]
+                if v is not None:
+                    hist_P_pos[k, :len(v)] = v
+        if history_P_ctx is not None:
+            for k in range(min(t + 1, len(history_P_ctx))):
+                v = history_P_ctx[k]
+                if v is not None:
+                    hist_P_ctx[k, :len(v)] = v
+
+        hist_O_res[t] = np.asarray(O_res_root, dtype=np.float64).ravel()
+        hist_O_hill[t] = np.asarray(O_hill_root, dtype=np.float64).ravel()
+        hist_P_pos[t] = np.asarray(P_pos_root, dtype=np.float64).ravel()
+        hist_P_ctx[t] = np.asarray(P_ctx_root, dtype=np.float64).ravel()
+
+        G, best_action = _si_smooth_recurse(
+            short_term_memory,
+            hist_O_res, hist_O_hill, hist_P_pos, hist_P_ctx,
+            np.ascontiguousarray(inputs.a_resource, dtype=np.float64),
+            A_pos_flat, A_res_flat, A_hill_flat,
+            np.ascontiguousarray(inputs.A_hill, dtype=np.float64),
+            np.ascontiguousarray(inputs.y_pos, dtype=np.float64),
+            np.ascontiguousarray(inputs.y_resource, dtype=np.float64),
+            np.ascontiguousarray(inputs.y_hill, dtype=np.float64),
+            np.ascontiguousarray(inputs.B_pos, dtype=np.float64),
+            np.ascontiguousarray(inputs.bb_ctx, dtype=np.float64),
+            float(inputs.weights.novelty),
+            float(inputs.weights.learning),
+            float(inputs.weights.epistemic),
+            float(inputs.weights.preference_inverse_precision),
+            int(t), int(N),
+            int(t_food), int(t_water), int(t_sleep), int(true_t),
+            bool(novelty_on), bool(epistemic_on),
+            node_count, memory_hits, memory_misses,
+        )
+        return PlanResult(
+            G=float(G),
+            best_actions=[int(best_action)] if best_action >= 0 else [],
+            memory_hits=int(memory_hits[0]),
+            memory_misses=int(memory_misses[0]),
+            node_count=int(node_count[0]),
+        )
 
     G, best_action = _si_recurse(
         short_term_memory,

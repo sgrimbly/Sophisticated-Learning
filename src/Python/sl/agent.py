@@ -269,30 +269,28 @@ def run_trial(
         )
 
         if family == "SI":
+            si_kwargs = dict(
+                t=t, N=t + horizon,
+                t_food=t_food, t_water=t_water, t_sleep=t_sleep,
+                true_t=t,
+                novelty_on=spec.get("novelty", True) and weights.novelty != 0,
+                epistemic_on=weights.epistemic != 0,
+                smoothing_on=spec.get("smoothing", False),
+                history_O_resource=O_resource_history,
+                history_O_hill=O_hill_history,
+                history_P_pos=Q_pos_history,
+                history_P_ctx=Q_ctx_history,
+            )
             if options.use_jit_planner:
                 from .planning.si_jit import tree_search_si_jit_run
                 result = tree_search_si_jit_run(
-                    short_term_memory,
-                    O_pos, O_res, O_hill,
-                    Q_pos, Q_ctx,
-                    planner_inputs,
-                    t=t, N=t + horizon,
-                    t_food=t_food, t_water=t_water, t_sleep=t_sleep,
-                    true_t=t,
-                    novelty_on=spec.get("novelty", True) and weights.novelty != 0,
-                    epistemic_on=weights.epistemic != 0,
+                    short_term_memory, O_pos, O_res, O_hill, Q_pos, Q_ctx,
+                    planner_inputs, **si_kwargs,
                 )
             else:
                 result = tree_search_si(
-                    short_term_memory,
-                    O_pos, O_res, O_hill,
-                    Q_pos, Q_ctx,
-                    planner_inputs,
-                    t=t, N=t + horizon,
-                    t_food=t_food, t_water=t_water, t_sleep=t_sleep,
-                    true_t=t,
-                    novelty_on=spec.get("novelty", True) and weights.novelty != 0,
-                    epistemic_on=weights.epistemic != 0,
+                    short_term_memory, O_pos, O_res, O_hill, Q_pos, Q_ctx,
+                    planner_inputs, **si_kwargs,
                 )
         elif family == "SL":
             sl_kwargs = dict(

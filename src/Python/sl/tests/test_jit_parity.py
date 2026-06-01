@@ -116,5 +116,64 @@ class TestSLJITParity(unittest.TestCase):
         np.testing.assert_allclose(r_np.G, r_jit.G, rtol=1e-2, atol=1e-1)
 
 
+@unittest.skipUnless(HAS_NUMBA, "numba not installed")
+class TestSISmoothJITParity(unittest.TestCase):
+    """Parity for the windowed-novelty SI variant (SI_novelty_smooth).
+
+    Unlike the SL smooth path, the SI smooth path reuses the single-step
+    ``_novelty_si`` term (constant ``a_prior``, ``a>0`` mask, no prune) on
+    both the NumPy and JIT sides, so the two implementations should agree
+    much more tightly than SL (which uses the looser fused
+    ``_planning_dirichlet_update``).
+    """
+
+    def _smooth_setup(self):
+        grid, inputs, Op, Or, Oh, Pp, Pc = _setup(max_horizon=3)
+        S = grid.num_states
+        # One step of fabricated-but-valid history so the t-6..t window has
+        # length > 1 and exercises spm_backwards over a past step.
+        P_pos0 = np.zeros(S); P_pos0[grid.start_position] = 1.0
+        P_ctx0 = np.array([0.4, 0.3, 0.2, 0.1])
+        O_res0 = np.array([0.0, 1.0, 0.0, 0.0])      # food at step 0
+        O_hill0 = np.array([0.0, 0.0, 0.0, 0.0, 1.0])
+        hist = dict(
+            history_O_resource=[O_res0, Or],
+            history_O_hill=[O_hill0, Oh],
+            history_P_pos=[P_pos0, Pp],
+            history_P_ctx=[P_ctx0, Pc],
+        )
+        return grid, inputs, Op, Or, Oh, Pp, Pc, hist
+
+    def test_si_smooth_jit_matches_numpy(self):
+        from sl.planning.si_jit import tree_search_si_jit_run
+
+        grid, inputs, Op, Or, Oh, Pp, Pc, hist = self._smooth_setup()
+        kw = dict(t=1, N=3, t_food=5, t_water=3, t_sleep=4, true_t=1,
+                  novelty_on=True, epistemic_on=True, smoothing_on=True, **hist)
+        stm_np = np.zeros((35, 35, 35, grid.num_joint_states))
+        stm_jit = np.zeros((35, 35, 35, grid.num_joint_states))
+
+        r_np = tree_search_si(stm_np, Op, Or, Oh, Pp, Pc, inputs, **kw)
+        r_jit = tree_search_si_jit_run(stm_jit, Op, Or, Oh, Pp, Pc, inputs, **kw)
+
+        np.testing.assert_allclose(r_np.G, r_jit.G, rtol=1e-9, atol=1e-8)
+        self.assertGreater(r_jit.node_count, 0)
+
+    def test_si_smooth_differs_from_single_step(self):
+        """The windowed novelty must change G vs the single-step SI path,
+        otherwise the smoothing branch is not actually being exercised."""
+        grid, inputs, Op, Or, Oh, Pp, Pc, hist = self._smooth_setup()
+        base = dict(t=1, N=3, t_food=5, t_water=3, t_sleep=4, true_t=1,
+                    novelty_on=True, epistemic_on=True)
+        stm_a = np.zeros((35, 35, 35, grid.num_joint_states))
+        stm_b = np.zeros((35, 35, 35, grid.num_joint_states))
+
+        r_smooth = tree_search_si(stm_a, Op, Or, Oh, Pp, Pc, inputs,
+                                  smoothing_on=True, **hist, **base)
+        r_single = tree_search_si(stm_b, Op, Or, Oh, Pp, Pc, inputs,
+                                  smoothing_on=False, **base)
+        self.assertNotAlmostEqual(r_smooth.G, r_single.G, places=6)
+
+
 if __name__ == "__main__":
     unittest.main()

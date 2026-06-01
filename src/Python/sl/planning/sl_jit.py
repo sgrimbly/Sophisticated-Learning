@@ -49,119 +49,12 @@ if _HAS_NUMBA:
         _determine_observation_preference as _determine_observation_preference,
         _index_clip as _index_clip,
         _imagined_obs_modality as _imagined_obs_modality,
+        # Smoothing-window primitives moved to si_jit (the lower module) so the
+        # SI-smooth and SL recursions share one compiled copy without a cycle.
+        _spm_backwards as _spm_backwards,
+        _planning_dirichlet_update as _planning_dirichlet_update,
+        _kldir_normalised_flat as _kldir_normalised_flat,
     )
-
-    @_nb.njit(cache=True, fastmath=True)
-    def _spm_backwards(L_init, hist_O_hill, hist_P_pos, A_hill, B_ctx_step,
-                        timey, t):
-        """Hill-only backward smoothing for the JIT SL recursion."""
-        n_o, n_s, n_c = A_hill.shape
-        L = L_init.copy()
-        p = np.eye(n_c, dtype=np.float64)
-        new_p = np.empty((n_c, n_c), dtype=np.float64)
-
-        for timestep in range(timey + 1, t + 1):
-            # p = B_ctx_step @ p
-            for i in range(n_c):
-                for j in range(n_c):
-                    v = 0.0
-                    for k in range(n_c):
-                        v += B_ctx_step[i, k] * p[k, j]
-                    new_p[i, j] = v
-            for i in range(n_c):
-                for j in range(n_c):
-                    p[i, j] = new_p[i, j]
-
-            # temp_c[c] = sum_s P_pos[s] * sum_o O_hill[o] * A_hill[o, s, c]
-            temp_c = np.zeros(n_c, dtype=np.float64)
-            for c in range(n_c):
-                v = 0.0
-                for s in range(n_s):
-                    lm = 0.0
-                    for o in range(n_o):
-                        lm += hist_O_hill[timestep, o] * A_hill[o, s, c]
-                    v += hist_P_pos[timestep, s] * lm
-                temp_c[c] = v
-
-            # aaa = temp_c @ p
-            for c in range(n_c):
-                v = 0.0
-                for cc in range(n_c):
-                    v += temp_c[cc] * p[cc, c]
-                L[c] = L[c] * v
-
-        # spm_norm
-        s = 0.0
-        for i in range(n_c):
-            v = L[i]
-            if v != v or v == np.inf or v == -np.inf:
-                v = 0.0
-            L[i] = v
-            s += v
-        if s <= 0.0:
-            for i in range(n_c):
-                L[i] = 1.0 / n_c
-        else:
-            for i in range(n_c):
-                L[i] = L[i] / s
-        return L
-
-    @_nb.njit(cache=True, fastmath=True)
-    def _planning_dirichlet_update(a_imag, O_res_t, P_pos_t, P_ctx_smoothed,
-                                    learning_weight, prune_threshold):
-        """In-line port of learning.planning_dirichlet_update for the SL JIT loop.
-
-        Returns (a_new, a_weighted).  a_learning is folded in.
-        """
-        n_o, n_s, n_c = a_imag.shape
-        a_new = a_imag.copy()
-        a_weighted = np.zeros((n_o, n_s, n_c), dtype=np.float64)
-
-        for o in range(n_o):
-            ov = O_res_t[o]
-            for s in range(n_s):
-                pv = ov * P_pos_t[s]
-                for c in range(n_c):
-                    if a_imag[o, s, c] <= 0.0:
-                        continue
-                    al = pv * P_ctx_smoothed[c]
-                    if prune_threshold > 0.0 and al <= prune_threshold:
-                        al = 0.0
-                    a_new[o, s, c] = a_imag[o, s, c] + al
-                    if o == 0:
-                        a_weighted[o, s, c] = al
-                    else:
-                        a_weighted[o, s, c] = learning_weight * al
-        return a_new, a_weighted
-
-    @_nb.njit(cache=True, fastmath=True)
-    def _kldir_normalised_flat(a_temp, a_prior):
-        """KL(normalise(a_temp.flat), normalise(a_prior.flat)) — fused."""
-        n_o, n_s, n_c = a_temp.shape
-        sum_t = 0.0; sum_p = 0.0
-        for o in range(n_o):
-            for s in range(n_s):
-                for c in range(n_c):
-                    if a_temp[o, s, c] > 0.0:
-                        sum_t += a_temp[o, s, c]
-                    if a_prior[o, s, c] > 0.0:
-                        sum_p += a_prior[o, s, c]
-        if sum_t <= 0.0 or sum_p <= 0.0:
-            return 0.0
-        kl = 0.0
-        for o in range(n_o):
-            for s in range(n_s):
-                for c in range(n_c):
-                    p_t = a_temp[o, s, c] / sum_t
-                    p_p = a_prior[o, s, c] / sum_p
-                    if p_t <= 0.0:
-                        continue
-                    if p_p <= 0.0:
-                        return _REALMAX
-                    kl += p_t * np.log(p_t / p_p)
-        if kl != kl or kl == np.inf or kl == -np.inf:
-            return _REALMAX
-        return kl
 
     @_nb.njit(cache=True)
     def _sl_recurse(
