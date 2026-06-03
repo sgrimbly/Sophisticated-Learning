@@ -52,7 +52,22 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output", default="early_learning.png")
     p.add_argument("--num-trials", type=int, default=120)
     p.add_argument("--threshold", type=float, default=THRESHOLD)
+    p.add_argument("--smooth-window", type=int, default=1,
+                   help="Rolling-mean window for the learning-curve panel only "
+                        "(cosmetic; threshold crossings use the raw mean). 1 = off.")
     return p.parse_args()
+
+
+def _smooth(y: np.ndarray, window: int) -> np.ndarray:
+    """Centred moving average; edges shrink the window. window<=1 is a no-op."""
+    if window <= 1:
+        return y
+    half = window // 2
+    out = np.empty_like(y, dtype=np.float64)
+    for i in range(len(y)):
+        lo, hi = max(0, i - half), min(len(y), i + half + 1)
+        out[i] = np.nanmean(y[lo:hi])
+    return out
 
 
 def load_variant(input_dir: Path, algo: str, num_trials: int):
@@ -99,13 +114,15 @@ def main() -> None:
 
     # --- Panel A: learning curves + threshold crossings ---
     t2t = {}
+    sw = args.smooth_window
     for algo, (surv, pkl, label, color, ls) in data.items():
         m, ci = mean_ci(surv)
-        axA.plot(trials, m, color=color, linestyle=ls, linewidth=2.2,
-                 label=label, zorder=3)
-        axA.fill_between(trials, m - ci, m + ci, color=color, alpha=0.12, zorder=1)
-        tt = trials_to_threshold(m, args.threshold)
+        tt = trials_to_threshold(m, args.threshold)   # crossing on the RAW mean
         t2t[algo] = tt
+        ms, cis = _smooth(m, sw), _smooth(ci, sw)      # smooth only for display
+        axA.plot(trials, ms, color=color, linestyle=ls, linewidth=2.2,
+                 label=label, zorder=3)
+        axA.fill_between(trials, ms - cis, ms + cis, color=color, alpha=0.12, zorder=1)
         if tt:
             axA.plot([tt], [args.threshold], marker="o", color=color, ms=6, zorder=4)
     axA.axhline(args.threshold, color="grey", lw=0.8, ls=":", zorder=0)

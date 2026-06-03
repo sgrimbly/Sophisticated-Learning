@@ -70,6 +70,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--algorithms", nargs="+", default=DEFAULT_ALGORITHMS, help="Algorithms to include.")
     parser.add_argument("--num-trials", type=int, default=120, help="Expected number of trials per file.")
     parser.add_argument("--window", type=int, default=20, help="Plateau summary window size.")
+    parser.add_argument("--smooth-window", type=int, default=1,
+                        help="Rolling-mean window for the learning-curve plot only "
+                             "(cosmetic; CSVs/windows use the raw series). 1 = off; 5-7 reads well.")
     parser.add_argument(
         "--learning-curve-output",
         default="learning_curves.png",
@@ -270,7 +273,26 @@ def compute_plateau_table(
     return plateau_rows
 
 
-def plot_learning_curves(summary_rows: list[dict[str, object]], algorithms: list[str], output_path: Path) -> None:
+def _smooth(y: np.ndarray, window: int) -> np.ndarray:
+    """Centred moving average; edges shrink the window. window<=1 is a no-op.
+
+    Cosmetic only -- the per-trial across-seed mean still has episode-to-episode
+    variance even at n=200; a short rolling mean makes the *trend* legible
+    without changing the underlying estimates (windows/AUC are computed on the
+    raw series elsewhere).
+    """
+    if window <= 1:
+        return y
+    half = window // 2
+    out = np.empty_like(y, dtype=np.float64)
+    for i in range(len(y)):
+        lo, hi = max(0, i - half), min(len(y), i + half + 1)
+        out[i] = np.nanmean(y[lo:hi])
+    return out
+
+
+def plot_learning_curves(summary_rows: list[dict[str, object]], algorithms: list[str],
+                         output_path: Path, smooth_window: int = 1) -> None:
     fig, ax = plt.subplots(figsize=(9, 5))
     for algorithm in algorithms:
         algo_rows = sorted(
@@ -280,8 +302,8 @@ def plot_learning_curves(summary_rows: list[dict[str, object]], algorithms: list
         if not algo_rows:
             continue
         x = np.array([int(row["trial"]) for row in algo_rows], dtype=int)
-        y = np.array([float(row["mean"]) for row in algo_rows], dtype=float)
-        ci = np.array([float(row["ci95"]) for row in algo_rows], dtype=float)
+        y = _smooth(np.array([float(row["mean"]) for row in algo_rows], dtype=float), smooth_window)
+        ci = _smooth(np.array([float(row["ci95"]) for row in algo_rows], dtype=float), smooth_window)
         color = COLORS.get(algorithm, None)
         is_headline = algorithm == HEADLINE_ALGO
         ax.plot(
@@ -360,7 +382,7 @@ def main() -> None:
         late_slope_threshold=args.late_slope_threshold,
     )
 
-    plot_learning_curves(summary_rows, args.algorithms, learning_curve_output)
+    plot_learning_curves(summary_rows, args.algorithms, learning_curve_output, args.smooth_window)
     plot_final_window_summary(plateau_rows, final_window_figure_output)
 
     write_csv(summary_rows, curve_summary_output)

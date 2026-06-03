@@ -102,30 +102,44 @@ def plot_grid(cells, novelties, learnings, output_path: Path) -> None:
                           color="white", fontsize=9)
     fig.colorbar(im, ax=ax_h, label="mean AUC")
 
-    # --- Novelty-response lines ---
-    cmap = plt.get_cmap("plasma")
-    for k, l in enumerate(learnings):
-        ys = [np.mean(cells.get((n, l), [np.nan])) for n in novelties]
-        ax_l.plot(novelties, ys, marker="o", linewidth=1.4,
-                  color=cmap(k / max(1, len(learnings) - 1)),
-                  label=f"learning={l}")
-    # Across-learning mean +/- SEM (bold).
-    agg_mean, agg_sem = [], []
+    # --- Novelty-response: aggregate (pooled over learning) with 95% CI, plus a
+    #     grand-mean reference band so "flat" is visually honest. Per-learning
+    #     traces are kept faint for transparency rather than dominating. ---
+    agg_mean, agg_ci, pooled = [], [], []
     for n in novelties:
         allv = [a for l in learnings for a in cells.get((n, l), [])]
         m, s = mean_sem(allv)
         agg_mean.append(m)
-        agg_sem.append(s)
+        agg_ci.append(1.96 * s)
+        pooled.extend(allv)
     agg_mean = np.array(agg_mean)
-    agg_sem = np.array(agg_sem)
-    ax_l.plot(novelties, agg_mean, color="black", linewidth=3.0, marker="s",
-              zorder=5, label="mean across learning")
-    ax_l.fill_between(novelties, agg_mean - agg_sem, agg_mean + agg_sem,
-                      color="black", alpha=0.15, zorder=4)
+    agg_ci = np.array(agg_ci)
+
+    # faint per-learning traces (context only)
+    for l in learnings:
+        ys = [np.mean(cells.get((n, l), [np.nan])) for n in novelties]
+        ax_l.plot(novelties, ys, color="0.7", linewidth=1.0, alpha=0.7,
+                  zorder=1, label=None)
+
+    # grand mean +/- its 95% CI across the whole range (the "flat" reference)
+    grand = float(np.mean(pooled))
+    grand_ci = 1.96 * (np.std(pooled, ddof=1) / np.sqrt(len(pooled)))
+    ax_l.axhspan(grand - grand_ci, grand + grand_ci, color="tab:blue", alpha=0.10, zorder=0)
+    ax_l.axhline(grand, color="tab:blue", lw=1.2, ls="--", zorder=2,
+                 label=f"grand mean {grand:.1f} (+/-{grand_ci:.1f})")
+
+    # aggregate points with 95% CI
+    ax_l.errorbar(novelties, agg_mean, yerr=agg_ci, color="black", lw=2.2,
+                  marker="o", ms=6, capsize=4, zorder=5,
+                  label="mean across learning (95% CI)")
+
+    # honest y-range: don't auto-zoom into the noise
+    ax_l.set_ylim(grand - 8, grand + 8)
     ax_l.set_xlabel("novelty weight")
     ax_l.set_ylabel("mean AUC (mean trial length)")
-    ax_l.set_title("Novelty response (SL adaptive) — does some novelty beat none?")
-    ax_l.legend(frameon=False, fontsize=8)
+    rng = agg_mean.max() - agg_mean.min()
+    ax_l.set_title(f"Novelty response (SL adaptive): flat (range {rng:.1f} AUC, all within CI)")
+    ax_l.legend(frameon=False, fontsize=8, loc="lower left")
     ax_l.spines["top"].set_visible(False)
     ax_l.spines["right"].set_visible(False)
 
