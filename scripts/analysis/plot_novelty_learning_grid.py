@@ -138,7 +138,15 @@ def plot_grid(cells, novelties, learnings, output_path: Path) -> None:
     ax_l.set_xlabel("novelty weight")
     ax_l.set_ylabel("mean AUC (mean trial length)")
     rng = agg_mean.max() - agg_mean.min()
-    ax_l.set_title(f"Novelty response (SL adaptive): flat (range {rng:.1f} AUC, all within CI)")
+    # Data-driven label: "flat" only if the whole response sits within ~2 median
+    # CIs; otherwise report the monotone trend honestly.
+    flat = rng <= 2.0 * float(np.median(agg_ci))
+    if flat:
+        desc = f"flat (range {rng:.1f} AUC, within CI)"
+    else:
+        trend = "declining" if agg_mean[-1] < agg_mean[0] else "rising"
+        desc = f"{trend} (range {rng:.1f} AUC; harm scales with learning weight)"
+    ax_l.set_title(f"Novelty response (SL adaptive): {desc}")
     ax_l.legend(frameon=False, fontsize=8, loc="lower left")
     ax_l.spines["top"].set_visible(False)
     ax_l.spines["right"].set_visible(False)
