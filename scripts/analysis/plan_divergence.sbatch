@@ -22,6 +22,9 @@ OUT=/scratch/grmstj001/plan_divergence_20260606
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_NUM_THREADS=1
 export NUMBA_CACHE_DIR="${TMPDIR:-/tmp}/numba_cache_${SLURM_JOB_ID:-x}_${SLURM_ARRAY_TASK_ID:-0}"
 mkdir -p "$NUMBA_CACHE_DIR" "$OUT"
+# Script is run by absolute path, so its own dir (scripts/analysis) lands on
+# sys.path, not src/Python -- put the package dir on PYTHONPATH so `import sl` works.
+export PYTHONPATH="$REPO/src/Python:${PYTHONPATH:-}"
 cd "$REPO/src/Python"
 echo "[plan_divergence] seed=$SEED node=$(hostname)"
 "$VENV/bin/python" "$REPO/scripts/analysis/plan_divergence.py" "$SEED" 120 \
