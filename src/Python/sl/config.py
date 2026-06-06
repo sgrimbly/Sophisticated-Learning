@@ -134,6 +134,12 @@ class RunOptions:
     # is unavailable.
     use_jit_planner: bool = False
 
+    # Diagnostic (off by default): for the SL family, at each real planning step
+    # also run the planner with adaptive_likelihood_in_plan toggled (on the same
+    # state, fresh STM copy) and record both chosen actions. Used to test whether
+    # SL's roll-forward actually changes decisions vs SI-style frozen planning.
+    diagnose_plan_divergence: bool = False
+
     def is_alive(self, t: int, t_food: int, t_water: int, t_sleep: int) -> bool:
         return (
             t < self.max_steps_per_trial

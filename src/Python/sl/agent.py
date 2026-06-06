@@ -65,6 +65,9 @@ class TrialResult:
     P_ctx_history: List[np.ndarray]
     O_resource_history: List[np.ndarray]
     O_hill_history: List[np.ndarray]
+    # Diagnostic: per-step (t, action_rollforward_on, action_rollforward_off)
+    # when options.diagnose_plan_divergence is set (SL family only); else empty.
+    plan_divergence: List[tuple] = field(default_factory=list)
 
 
 @dataclass
@@ -100,6 +103,7 @@ def run_trial(
     true_states: List[tuple] = []
     observations: List[tuple] = []
     chosen_actions: List[int] = []
+    plan_divergence: List[tuple] = []
     horizons: List[int] = []
 
     Q_pos_history: List[np.ndarray] = []
@@ -310,15 +314,27 @@ def run_trial(
             )
             if options.use_jit_planner:
                 from .planning.sl_jit import tree_search_sl_jit_run
-                result = tree_search_sl_jit_run(
-                    short_term_memory, O_pos, O_res, O_hill, Q_pos, Q_ctx,
-                    planner_inputs, **sl_kwargs,
-                )
+                _sl_fn = tree_search_sl_jit_run
             else:
-                result = tree_search_sl(
-                    short_term_memory, O_pos, O_res, O_hill, Q_pos, Q_ctx,
-                    planner_inputs, **sl_kwargs,
+                _sl_fn = tree_search_sl
+            _stm_snap = short_term_memory.copy() if options.diagnose_plan_divergence else None
+            result = _sl_fn(
+                short_term_memory, O_pos, O_res, O_hill, Q_pos, Q_ctx,
+                planner_inputs, **sl_kwargs,
+            )
+            if options.diagnose_plan_divergence:
+                # Counterfactual: same state (fresh STM copy), roll-forward toggled.
+                alt_kwargs = dict(sl_kwargs)
+                alt_kwargs["adaptive_likelihood_in_plan"] = (
+                    not sl_kwargs["adaptive_likelihood_in_plan"]
                 )
+                alt = _sl_fn(
+                    _stm_snap, O_pos, O_res, O_hill, Q_pos, Q_ctx,
+                    planner_inputs, **alt_kwargs,
+                )
+                a_on = result.best_actions[0] if result.best_actions else -1
+                a_off = alt.best_actions[0] if alt.best_actions else -1
+                plan_divergence.append((int(t), int(a_on), int(a_off)))
         elif family == "BA":
             result = tree_search_ba(
                 short_term_memory,
@@ -377,6 +393,7 @@ def run_trial(
         P_ctx_history=P_ctx_history,
         O_resource_history=O_resource_history,
         O_hill_history=O_hill_history,
+        plan_divergence=plan_divergence,
     )
 
 
